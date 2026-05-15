@@ -185,6 +185,6 @@
     function downloadAllImages(){}
     function reset(){originalImage=null;processedBlob=null;originalFileName='';originalSize=0;currentRotation=0;currentFlipH=false;currentFlipV=false;gifFrames=[];watermarkImageEl=null;workspace.classList.remove('visible');previewBox.innerHTML=`<div class="preview-placeholder" id="previewPlaceholder"><div class="preview-placeholder-icon">🖼️</div><p>图片预览</p></div>`;outputInfo.style.display='none';downloadBtn.disabled=true;downloadAllBtn.style.display='none';fileInput.value=''}
     function formatBytes(bytes){if(bytes===0)return'0 B';const k=1024;const sizes=['B','KB','MB','GB'];const i=Math.floor(Math.log(bytes)/Math.log(k));return parseFloat((bytes/Math.pow(k,i)).toFixed(2))+' '+sizes[i]}
-  <\/script>
+  </script>
 </body>
 </html>
