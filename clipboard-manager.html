@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>剪贴板管理器 — tool.pumf.top</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-focus: #09b894;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-primary-glow: rgba(10, 191, 165, 0.15);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-canvas-soft-2: #f0f2f8;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --color-border-hover: rgba(10, 191, 165, 0.3);
+      --color-border-strong: rgba(0, 0, 0, 0.12);
+      --color-hairline: #ebebeb;
+      --color-error: #ef4444;
+      --color-success: #10b981;
+      --color-overlay: rgba(0, 0, 0, 0.5);
+      --space-xxs: 4px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 40px;
+      --space-3xl: 48px;
+      --space-4xl: 64px;
+      --space-section: 128px;
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --radius-xxl: 24px;
+      --radius-pill: 100px;
+      --radius-full: 9999px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-sans); font-size: 14px; font-weight: 400; line-height: 1.6; color: var(--color-ink); background: var(--color-canvas-soft); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 var(--space-lg); }
+    .nav { position: sticky; top: 0; z-index: 100; background: var(--color-canvas); border-bottom: 1px solid var(--color-border); height: 56px; display: flex; align-items: center; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .nav-logo { font-size: 16px; font-weight: 600; color: var(--color-ink); text-decoration: none; letter-spacing: -0.3px; }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back { font-size: 13px; color: var(--color-body); text-decoration: none; display: flex; align-items: center; gap: var(--space-xxs); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); transition: color 0.2s, background 0.2s; }
+    .nav-back:hover { color: var(--color-primary); background: var(--color-primary-soft); }
+    .header { background: var(--color-canvas); padding: var(--space-3xl) var(--space-lg); text-align: center; border-bottom: 1px solid var(--color-border); }
+    .header-icon { font-size: 40px; margin-bottom: var(--space-sm); }
+    .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.6px; margin-bottom: var(--space-xxs); }
+    .header p { font-size: 14px; color: var(--color-body); }
+    .main { padding: var(--space-3xl) 0; }
+    .input-area { background: var(--color-canvas); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-lg); margin-bottom: var(--space-xl); box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .input-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); }
+    .input-title { font-size: 14px; font-weight: 600; }
+    .input-actions { display: flex; gap: var(--space-xs); }
+    .input-field { width: 100%; min-height: 120px; padding: var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-family: var(--font-sans); font-size: 14px; line-height: 1.6; resize: vertical; background: var(--color-canvas-soft); transition: border-color 0.2s; }
+    .input-field:focus { outline: none; border-color: var(--color-primary); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xxs); padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); font-size: 13px; font-weight: 500; font-family: var(--font-sans); cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; }
+    .btn-primary { background: var(--color-primary); color: var(--color-on-primary); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-secondary { background: var(--color-canvas-soft); color: var(--color-ink); border: 1px solid var(--color-border); }
+    .btn-secondary:hover { border-color: var(--color-border-hover); }
+    .btn-icon { font-size: 14px; }
+    .history-section { margin-bottom: var(--space-xl); }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); }
+    .section-title { font-size: 14px; font-weight: 600; }
+    .section-count { font-size: 12px; color: var(--color-muted); background: var(--color-canvas-soft); padding: 2px 8px; border-radius: var(--radius-full); }
+    .clipboard-list { display: flex; flex-direction: column; gap: var(--space-sm); }
+    .clipboard-item { background: var(--color-canvas); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md); display: flex; align-items: flex-start; gap: var(--space-md); transition: border-color 0.2s, box-shadow 0.2s; position: relative; }
+    .clipboard-item:hover { border-color: var(--color-border-hover); box-shadow: 0 4px 20px var(--color-primary-glow); }
+    .item-content { flex: 1; min-width: 0; }
+    .item-text { font-size: 14px; line-height: 1.5; color: var(--color-ink); word-break: break-word; white-space: pre-wrap; max-height: 80px; overflow: hidden; }
+    .item-text.expanded { max-height: none; }
+    .item-meta { display: flex; gap: var(--space-md); margin-top: var(--space-xs); font-size: 11px; color: var(--color-muted); }
+    .item-actions { display: flex; gap: var(--space-xs); opacity: 0; transition: opacity 0.2s; }
+    .clipboard-item:hover .item-actions { opacity: 1; }
+    .item-btn { padding: var(--space-xxs) var(--space-xs); font-size: 11px; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid var(--color-border); background: var(--color-canvas); transition: all 0.2s; }
+    .item-btn:hover { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary); }
+    .item-btn.copied { background: var(--color-success); color: white; border-color: var(--color-success); }
+    .empty-state { text-align: center; padding: var(--space-3xl) var(--space-lg); color: var(--color-muted); }
+    .empty-icon { font-size: 48px; margin-bottom: var(--space-md); opacity: 0.4; }
+    .empty-text { font-size: 14px; }
+    .footer { padding: var(--space-2xl) 0; text-align: center; color: var(--color-muted); font-size: 11px; background: var(--color-canvas); border-top: 1px solid var(--color-border); }
+    .type-badge { display: inline-block; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 6px; border-radius: var(--radius-xs); background: var(--color-canvas-soft-2); color: var(--color-body); }
+    .type-badge.text { background: rgba(10, 191, 165, 0.1); color: var(--color-primary); }
+    .type-badge.link { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .type-badge.code { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+    @media (max-width: 600px) { .container { padding: 0 var(--space-md); } .item-actions { opacity: 1; } }
+  </style>
+</head>
+<body>
+  <nav class="nav"><div class="container nav-inner"><a href="/" class="nav-logo">tool<span>.pumf.top</span></a><a href="/" class="nav-back">← 返回首页</a></div></nav>
+  <header class="header"><div class="header-icon">📋</div><h1>剪贴板管理器</h1><p>跨设备同步剪贴板 · 文本存储 · 快速复制</p></header>
+  <main class="main">
+    <div class="container">
+      <div class="input-area">
+        <div class="input-header"><span class="input-title">新建剪贴项</span><div class="input-actions"><button class="btn btn-secondary" id="pasteBtn"><span class="btn-icon">📋</span> 粘贴</button></div></div>
+        <textarea class="input-field" id="inputField" placeholder="在此输入或粘贴内容..."></textarea>
+        <div class="btn-group" style="margin-top: var(--space-md); display: flex; gap: var(--space-xs);"><button class="btn btn-primary" id="saveBtn"><span class="btn-icon">💾</span> 保存到剪贴板</button><button class="btn btn-secondary" id="clearBtn">清空</button></div>
+      </div>
+      <div class="history-section">
+        <div class="section-header"><span class="section-title">剪贴板历史</span><span class="section-count" id="itemCount">0 项</span></div>
+        <div class="clipboard-list" id="clipboardList"><div class="empty-state"><div class="empty-icon">📋</div><p class="empty-text">暂无剪贴内容<br>在上方输入内容并保存</p></div></div>
+      </div>
+    </div>
+  </main>
+  <footer class="footer"><p>剪贴板管理器 · tool.pumf.top · 纯浏览器端存储，数据仅保存在本机</p></footer>
+  <script>
+    const inputField = document.getElementById('inputField');
+    const saveBtn = document.getElementById('saveBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const pasteBtn = document.getElementById('pasteBtn');
+    const clipboardList = document.getElementById('clipboardList');
+    const itemCount = document.getElementById('itemCount');
+    let items = JSON.parse(localStorage.getItem('clipboard_items') || '[]');
+    function saveItems() { localStorage.setItem('clipboard_items', JSON.stringify(items)); updateUI(); }
+    function formatTime(date) { const d = new Date(date); return d.toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+    function getType(text) { if (/^https?:\/\//.test(text)) return 'link'; if (/[{};<>]|function|class|const|let|var/.test(text)) return 'code'; return 'text'; }
+    function updateUI() {
+      itemCount.textContent = items.length + ' 项';
+      if (items.length === 0) { clipboardList.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p class="empty-text">暂无剪贴内容<br>在上方输入内容并保存</p></div>'; return; }
+      clipboardList.innerHTML = items.map((item, i) => {
+        const type = getType(item.text);
+        const typeClass = 'type-badge ' + type;
+        const typeLabel = type === 'link' ? '链接' : type === 'code' ? '代码' : '文本';
+        const shortText = item.text.length > 120 ? item.text.slice(0, 120) + '...' : item.text;
+        return '<div class="clipboard-item"><div class="item-content"><div class="item-text" id="text-' + i + '">' + escapeHtml(shortText) + '</div><div class="item-meta"><span class="' + typeClass + '">' + typeLabel + '</span><span>' + formatTime(item.time) + '</span>' + (item.text.length > 120 ? '<span style="cursor:pointer;color:var(--color-primary)" onclick="toggleExpand(' + i + ')">展开</span>' : '') + '</span></div></div><div class="item-actions"><button class="item-btn" onclick="copyItem(' + i + ',this)">复制</button><button class="item-btn" onclick="deleteItem(' + i + ')">删除</button></div></div>';
+      }).join('');
+    }
+    function escapeHtml(text) { return text.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    window.toggleExpand = function(i) { const el = document.getElementById('text-' + i); el.classList.toggle('expanded'); el.textContent = el.classList.contains('expanded') ? items[i].text : (items[i].text.length > 120 ? items[i].text.slice(0, 120) + '...' : items[i].text); };
+    window.copyItem = function(i, btn) { navigator.clipboard.writeText(items[i].text).then(() => { btn.textContent = '已复制'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500); }); };
+    window.deleteItem = function(i) { items.splice(i, 1); saveItems(); };
+    saveBtn.addEventListener('click', () => { const text = inputField.value.trim(); if (!text) return; items.unshift({ text, time: Date.now() }); if (items.length > 50) items = items.slice(0, 50); inputField.value = ''; saveItems(); });
+    clearBtn.addEventListener('click', () => { inputField.value = ''; });
+    pasteBtn.addEventListener('click', async () => { try { const text = await navigator.clipboard.readText(); inputField.value = text; } catch (e) { alert('无法访问剪贴板，请手动粘贴'); } });
+    updateUI();
+  </script>
+</body>
+</html>
