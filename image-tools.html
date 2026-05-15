@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图片工具箱 — tool.pumf.top</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-primary-glow: rgba(10, 191, 165, 0.15);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-canvas-soft-2: #f0f2f8;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --color-border-hover: rgba(10, 191, 165, 0.3);
+      --color-hairline: #ebebeb;
+      --color-error: #ef4444;
+      --color-success: #10b981;
+      --space-xxs: 4px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 40px;
+      --space-3xl: 48px;
+      --space-4xl: 64px;
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--color-ink);
+      background: var(--color-canvas-soft);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 var(--space-lg); }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .nav-logo { font-size: 16px; font-weight: 600; color: var(--color-ink); text-decoration: none; letter-spacing: -0.3px; }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 13px; color: var(--color-body); text-decoration: none;
+      display: flex; align-items: center; gap: var(--space-xxs);
+      padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+      transition: color 0.2s, background 0.2s;
+    }
+    .nav-back:hover { color: var(--color-primary); background: var(--color-primary-soft); }
+    .header {
+      background: var(--color-canvas);
+      padding: var(--space-4xl) var(--space-lg);
+      text-align: center; border-bottom: 1px solid var(--color-border);
+    }
+    .header-icon { font-size: 48px; margin-bottom: var(--space-md); }
+    .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.8px; margin-bottom: var(--space-xs); }
+    .header p { font-size: 15px; color: var(--color-body); }
+    .main { padding: var(--space-4xl) 0; }
+    .upload-zone {
+      background: var(--color-canvas);
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4xl) var(--space-lg);
+      text-align: center; cursor: pointer;
+      transition: border-color 0.25s, background 0.25s;
+      margin-bottom: var(--space-xl);
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-soft);
+    }
+    .upload-zone-icon { font-size: 48px; margin-bottom: var(--space-md); opacity: 0.6; }
+    .upload-zone h3 { font-size: 16px; font-weight: 600; margin-bottom: var(--space-xxs); }
+    .upload-zone p { font-size: 13px; color: var(--color-muted); }
+    .upload-zone input { display: none; }
+    .tool-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-sm); margin-bottom: var(--space-xl);
+    }
+    .tool-btn {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-md); cursor: pointer;
+      text-align: center; transition: all 0.2s;
+    }
+    .tool-btn:hover { border-color: var(--color-border-hover); box-shadow: 0 4px 20px var(--color-primary-glow); }
+    .tool-btn.active { border-color: var(--color-primary); background: var(--color-primary-soft); }
+    .tool-btn-icon { font-size: 24px; margin-bottom: var(--space-xs); }
+    .tool-btn-name { font-size: 13px; font-weight: 600; color: var(--color-ink); }
+    .workspace {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl); display: none;
+    }
+    .workspace.visible { display: block; }
+    .workspace-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: var(--space-lg); padding-bottom: var(--space-md);
+      border-bottom: 1px solid var(--color-hairline);
+    }
+    .workspace-title { font-size: 15px; font-weight: 600; }
+    .workspace-info { font-size: 12px; color: var(--color-muted); font-family: var(--font-mono); }
+    .preview-area {
+      display: grid; grid-template-columns: 1fr 280px;
+      gap: var(--space-xl); margin-bottom: var(--space-xl);
+    }
+    .preview-box {
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      min-height: 300px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .preview-box canvas, .preview-box img {
+      max-width: 100%; max-height: 400px; object-fit: contain;
+    }
+    .preview-placeholder { text-align: center; color: var(--color-muted); }
+    .preview-placeholder-icon { font-size: 48px; margin-bottom: var(--space-sm); opacity: 0.4; }
+    .preview-placeholder p { font-size: 13px; }
+    .controls { display: flex; flex-direction: column; gap: var(--space-md); }
+    .control-group { display: flex; flex-direction: column; gap: var(--space-xxs); }
+    .control-label {
+      font-size: 12px; font-weight: 500; color: var(--color-body);
+      display: flex; justify-content: space-between;
+    }
+    .control-label span { font-family: var(--font-mono); color: var(--color-muted); }
+    .control-input {
+      width: 100%; padding: var(--space-sm) var(--space-md);
+      border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+      font-size: 14px; font-family: var(--font-sans);
+      color: var(--color-ink); background: var(--color-canvas);
+      transition: border-color 0.2s;
+    }
+    .control-input:focus { outline: none; border-color: var(--color-primary); }
+    .control-select {
+      width: 100%; padding: var(--space-sm) var(--space-md);
+      border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+      font-size: 14px; font-family: var(--font-sans);
+      color: var(--color-ink); background: var(--color-canvas); cursor: pointer;
+    }
+    .control-select:focus { outline: none; border-color: var(--color-primary); }
+    .control-range {
+      width: 100%; height: 6px; -webkit-appearance: none; appearance: none;
+      background: var(--color-canvas-soft-2); border-radius: 3px; outline: none;
+    }
+    .control-range::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px; background: var(--color-primary);
+      border-radius: 50%; cursor: pointer; box-shadow: 0 2px 8px var(--color-primary-glow);
+    }
+    .control-range::-moz-range-thumb {
+      width: 18px; height: 18px; background: var(--color-primary);
+      border-radius: 50%; cursor: pointer; border: none;
+    }
+    .control-checkbox { display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; }
+    .control-checkbox input { width: 18px; height: 18px; accent-color: var(--color-primary); }
+    .control-checkbox span { font-size: 13px; color: var(--color-body); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: var(--space-xs); padding: var(--space-sm) var(--space-lg);
+      border-radius: var(--radius-full); font-size: 14px; font-weight: 500;
+      font-family: var(--font-sans); cursor: pointer; transition: all 0.2s;
+      border: none; text-decoration: none;
+    }
+    .btn-primary { background: var(--color-primary); color: var(--color-on-primary); }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    .btn-secondary { background: var(--color-canvas-soft); color: var(--color-ink); border: 1px solid var(--color-border); }
+    .btn-secondary:hover { border-color: var(--color-border-hover); }
+    .btn-group { display: flex; gap: var(--space-sm); margin-top: var(--space-lg); }
+    .output-info {
+      background: var(--color-canvas-soft); border-radius: var(--radius-md);
+      padding: var(--space-md); margin-top: var(--space-md);
+      font-size: 12px; font-family: var(--font-mono); color: var(--color-body);
+    }
+    .output-info-row { display: flex; justify-content: space-between; padding: var(--space-xxs) 0; }
+    .output-info-row:not(:last-child) { border-bottom: 1px solid var(--color-hairline); }
+    .output-info-label { color: var(--color-muted); }
+    .output-info-value { color: var(--color-ink); font-weight: 500; }
+    .output-info-value.success { color: var(--color-success); }
+    .footer {
+      padding: var(--space-3xl) 0; text-align: center;
+      color: var(--color-muted); font-size: 12px;
+      background: var(--color-canvas); border-top: 1px solid var(--color-border);
+    }
+    @media (max-width: 768px) {
+      .tool-selector { grid-template-columns: repeat(2, 1fr); }
+      .preview-area { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">tool<span>.pumf.top</span></a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <header class="header">
+    <div class="header-icon">🖼️</div>
+    <h1>图片工具箱</h1>
+    <p>格式转换 · 图片压缩 · 尺寸调整 · 裁剪</p>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-zone-icon">📁</div>
+        <h3>点击或拖拽图片到这里</h3>
+        <p>支持 PNG、JPG、WebP、GIF 格式</p>
+        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif">
+      </div>
+
+      <div class="tool-selector">
+        <button class="tool-btn active" data-tool="convert">
+          <div class="tool-btn-icon">🔄</div>
+          <div class="tool-btn-name">格式转换</div>
+        </button>
+        <button class="tool-btn" data-tool="compress">
+          <div class="tool-btn-icon">📦</div>
+          <div class="tool-btn-name">图片压缩</div>
+        </button>
+        <button class="tool-btn" data-tool="resize">
+          <div class="tool-btn-icon">📐</div>
+          <div class="tool-btn-name">调整尺寸</div>
+        </button>
+        <button class="tool-btn" data-tool="crop">
+          <div class="tool-btn-icon">✂️</div>
+          <div class="tool-btn-name">裁剪</div>
+        </button>
+      </div>
+
+      <div class="workspace" id="workspace">
+        <div class="workspace-header">
+          <span class="workspace-title" id="workspaceTitle">格式转换</span>
+          <span class="workspace-info" id="workspaceInfo"></span>
+        </div>
+        
+        <div class="preview-area">
+          <div class="preview-box" id="previewBox">
+            <div class="preview-placeholder" id="previewPlaceholder">
+              <div class="preview-placeholder-icon">🖼️</div>
+              <p>图片预览</p>
+            </div>
+          </div>
+          
+          <div class="controls" id="controls"></div>
+        </div>
+        
+        <div class="output-info" id="outputInfo" style="display: none;">
+          <div class="output-info-row">
+            <span class="output-info-label">原始大小</span>
+            <span class="output-info-value" id="originalSizeEl">-</span>
+          </div>
+          <div class="output-info-row">
+            <span class="output-info-label">输出大小</span>
+            <span class="output-info-value" id="outputSizeEl">-</span>
+          </div>
+          <div class="output-info-row">
+            <span class="output-info-label">节省</span>
+            <span class="output-info-value success" id="savedSizeEl">-</span>
+          </div>
+        </div>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" id="processBtn"><span>处理图片</span></button>
+          <button class="btn btn-secondary" id="downloadBtn" disabled><span>下载图片</span></button>
+          <button class="btn btn-secondary" id="resetBtn"><span>重置</span></button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>图片工具箱 · tool.pumf.top · 纯浏览器端处理，无需上传</p>
+  </footer>
+
+  <script>
+    let currentTool = 'convert';
+    let originalImage = null;
+    let processedBlob = null;
+    let originalFileName = '';
+    let originalSize = 0;
+
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const workspace = document.getElementById('workspace');
+    const previewBox = document.getElementById('previewBox');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+    const controls = document.getElementById('controls');
+    const workspaceTitle = document.getElementById('workspaceTitle');
+    const workspaceInfo = document.getElementById('workspaceInfo');
+    const outputInfo = document.getElementById('outputInfo');
+    const originalSizeEl = document.getElementById('originalSizeEl');
+    const outputSizeEl = document.getElementById('outputSizeEl');
+    const savedSizeEl = document.getElementById('savedSizeEl');
+    const processBtn = document.getElementById('processBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const toolBtns = document.querySelectorAll('.tool-btn');
+
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => { uploadZone.classList.remove('dragover'); });
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault(); uploadZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) loadImage(file);
+    });
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) loadImage(file);
+    });
+
+    function loadImage(file) {
+      originalFileName = file.name.replace(/\.[^.]+$/, '');
+      originalSize = file.size;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          originalImage = img;
+          workspace.classList.add('visible');
+          workspaceInfo.textContent = `${img.width} × ${img.height} · ${formatBytes(file.size)}`;
+          originalSizeEl.textContent = formatBytes(file.size);
+          renderControls();
+          processImage();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    toolBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        toolBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTool = btn.dataset.tool;
+        if (originalImage) { renderControls(); processImage(); }
+      });
+    });
+
+    function renderControls() {
+      const toolNames = { convert: '格式转换', compress: '图片压缩', resize: '调整尺寸', crop: '裁剪' };
+      workspaceTitle.textContent = toolNames[currentTool];
+      let html = '';
+      switch (currentTool) {
+        case 'convert':
+          html = `
+            <div class="control-group">
+              <label class="control-label">输出格式</label>
+              <select class="control-select" id="outputFormat">
+                <option value="image/png">PNG</option>
+                <option value="image/jpeg" selected>JPG</option>
+                <option value="image/webp">WebP</option>
+              </select>
+            </div>
+            <div class="control-group" id="qualityGroup">
+              <label class="control-label">输出质量 <span id="qualityValue">85%</span></label>
+              <input type="range" class="control-range" id="quality" min="10" max="100" value="85">
+            </div>
+          `;
+          break;
+        case 'compress':
+          html = `
+            <div class="control-group">
+              <label class="control-label">输出格式</label>
+              <select class="control-select" id="outputFormat">
+                <option value="image/png">PNG</option>
+                <option value="image/jpeg" selected>JPG</option>
+                <option value="image/webp">WebP</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label class="control-label">压缩质量 <span id="qualityValue">70%</span></label>
+              <input type="range" class="control-range" id="quality" min="10" max="100" value="70">
+            </div>
+          `;
+          break;
+        case 'resize':
+          html = `
+            <div class="control-group">
+              <label class="control-label">宽度 (px)</label>
+              <input type="number" class="control-input" id="newWidth" value="${originalImage.width}">
+            </div>
+            <div class="control-group">
+              <label class="control-label">高度 (px)</label>
+              <input type="number" class="control-input" id="newHeight" value="${originalImage.height}">
+            </div>
+            <div class="control-group">
+              <label class="control-checkbox">
+                <input type="checkbox" id="maintainAspect" checked>
+                <span>保持宽高比</span>
+              </label>
+            </div>
+            <div class="control-group">
+              <label class="control-label">输出格式</label>
+              <select class="control-select" id="outputFormat">
+                <option value="image/png">PNG</option>
+                <option value="image/jpeg" selected>JPG</option>
+                <option value="image/webp">WebP</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label class="control-label">质量 <span id="qualityValue">85%</span></label>
+              <input type="range" class="control-range" id="quality" min="10" max="100" value="85">
+            </div>
+          `;
+          break;
+        case 'crop':
+          html = `
+            <div class="control-group">
+              <label class="control-label">裁剪宽度 (px)</label>
+              <input type="number" class="control-input" id="cropWidth" value="${Math.round(originalImage.width / 2)}">
+            </div>
+            <div class="control-group">
+              <label class="control-label">裁剪高度 (px)</label>
+              <input type="number" class="control-input" id="cropHeight" value="${Math.round(originalImage.height / 2)}">
+            </div>
+            <div class="control-group">
+              <label class="control-label">X 偏移 (px)</label>
+              <input type="number" class="control-input" id="cropX" value="0">
+            </div>
+            <div class="control-group">
+              <label class="control-label">Y 偏移 (px)</label>
+              <input type="number" class="control-input" id="cropY" value="0">
+            </div>
+          `;
+          break;
+      }
+      controls.innerHTML = html;
+      if (currentTool !== 'crop') {
+        const quality = document.getElementById('quality');
+        const qualityValue = document.getElementById('qualityValue');
+        if (quality && qualityValue) {
+          quality.addEventListener('input', () => { qualityValue.textContent = quality.value + '%'; processImage(); });
+        }
+        const outputFormat = document.getElementById('outputFormat');
+        if (outputFormat) {
+          outputFormat.addEventListener('change', () => {
+            const qualityGroup = document.getElementById('qualityGroup');
+            if (qualityGroup) qualityGroup.style.display = outputFormat.value === 'image/png' ? 'none' : 'block';
+            processImage();
+          });
+        }
+      }
+      if (currentTool === 'resize') {
+        const widthInput = document.getElementById('newWidth');
+        const heightInput = document.getElementById('newHeight');
+        const maintainAspect = document.getElementById('maintainAspect');
+        let aspectRatio = originalImage.width / originalImage.height;
+        widthInput.addEventListener('input', () => {
+          if (maintainAspect.checked) heightInput.value = Math.round(widthInput.value / aspectRatio);
+          processImage();
+        });
+        heightInput.addEventListener('input', () => {
+          if (maintainAspect.checked) widthInput.value = Math.round(heightInput.value * aspectRatio);
+          processImage();
+        });
+        maintainAspect.addEventListener('change', () => {
+          if (maintainAspect.checked) { aspectRatio = originalImage.width / originalImage.height; widthInput.value = Math.round(heightInput.value * aspectRatio); }
+          processImage();
+        });
+      }
+      if (currentTool === 'crop') {
+        ['cropWidth', 'cropHeight', 'cropX', 'cropY'].forEach(id => { document.getElementById(id).addEventListener('input', processImage); });
+      }
+    }
+
+    function processImage() {
+      if (!originalImage) return;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      let destWidth, destHeight, srcX, srcY, srcWidth, srcHeight;
+      switch (currentTool) {
+        case 'convert':
+        case 'compress':
+          destWidth = originalImage.width; destHeight = originalImage.height;
+          srcX = 0; srcY = 0; srcWidth = originalImage.width; srcHeight = originalImage.height;
+          break;
+        case 'resize':
+          destWidth = parseInt(document.getElementById('newWidth').value) || originalImage.width;
+          destHeight = parseInt(document.getElementById('newHeight').value) || originalImage.height;
+          srcX = 0; srcY = 0; srcWidth = originalImage.width; srcHeight = originalImage.height;
+          break;
+        case 'crop':
+          srcX = parseInt(document.getElementById('cropX').value) || 0;
+          srcY = parseInt(document.getElementById('cropY').value) || 0;
+          srcWidth = parseInt(document.getElementById('cropWidth').value) || originalImage.width;
+          srcHeight = parseInt(document.getElementById('cropHeight').value) || originalImage.height;
+          destWidth = srcWidth; destHeight = srcHeight;
+          break;
+      }
+      srcX = Math.max(0, Math.min(srcX, originalImage.width - 1));
+      srcY = Math.max(0, Math.min(srcY, originalImage.height - 1));
+      srcWidth = Math.max(1, Math.min(srcWidth, originalImage.width - srcX));
+      srcHeight = Math.max(1, Math.min(srcHeight, originalImage.height - srcY));
+      destWidth = Math.max(1, Math.min(destWidth, originalImage.width));
+      destHeight = Math.max(1, Math.min(destHeight, originalImage.height));
+      canvas.width = destWidth; canvas.height = destHeight;
+      const outputFormat = document.getElementById('outputFormat')?.value || 'image/jpeg';
+      if (outputFormat === 'image/jpeg') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, destWidth, destHeight); }
+      ctx.drawImage(originalImage, srcX, srcY, srcWidth, srcHeight, 0, 0, destWidth, destHeight);
+      const quality = parseInt(document.getElementById('quality')?.value || 85) / 100;
+      canvas.toBlob((blob) => {
+        processedBlob = blob;
+        const url = URL.createObjectURL(blob);
+        previewPlaceholder.style.display = 'none';
+        previewBox.innerHTML = `<img src="${url}" alt="Preview">`;
+        outputInfo.style.display = 'block';
+        outputSizeEl.textContent = formatBytes(blob.size);
+        const saved = originalSize - blob.size;
+        const savedPercent = ((saved / originalSize) * 100).toFixed(1);
+        savedSizeEl.textContent = saved > 0 ? `${formatBytes(saved)} (${savedPercent}%)` : '0 KB (0%)';
+        downloadBtn.disabled = false;
+      }, outputFormat, quality);
+    }
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    processBtn.addEventListener('click', processImage);
+    downloadBtn.addEventListener('click', () => {
+      if (!processedBlob) return;
+      const outputFormat = document.getElementById('outputFormat')?.value || 'image/jpeg';
+      const ext = outputFormat.split('/')[1];
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(processedBlob);
+      a.download = `${originalFileName}_${currentTool}.${ext}`;
+      a.click();
+    });
+    resetBtn.addEventListener('click', () => {
+      originalImage = null; processedBlob = null; originalFileName = ''; originalSize = 0;
+      workspace.classList.remove('visible');
+      previewBox.innerHTML = `<div class="preview-placeholder" id="previewPlaceholder"><div class="preview-placeholder-icon">🖼️</div><p>图片预览</p></div>`;
+      outputInfo.style.display = 'none';
+      downloadBtn.disabled = true;
+      fileInput.value = '';
+    });
+  </script>
+</body>
+</html>
