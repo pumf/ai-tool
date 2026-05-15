@@ -8,571 +8,128 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --color-primary: #0abFA5;
-      --color-on-primary: #ffffff;
-      --color-primary-hover: #08d9a3;
-      --color-primary-soft: rgba(10, 191, 165, 0.08);
-      --color-primary-glow: rgba(10, 191, 165, 0.15);
-      --color-ink: #1a1a2e;
-      --color-body: #5c5c72;
-      --color-muted: #9494a8;
-      --color-canvas: #ffffff;
-      --color-canvas-soft: #f8f9fb;
-      --color-canvas-soft-2: #f0f2f8;
-      --color-border: rgba(0, 0, 0, 0.07);
-      --color-border-hover: rgba(10, 191, 165, 0.3);
-      --color-hairline: #ebebeb;
-      --color-error: #ef4444;
-      --color-success: #10b981;
-      --space-xxs: 4px;
-      --space-xs: 8px;
-      --space-sm: 12px;
-      --space-md: 16px;
-      --space-lg: 24px;
-      --space-xl: 32px;
-      --space-2xl: 40px;
-      --space-3xl: 48px;
-      --space-4xl: 64px;
-      --radius-xs: 4px;
-      --radius-sm: 6px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-full: 9999px;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--font-sans);
-      font-size: 14px;
-      font-weight: 400;
-      line-height: 1.6;
-      color: var(--color-ink);
-      background: var(--color-canvas-soft);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
-    .container { max-width: 960px; margin: 0 auto; padding: 0 var(--space-lg); }
-    .nav {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--color-canvas);
-      border-bottom: 1px solid var(--color-border);
-      height: 56px; display: flex; align-items: center;
-    }
-    .nav-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-    .nav-logo { font-size: 16px; font-weight: 600; color: var(--color-ink); text-decoration: none; letter-spacing: -0.3px; }
-    .nav-logo span { color: var(--color-primary); }
-    .nav-back {
-      font-size: 13px; color: var(--color-body); text-decoration: none;
-      display: flex; align-items: center; gap: var(--space-xxs);
-      padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
-      transition: color 0.2s, background 0.2s;
-    }
-    .nav-back:hover { color: var(--color-primary); background: var(--color-primary-soft); }
-    .header {
-      background: var(--color-canvas);
-      padding: var(--space-4xl) var(--space-lg);
-      text-align: center; border-bottom: 1px solid var(--color-border);
-    }
-    .header-icon { font-size: 48px; margin-bottom: var(--space-md); }
-    .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.8px; margin-bottom: var(--space-xs); }
-    .header p { font-size: 15px; color: var(--color-body); }
-    .main { padding: var(--space-4xl) 0; }
-    .upload-zone {
-      background: var(--color-canvas);
-      border: 2px dashed var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: var(--space-4xl) var(--space-lg);
-      text-align: center; cursor: pointer;
-      transition: border-color 0.25s, background 0.25s;
-      margin-bottom: var(--space-xl);
-    }
-    .upload-zone:hover, .upload-zone.dragover {
-      border-color: var(--color-primary);
-      background: var(--color-primary-soft);
-    }
-    .upload-zone-icon { font-size: 48px; margin-bottom: var(--space-md); opacity: 0.6; }
-    .upload-zone h3 { font-size: 16px; font-weight: 600; margin-bottom: var(--space-xxs); }
-    .upload-zone p { font-size: 13px; color: var(--color-muted); }
-    .upload-zone input { display: none; }
-    .tool-selector {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--space-sm); margin-bottom: var(--space-xl);
-    }
-    .tool-btn {
-      background: var(--color-canvas);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      padding: var(--space-md); cursor: pointer;
-      text-align: center; transition: all 0.2s;
-    }
-    .tool-btn:hover { border-color: var(--color-border-hover); box-shadow: 0 4px 20px var(--color-primary-glow); }
-    .tool-btn.active { border-color: var(--color-primary); background: var(--color-primary-soft); }
-    .tool-btn-icon { font-size: 24px; margin-bottom: var(--space-xs); }
-    .tool-btn-name { font-size: 13px; font-weight: 600; color: var(--color-ink); }
-    .workspace {
-      background: var(--color-canvas);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: var(--space-xl); display: none;
-    }
-    .workspace.visible { display: block; }
-    .workspace-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: var(--space-lg); padding-bottom: var(--space-md);
-      border-bottom: 1px solid var(--color-hairline);
-    }
-    .workspace-title { font-size: 15px; font-weight: 600; }
-    .workspace-info { font-size: 12px; color: var(--color-muted); font-family: var(--font-mono); }
-    .preview-area {
-      display: grid; grid-template-columns: 1fr 280px;
-      gap: var(--space-xl); margin-bottom: var(--space-xl);
-    }
-    .preview-box {
-      background: var(--color-canvas-soft);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      min-height: 300px;
-      display: flex; align-items: center; justify-content: center;
-      position: relative; overflow: hidden;
-    }
-    .preview-box canvas, .preview-box img {
-      max-width: 100%; max-height: 400px; object-fit: contain;
-    }
-    .preview-placeholder { text-align: center; color: var(--color-muted); }
-    .preview-placeholder-icon { font-size: 48px; margin-bottom: var(--space-sm); opacity: 0.4; }
-    .preview-placeholder p { font-size: 13px; }
-    .controls { display: flex; flex-direction: column; gap: var(--space-md); }
-    .control-group { display: flex; flex-direction: column; gap: var(--space-xxs); }
-    .control-label {
-      font-size: 12px; font-weight: 500; color: var(--color-body);
-      display: flex; justify-content: space-between;
-    }
-    .control-label span { font-family: var(--font-mono); color: var(--color-muted); }
-    .control-input {
-      width: 100%; padding: var(--space-sm) var(--space-md);
-      border: 1px solid var(--color-border); border-radius: var(--radius-sm);
-      font-size: 14px; font-family: var(--font-sans);
-      color: var(--color-ink); background: var(--color-canvas);
-      transition: border-color 0.2s;
-    }
-    .control-input:focus { outline: none; border-color: var(--color-primary); }
-    .control-select {
-      width: 100%; padding: var(--space-sm) var(--space-md);
-      border: 1px solid var(--color-border); border-radius: var(--radius-sm);
-      font-size: 14px; font-family: var(--font-sans);
-      color: var(--color-ink); background: var(--color-canvas); cursor: pointer;
-    }
-    .control-select:focus { outline: none; border-color: var(--color-primary); }
-    .control-range {
-      width: 100%; height: 6px; -webkit-appearance: none; appearance: none;
-      background: var(--color-canvas-soft-2); border-radius: 3px; outline: none;
-    }
-    .control-range::-webkit-slider-thumb {
-      -webkit-appearance: none; appearance: none;
-      width: 18px; height: 18px; background: var(--color-primary);
-      border-radius: 50%; cursor: pointer; box-shadow: 0 2px 8px var(--color-primary-glow);
-    }
-    .control-range::-moz-range-thumb {
-      width: 18px; height: 18px; background: var(--color-primary);
-      border-radius: 50%; cursor: pointer; border: none;
-    }
-    .control-checkbox { display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; }
-    .control-checkbox input { width: 18px; height: 18px; accent-color: var(--color-primary); }
-    .control-checkbox span { font-size: 13px; color: var(--color-body); }
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      gap: var(--space-xs); padding: var(--space-sm) var(--space-lg);
-      border-radius: var(--radius-full); font-size: 14px; font-weight: 500;
-      font-family: var(--font-sans); cursor: pointer; transition: all 0.2s;
-      border: none; text-decoration: none;
-    }
-    .btn-primary { background: var(--color-primary); color: var(--color-on-primary); }
-    .btn-primary:hover { background: var(--color-primary-hover); }
-    .btn-secondary { background: var(--color-canvas-soft); color: var(--color-ink); border: 1px solid var(--color-border); }
-    .btn-secondary:hover { border-color: var(--color-border-hover); }
-    .btn-group { display: flex; gap: var(--space-sm); margin-top: var(--space-lg); }
-    .output-info {
-      background: var(--color-canvas-soft); border-radius: var(--radius-md);
-      padding: var(--space-md); margin-top: var(--space-md);
-      font-size: 12px; font-family: var(--font-mono); color: var(--color-body);
-    }
-    .output-info-row { display: flex; justify-content: space-between; padding: var(--space-xxs) 0; }
-    .output-info-row:not(:last-child) { border-bottom: 1px solid var(--color-hairline); }
-    .output-info-label { color: var(--color-muted); }
-    .output-info-value { color: var(--color-ink); font-weight: 500; }
-    .output-info-value.success { color: var(--color-success); }
-    .footer {
-      padding: var(--space-3xl) 0; text-align: center;
-      color: var(--color-muted); font-size: 12px;
-      background: var(--color-canvas); border-top: 1px solid var(--color-border);
-    }
-    @media (max-width: 768px) {
-      .tool-selector { grid-template-columns: repeat(2, 1fr); }
-      .preview-area { grid-template-columns: 1fr; }
-    }
+    :root{--color-primary:#0abFA5;--color-on-primary:#ffffff;--color-primary-hover:#08d9a3;--color-primary-soft:rgba(10,191,165,0.08);--color-primary-glow:rgba(10,191,165,0.15);--color-ink:#1a1a2e;--color-body:#5c5c72;--color-muted:#9494a8;--color-canvas:#ffffff;--color-canvas-soft:#f8f9fb;--color-canvas-soft-2:#f0f2f8;--color-border:rgba(0,0,0,0.07);--color-border-hover:rgba(10,191,165,0.3);--color-hairline:#ebebeb;--color-error:#ef4444;--color-success:#10b981;--space-xxs:4px;--space-xs:8px;--space-sm:12px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:40px;--space-3xl:48px;--space-4xl:64px;--radius-xs:4px;--radius-sm:6px;--radius-md:12px;--radius-lg:16px;--radius-full:9999px;--font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font-mono:'SF Mono','Fira Code','Consolas',monospace}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+    body{font-family:var(--font-sans);font-size:14px;font-weight:400;line-height:1.6;color:var(--color-ink);background:var(--color-canvas-soft);min-height:100vh;-webkit-font-smoothing:antialiased}
+    .container{max-width:1100px;margin:0 auto;padding:0 var(--space-lg)}
+    .nav{position:sticky;top:0;z-index:100;background:var(--color-canvas);border-bottom:1px solid var(--color-border);height:56px;display:flex;align-items:center}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;width:100%}
+    .nav-logo{font-size:16px;font-weight:600;color:var(--color-ink);text-decoration:none;letter-spacing:-0.3px}.nav-logo span{color:var(--color-primary)}
+    .nav-back{font-size:13px;color:var(--color-body);text-decoration:none;display:flex;align-items:center;gap:var(--space-xxs);padding:var(--space-xs) var(--space-sm);border-radius:var(--radius-sm);transition:color 0.2s,background 0.2s}
+    .nav-back:hover{color:var(--color-primary);background:var(--color-primary-soft)}
+    .header{background:var(--color-canvas);padding:var(--space-3xl) var(--space-lg);text-align:center;border-bottom:1px solid var(--color-border)}
+    .header-icon{font-size:40px;margin-bottom:var(--space-sm)}.header h1{font-size:24px;font-weight:700;letter-spacing:-0.6px;margin-bottom:var(--space-xxs)}.header p{font-size:14px;color:var(--color-body)}
+    .main{padding:var(--space-3xl) 0}
+    .upload-zone{background:var(--color-canvas);border:2px dashed var(--color-border);border-radius:var(--radius-lg);padding:var(--space-3xl) var(--space-lg);text-align:center;cursor:pointer;transition:border-color 0.25s,background 0.25s;margin-bottom:var(--space-xl)}
+    .upload-zone:hover,.upload-zone.dragover{border-color:var(--color-primary);background:var(--color-primary-soft)}
+    .upload-zone-icon{font-size:40px;margin-bottom:var(--space-sm);opacity:0.6}.upload-zone h3{font-size:15px;font-weight:600;margin-bottom:var(--space-xxs)}.upload-zone p{font-size:12px;color:var(--color-muted)}.upload-zone input{display:none}
+    .tool-selector{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-xs);margin-bottom:var(--space-xl)}
+    @media(max-width:768px){.tool-selector{grid-template-columns:repeat(3,1fr)}}
+    .tool-btn{background:var(--color-canvas);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-sm) var(--space-xs);cursor:pointer;text-align:center;transition:all 0.2s;font-family:var(--font-sans)}
+    .tool-btn:hover{border-color:var(--color-border-hover);box-shadow:0 4px 20px var(--color-primary-glow)}
+    .tool-btn.active{border-color:var(--color-primary);background:var(--color-primary-soft)}
+    .tool-btn-icon{font-size:20px;margin-bottom:2px}.tool-btn-name{font-size:11px;font-weight:600;color:var(--color-ink)}
+    .workspace{background:var(--color-canvas);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-lg);display:none}.workspace.visible{display:block}
+    .workspace-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-md);padding-bottom:var(--space-sm);border-bottom:1px solid var(--color-hairline)}
+    .workspace-title{font-size:14px;font-weight:600}.workspace-info{font-size:11px;color:var(--color-muted);font-family:var(--font-mono)}
+    .preview-area{display:grid;grid-template-columns:1fr 300px;gap:var(--space-lg);margin-bottom:var(--space-md)}
+    @media(max-width:900px){.preview-area{grid-template-columns:1fr}}
+    .preview-box{background:var(--color-canvas-soft);border:1px solid var(--color-border);border-radius:var(--radius-md);min-height:280px;display:flex;align-items:center;justify-content:center;position:relative;overflow:auto}
+    .preview-box canvas,.preview-box img{max-width:100%;max-height:360px;object-fit:contain}
+    .preview-placeholder{text-align:center;color:var(--color-muted)}.preview-placeholder-icon{font-size:40px;margin-bottom:var(--space-xs);opacity:0.4}.preview-placeholder p{font-size:12px}
+    .controls{display:flex;flex-direction:column;gap:var(--space-sm)}
+    .control-group{display:flex;flex-direction:column;gap:2px}
+    .control-label{font-size:11px;font-weight:500;color:var(--color-body);display:flex;justify-content:space-between}.control-label span{font-family:var(--font-mono);color:var(--color-muted)}
+    .control-input{width:100%;padding:var(--space-xs) var(--space-sm);border:1px solid var(--color-border);border-radius:var(--radius-sm);font-size:13px;font-family:var(--font-sans);color:var(--color-ink);background:var(--color-canvas);transition:border-color 0.2s}
+    .control-input:focus{outline:none;border-color:var(--color-primary)}
+    .control-select{width:100%;padding:var(--space-xs) var(--space-sm);border:1px solid var(--color-border);border-radius:var(--radius-sm);font-size:13px;font-family:var(--font-sans);color:var(--color-ink);background:var(--color-canvas);cursor:pointer}
+    .control-select:focus{outline:none;border-color:var(--color-primary)}
+    .control-range{width:100%;height:4px;-webkit-appearance:none;appearance:none;background:var(--color-canvas-soft-2);border-radius:2px;outline:none}
+    .control-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;background:var(--color-primary);border-radius:50%;cursor:pointer}
+    .control-range::-moz-range-thumb{width:14px;height:14px;background:var(--color-primary);border-radius:50%;cursor:pointer;border:none}
+    .control-checkbox{display:flex;align-items:center;gap:var(--space-xs);cursor:pointer}.control-checkbox input{width:14px;height:14px;accent-color:var(--color-primary)}.control-checkbox span{font-size:12px;color:var(--color-body)}
+    .control-row{display:flex;gap:var(--space-xs)}.control-row .control-group{flex:1}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-xxs);padding:var(--space-xs) var(--space-md);border-radius:var(--radius-full);font-size:13px;font-weight:500;font-family:var(--font-sans);cursor:pointer;transition:all 0.2s;border:none;text-decoration:none}
+    .btn-primary{background:var(--color-primary);color:var(--color-on-primary)}.btn-primary:hover{background:var(--color-primary-hover)}
+    .btn-secondary{background:var(--color-canvas-soft);color:var(--color-ink);border:1px solid var(--color-border)}.btn-secondary:hover{border-color:var(--color-border-hover)}
+    .btn-group{display:flex;gap:var(--space-xs);margin-top:var(--space-md);flex-wrap:wrap}
+    .output-info{background:var(--color-canvas-soft);border-radius:var(--radius-md);padding:var(--space-sm);margin-top:var(--space-sm);font-size:11px;font-family:var(--font-mono);color:var(--color-body)}
+    .output-info-row{display:flex;justify-content:space-between;padding:2px 0}.output-info-row:not(:last-child){border-bottom:1px solid var(--color-hairline)}
+    .output-info-label{color:var(--color-muted)}.output-info-value{color:var(--color-ink);font-weight:500}.output-info-value.success{color:var(--color-success)}
+    .footer{padding:var(--space-2xl) 0;text-align:center;color:var(--color-muted);font-size:11px;background:var(--color-canvas);border-top:1px solid var(--color-border)}
+    .rotate-btns{display:flex;gap:var(--space-xs);flex-wrap:wrap}
+    .rotate-btn{flex:1;min-width:60px;padding:var(--space-xs);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-canvas);cursor:pointer;font-size:12px;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:2px}
+    .rotate-btn:hover{border-color:var(--color-primary);background:var(--color-primary-soft)}.rotate-btn span:first-child{font-size:18px}.rotate-btn span:last-child{font-size:10px;color:var(--color-muted)}
+    .base64-output{width:100%;min-height:80px;padding:var(--space-sm);border:1px solid var(--color-border);border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:10px;background:var(--color-canvas-soft);color:var(--color-body);word-break:break-all;resize:vertical}
+    .base64-output:focus{outline:none;border-color:var(--color-primary)}
+    .gif-frames{display:flex;flex-wrap:wrap;gap:var(--space-xs);margin-top:var(--space-sm)}
+    .gif-frame{position:relative}.gif-frame img{max-width:80px;max-height:80px;border:1px solid var(--color-border);border-radius:var(--radius-sm)}
+    .gif-frame-num{position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,0.6);color:white;font-size:9px;padding:1px 4px;border-radius:2px}
+    .ico-sizes{display:flex;gap:var(--space-xs);flex-wrap:wrap;margin-top:var(--space-sm)}
+    .ico-size{display:flex;flex-direction:column;align-items:center;gap:2px}.ico-size canvas{border:1px solid var(--color-border);border-radius:var(--radius-xs)}.ico-size span{font-size:10px;color:var(--color-muted)}
   </style>
 </head>
 <body>
-
-  <nav class="nav">
-    <div class="container nav-inner">
-      <a href="/" class="nav-logo">tool<span>.pumf.top</span></a>
-      <a href="/" class="nav-back">← 返回首页</a>
+  <nav class="nav"><div class="container nav-inner"><a href="/" class="nav-logo">tool<span>.pumf.top</span></a><a href="/" class="nav-back">← 返回首页</a></div></nav>
+  <header class="header"><div class="header-icon">🖼️</div><h1>图片工具箱</h1><p>格式转换 · 压缩 · 尺寸 · 裁剪 · 旋转 · 调色 · 水印 · 打码 · Base64</p></header>
+  <main class="main"><div class="container">
+    <div class="upload-zone" id="uploadZone"><div class="upload-zone-icon">📁</div><h3>点击或拖拽图片到这里</h3><p>支持 PNG、JPG、WebP、GIF 格式</p><input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif"></div>
+    <div class="tool-selector">
+      <button class="tool-btn active" data-tool="convert"><div class="tool-btn-icon">🔄</div><div class="tool-btn-name">格式转换</div></button>
+      <button class="tool-btn" data-tool="compress"><div class="tool-btn-icon">📦</div><div class="tool-btn-name">图片压缩</div></button>
+      <button class="tool-btn" data-tool="resize"><div class="tool-btn-icon">📐</div><div class="tool-btn-name">调整尺寸</div></button>
+      <button class="tool-btn" data-tool="crop"><div class="tool-btn-icon">✂️</div><div class="tool-btn-name">裁剪</div></button>
+      <button class="tool-btn" data-tool="rotate"><div class="tool-btn-icon">🔃</div><div class="tool-btn-name">旋转翻转</div></button>
+      <button class="tool-btn" data-tool="adjust"><div class="tool-btn-icon">🎨</div><div class="tool-btn-name">调色</div></button>
+      <button class="tool-btn" data-tool="watermark"><div class="tool-btn-icon">💧</div><div class="tool-btn-name">添加水印</div></button>
+      <button class="tool-btn" data-tool="blur"><div class="tool-btn-icon">🔲</div><div class="tool-btn-name">模糊打码</div></button>
+      <button class="tool-btn" data-tool="rounded"><div class="tool-btn-icon">🔘</div><div class="tool-btn-name">圆角阴影</div></button>
+      <button class="tool-btn" data-tool="base64"><div class="tool-btn-icon">📝</div><div class="tool-btn-name">Base64</div></button>
+      <button class="tool-btn" data-tool="ico"><div class="tool-btn-icon">🔖</div><div class="tool-btn-name">ICO图标</div></button>
+      <button class="tool-btn" data-tool="gif"><div class="tool-btn-icon">🎞️</div><div class="tool-btn-name">GIF帧分解</div></button>
     </div>
-  </nav>
-
-  <header class="header">
-    <div class="header-icon">🖼️</div>
-    <h1>图片工具箱</h1>
-    <p>格式转换 · 图片压缩 · 尺寸调整 · 裁剪</p>
-  </header>
-
-  <main class="main">
-    <div class="container">
-      
-      <div class="upload-zone" id="uploadZone">
-        <div class="upload-zone-icon">📁</div>
-        <h3>点击或拖拽图片到这里</h3>
-        <p>支持 PNG、JPG、WebP、GIF 格式</p>
-        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif">
-      </div>
-
-      <div class="tool-selector">
-        <button class="tool-btn active" data-tool="convert">
-          <div class="tool-btn-icon">🔄</div>
-          <div class="tool-btn-name">格式转换</div>
-        </button>
-        <button class="tool-btn" data-tool="compress">
-          <div class="tool-btn-icon">📦</div>
-          <div class="tool-btn-name">图片压缩</div>
-        </button>
-        <button class="tool-btn" data-tool="resize">
-          <div class="tool-btn-icon">📐</div>
-          <div class="tool-btn-name">调整尺寸</div>
-        </button>
-        <button class="tool-btn" data-tool="crop">
-          <div class="tool-btn-icon">✂️</div>
-          <div class="tool-btn-name">裁剪</div>
-        </button>
-      </div>
-
-      <div class="workspace" id="workspace">
-        <div class="workspace-header">
-          <span class="workspace-title" id="workspaceTitle">格式转换</span>
-          <span class="workspace-info" id="workspaceInfo"></span>
-        </div>
-        
-        <div class="preview-area">
-          <div class="preview-box" id="previewBox">
-            <div class="preview-placeholder" id="previewPlaceholder">
-              <div class="preview-placeholder-icon">🖼️</div>
-              <p>图片预览</p>
-            </div>
-          </div>
-          
-          <div class="controls" id="controls"></div>
-        </div>
-        
-        <div class="output-info" id="outputInfo" style="display: none;">
-          <div class="output-info-row">
-            <span class="output-info-label">原始大小</span>
-            <span class="output-info-value" id="originalSizeEl">-</span>
-          </div>
-          <div class="output-info-row">
-            <span class="output-info-label">输出大小</span>
-            <span class="output-info-value" id="outputSizeEl">-</span>
-          </div>
-          <div class="output-info-row">
-            <span class="output-info-label">节省</span>
-            <span class="output-info-value success" id="savedSizeEl">-</span>
-          </div>
-        </div>
-        
-        <div class="btn-group">
-          <button class="btn btn-primary" id="processBtn"><span>处理图片</span></button>
-          <button class="btn btn-secondary" id="downloadBtn" disabled><span>下载图片</span></button>
-          <button class="btn btn-secondary" id="resetBtn"><span>重置</span></button>
-        </div>
-      </div>
-
+    <div class="workspace" id="workspace">
+      <div class="workspace-header"><span class="workspace-title" id="workspaceTitle">格式转换</span><span class="workspace-info" id="workspaceInfo"></span></div>
+      <div class="preview-area"><div class="preview-box" id="previewBox"><div class="preview-placeholder" id="previewPlaceholder"><div class="preview-placeholder-icon">🖼️</div><p>图片预览</p></div></div><div class="controls" id="controls"></div></div>
+      <div class="output-info" id="outputInfo" style="display:none;"><div class="output-info-row"><span class="output-info-label">原始大小</span><span class="output-info-value" id="originalSizeEl">-</span></div><div class="output-info-row"><span class="output-info-label">输出大小</span><span class="output-info-value" id="outputSizeEl">-</span></div><div class="output-info-row"><span class="output-info-label">节省</span><span class="output-info-value success" id="savedSizeEl">-</span></div></div>
+      <div class="btn-group"><button class="btn btn-primary" id="processBtn"><span>处理图片</span></button><button class="btn btn-secondary" id="downloadBtn" disabled><span>下载</span></button><button class="btn btn-secondary" id="downloadAllBtn" style="display:none;"><span>下载全部</span></button><button class="btn btn-secondary" id="resetBtn"><span>重置</span></button></div>
     </div>
-  </main>
-
-  <footer class="footer">
-    <p>图片工具箱 · tool.pumf.top · 纯浏览器端处理，无需上传</p>
-  </footer>
+  </div></main>
+  <footer class="footer"><p>图片工具箱 · tool.pumf.top · 纯浏览器端处理，无需上传</p></footer>
 
   <script>
-    let currentTool = 'convert';
-    let originalImage = null;
-    let processedBlob = null;
-    let originalFileName = '';
-    let originalSize = 0;
-
-    const uploadZone = document.getElementById('uploadZone');
-    const fileInput = document.getElementById('fileInput');
-    const workspace = document.getElementById('workspace');
-    const previewBox = document.getElementById('previewBox');
-    const previewPlaceholder = document.getElementById('previewPlaceholder');
-    const controls = document.getElementById('controls');
-    const workspaceTitle = document.getElementById('workspaceTitle');
-    const workspaceInfo = document.getElementById('workspaceInfo');
-    const outputInfo = document.getElementById('outputInfo');
-    const originalSizeEl = document.getElementById('originalSizeEl');
-    const outputSizeEl = document.getElementById('outputSizeEl');
-    const savedSizeEl = document.getElementById('savedSizeEl');
-    const processBtn = document.getElementById('processBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const toolBtns = document.querySelectorAll('.tool-btn');
-
-    uploadZone.addEventListener('click', () => fileInput.click());
-    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-    uploadZone.addEventListener('dragleave', () => { uploadZone.classList.remove('dragover'); });
-    uploadZone.addEventListener('drop', (e) => {
-      e.preventDefault(); uploadZone.classList.remove('dragover');
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) loadImage(file);
-    });
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) loadImage(file);
-    });
-
-    function loadImage(file) {
-      originalFileName = file.name.replace(/\.[^.]+$/, '');
-      originalSize = file.size;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          originalImage = img;
-          workspace.classList.add('visible');
-          workspaceInfo.textContent = `${img.width} × ${img.height} · ${formatBytes(file.size)}`;
-          originalSizeEl.textContent = formatBytes(file.size);
-          renderControls();
-          processImage();
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    toolBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        toolBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentTool = btn.dataset.tool;
-        if (originalImage) { renderControls(); processImage(); }
-      });
-    });
-
-    function renderControls() {
-      const toolNames = { convert: '格式转换', compress: '图片压缩', resize: '调整尺寸', crop: '裁剪' };
-      workspaceTitle.textContent = toolNames[currentTool];
-      let html = '';
-      switch (currentTool) {
-        case 'convert':
-          html = `
-            <div class="control-group">
-              <label class="control-label">输出格式</label>
-              <select class="control-select" id="outputFormat">
-                <option value="image/png">PNG</option>
-                <option value="image/jpeg" selected>JPG</option>
-                <option value="image/webp">WebP</option>
-              </select>
-            </div>
-            <div class="control-group" id="qualityGroup">
-              <label class="control-label">输出质量 <span id="qualityValue">85%</span></label>
-              <input type="range" class="control-range" id="quality" min="10" max="100" value="85">
-            </div>
-          `;
-          break;
-        case 'compress':
-          html = `
-            <div class="control-group">
-              <label class="control-label">输出格式</label>
-              <select class="control-select" id="outputFormat">
-                <option value="image/png">PNG</option>
-                <option value="image/jpeg" selected>JPG</option>
-                <option value="image/webp">WebP</option>
-              </select>
-            </div>
-            <div class="control-group">
-              <label class="control-label">压缩质量 <span id="qualityValue">70%</span></label>
-              <input type="range" class="control-range" id="quality" min="10" max="100" value="70">
-            </div>
-          `;
-          break;
-        case 'resize':
-          html = `
-            <div class="control-group">
-              <label class="control-label">宽度 (px)</label>
-              <input type="number" class="control-input" id="newWidth" value="${originalImage.width}">
-            </div>
-            <div class="control-group">
-              <label class="control-label">高度 (px)</label>
-              <input type="number" class="control-input" id="newHeight" value="${originalImage.height}">
-            </div>
-            <div class="control-group">
-              <label class="control-checkbox">
-                <input type="checkbox" id="maintainAspect" checked>
-                <span>保持宽高比</span>
-              </label>
-            </div>
-            <div class="control-group">
-              <label class="control-label">输出格式</label>
-              <select class="control-select" id="outputFormat">
-                <option value="image/png">PNG</option>
-                <option value="image/jpeg" selected>JPG</option>
-                <option value="image/webp">WebP</option>
-              </select>
-            </div>
-            <div class="control-group">
-              <label class="control-label">质量 <span id="qualityValue">85%</span></label>
-              <input type="range" class="control-range" id="quality" min="10" max="100" value="85">
-            </div>
-          `;
-          break;
-        case 'crop':
-          html = `
-            <div class="control-group">
-              <label class="control-label">裁剪宽度 (px)</label>
-              <input type="number" class="control-input" id="cropWidth" value="${Math.round(originalImage.width / 2)}">
-            </div>
-            <div class="control-group">
-              <label class="control-label">裁剪高度 (px)</label>
-              <input type="number" class="control-input" id="cropHeight" value="${Math.round(originalImage.height / 2)}">
-            </div>
-            <div class="control-group">
-              <label class="control-label">X 偏移 (px)</label>
-              <input type="number" class="control-input" id="cropX" value="0">
-            </div>
-            <div class="control-group">
-              <label class="control-label">Y 偏移 (px)</label>
-              <input type="number" class="control-input" id="cropY" value="0">
-            </div>
-          `;
-          break;
-      }
-      controls.innerHTML = html;
-      if (currentTool !== 'crop') {
-        const quality = document.getElementById('quality');
-        const qualityValue = document.getElementById('qualityValue');
-        if (quality && qualityValue) {
-          quality.addEventListener('input', () => { qualityValue.textContent = quality.value + '%'; processImage(); });
-        }
-        const outputFormat = document.getElementById('outputFormat');
-        if (outputFormat) {
-          outputFormat.addEventListener('change', () => {
-            const qualityGroup = document.getElementById('qualityGroup');
-            if (qualityGroup) qualityGroup.style.display = outputFormat.value === 'image/png' ? 'none' : 'block';
-            processImage();
-          });
-        }
-      }
-      if (currentTool === 'resize') {
-        const widthInput = document.getElementById('newWidth');
-        const heightInput = document.getElementById('newHeight');
-        const maintainAspect = document.getElementById('maintainAspect');
-        let aspectRatio = originalImage.width / originalImage.height;
-        widthInput.addEventListener('input', () => {
-          if (maintainAspect.checked) heightInput.value = Math.round(widthInput.value / aspectRatio);
-          processImage();
-        });
-        heightInput.addEventListener('input', () => {
-          if (maintainAspect.checked) widthInput.value = Math.round(heightInput.value * aspectRatio);
-          processImage();
-        });
-        maintainAspect.addEventListener('change', () => {
-          if (maintainAspect.checked) { aspectRatio = originalImage.width / originalImage.height; widthInput.value = Math.round(heightInput.value * aspectRatio); }
-          processImage();
-        });
-      }
-      if (currentTool === 'crop') {
-        ['cropWidth', 'cropHeight', 'cropX', 'cropY'].forEach(id => { document.getElementById(id).addEventListener('input', processImage); });
-      }
-    }
-
-    function processImage() {
-      if (!originalImage) return;
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      let destWidth, destHeight, srcX, srcY, srcWidth, srcHeight;
-      switch (currentTool) {
-        case 'convert':
-        case 'compress':
-          destWidth = originalImage.width; destHeight = originalImage.height;
-          srcX = 0; srcY = 0; srcWidth = originalImage.width; srcHeight = originalImage.height;
-          break;
-        case 'resize':
-          destWidth = parseInt(document.getElementById('newWidth').value) || originalImage.width;
-          destHeight = parseInt(document.getElementById('newHeight').value) || originalImage.height;
-          srcX = 0; srcY = 0; srcWidth = originalImage.width; srcHeight = originalImage.height;
-          break;
-        case 'crop':
-          srcX = parseInt(document.getElementById('cropX').value) || 0;
-          srcY = parseInt(document.getElementById('cropY').value) || 0;
-          srcWidth = parseInt(document.getElementById('cropWidth').value) || originalImage.width;
-          srcHeight = parseInt(document.getElementById('cropHeight').value) || originalImage.height;
-          destWidth = srcWidth; destHeight = srcHeight;
-          break;
-      }
-      srcX = Math.max(0, Math.min(srcX, originalImage.width - 1));
-      srcY = Math.max(0, Math.min(srcY, originalImage.height - 1));
-      srcWidth = Math.max(1, Math.min(srcWidth, originalImage.width - srcX));
-      srcHeight = Math.max(1, Math.min(srcHeight, originalImage.height - srcY));
-      destWidth = Math.max(1, Math.min(destWidth, originalImage.width));
-      destHeight = Math.max(1, Math.min(destHeight, originalImage.height));
-      canvas.width = destWidth; canvas.height = destHeight;
-      const outputFormat = document.getElementById('outputFormat')?.value || 'image/jpeg';
-      if (outputFormat === 'image/jpeg') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, destWidth, destHeight); }
-      ctx.drawImage(originalImage, srcX, srcY, srcWidth, srcHeight, 0, 0, destWidth, destHeight);
-      const quality = parseInt(document.getElementById('quality')?.value || 85) / 100;
-      canvas.toBlob((blob) => {
-        processedBlob = blob;
-        const url = URL.createObjectURL(blob);
-        previewPlaceholder.style.display = 'none';
-        previewBox.innerHTML = `<img src="${url}" alt="Preview">`;
-        outputInfo.style.display = 'block';
-        outputSizeEl.textContent = formatBytes(blob.size);
-        const saved = originalSize - blob.size;
-        const savedPercent = ((saved / originalSize) * 100).toFixed(1);
-        savedSizeEl.textContent = saved > 0 ? `${formatBytes(saved)} (${savedPercent}%)` : '0 KB (0%)';
-        downloadBtn.disabled = false;
-      }, outputFormat, quality);
-    }
-
-    function formatBytes(bytes) {
-      if (bytes === 0) return '0 B';
-      const k = 1024;
-      const sizes = ['B', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    processBtn.addEventListener('click', processImage);
-    downloadBtn.addEventListener('click', () => {
-      if (!processedBlob) return;
-      const outputFormat = document.getElementById('outputFormat')?.value || 'image/jpeg';
-      const ext = outputFormat.split('/')[1];
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(processedBlob);
-      a.download = `${originalFileName}_${currentTool}.${ext}`;
-      a.click();
-    });
-    resetBtn.addEventListener('click', () => {
-      originalImage = null; processedBlob = null; originalFileName = ''; originalSize = 0;
-      workspace.classList.remove('visible');
-      previewBox.innerHTML = `<div class="preview-placeholder" id="previewPlaceholder"><div class="preview-placeholder-icon">🖼️</div><p>图片预览</p></div>`;
-      outputInfo.style.display = 'none';
-      downloadBtn.disabled = true;
-      fileInput.value = '';
-    });
-  </script>
+    let currentTool='convert',originalImage=null,processedBlob=null,originalFileName='',originalSize=0,gifFrames=[],watermarkImageEl=null;
+    const uploadZone=document.getElementById('uploadZone'),fileInput=document.getElementById('fileInput'),workspace=document.getElementById('workspace'),previewBox=document.getElementById('previewBox'),previewPlaceholder=document.getElementById('previewPlaceholder'),controls=document.getElementById('controls'),workspaceTitle=document.getElementById('workspaceTitle'),workspaceInfo=document.getElementById('workspaceInfo'),outputInfo=document.getElementById('outputInfo'),originalSizeEl=document.getElementById('originalSizeEl'),outputSizeEl=document.getElementById('outputSizeEl'),savedSizeEl=document.getElementById('savedSizeEl'),processBtn=document.getElementById('processBtn'),downloadBtn=document.getElementById('downloadBtn'),downloadAllBtn=document.getElementById('downloadAllBtn'),resetBtn=document.getElementById('resetBtn'),toolBtns=document.querySelectorAll('.tool-btn');
+    uploadZone.addEventListener('click',()=>fileInput.click());
+    uploadZone.addEventListener('dragover',(e)=>{e.preventDefault();uploadZone.classList.add('dragover')});
+    uploadZone.addEventListener('dragleave',()=>{uploadZone.classList.remove('dragover')});
+    uploadZone.addEventListener('drop',(e)=>{e.preventDefault();uploadZone.classList.remove('dragover');const file=e.dataTransfer.files[0];if(file&&file.type.startsWith('image/'))loadImage(file)});
+    fileInput.addEventListener('change',(e)=>{const file=e.target.files[0];if(file)loadImage(file)});
+    function loadImage(file){originalFileName=file.name.replace(/\.[^.]+$/,'');originalSize=file.size;gifFrames=[];watermarkImageEl=null;const reader=new FileReader();reader.onload=(e)=>{const img=new Image();img.onload=()=>{originalImage=img;workspace.classList.add('visible');workspaceInfo.textContent=img.width+' × '+img.height+' · '+formatBytes(file.size);originalSizeEl.textContent=formatBytes(file.size);renderControls();processImage()};img.src=e.target.result};reader.readAsDataURL(file)}
+    toolBtns.forEach(btn=>{btn.addEventListener('click',()=>{toolBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentTool=btn.dataset.tool;downloadAllBtn.style.display='none';if(originalImage){renderControls();processImage()}})});
+    function renderControls(){const toolNames={convert:'格式转换',compress:'图片压缩',resize:'调整尺寸',crop:'裁剪',rotate:'旋转翻转',adjust:'调色',watermark:'添加水印',blur:'模糊打码',rounded:'圆角阴影',base64:'Base64编码',ico:'ICO图标生成',gif:'GIF帧分解'};workspaceTitle.textContent=toolNames[currentTool];let html='';switch(currentTool){case'convert':html='<div class="control-group"><label class="control-label">输出格式</label><select class="control-select" id="outputFormat"><option value="image/png">PNG</option><option value="image/jpeg" selected>JPG</option><option value="image/webp">WebP</option></select></div><div class="control-group" id="qualityGroup"><label class="control-label">输出质量 <span id="qualityValue">85%</span></label><input type="range" class="control-range" id="quality" min="10" max="100" value="85"></div>';break;case'compress':html='<div class="control-group"><label class="control-label">输出格式</label><select class="control-select" id="outputFormat"><option value="image/png">PNG</option><option value="image/jpeg" selected>JPG</option><option value="image/webp">WebP</option></select></div><div class="control-group"><label class="control-label">压缩质量 <span id="qualityValue">60%</span></label><input type="range" class="control-range" id="quality" min="10" max="100" value="60"></div>';break;case'resize':html='<div class="control-row"><div class="control-group"><label class="control-label">宽度</label><input type="number" class="control-input" id="newWidth" value="'+originalImage.width+'"></div><div class="control-group"><label class="control-label">高度</label><input type="number" class="control-input" id="newHeight" value="'+originalImage.height+'"></div></div><div class="control-group"><label class="control-checkbox"><input type="checkbox" id="maintainAspect" checked><span>保持宽高比</span></label></div><div class="control-group"><label class="control-label">输出格式</label><select class="control-select" id="outputFormat"><option value="image/png">PNG</option><option value="image/jpeg" selected>JPG</option><option value="image/webp">WebP</option></select></div><div class="control-group"><label class="control-label">质量 <span id="qualityValue">85%</span></label><input type="range" class="control-range" id="quality" min="10" max="100" value="85"></div>';break;case'crop':html='<div class="control-row"><div class="control-group"><label class="control-label">宽度</label><input type="number" class="control-input" id="cropWidth" value="'+Math.round(originalImage.width/2)+'"></div><div class="control-group"><label class="control-label">高度</label><input type="number" class="control-input" id="cropHeight" value="'+Math.round(originalImage.height/2)+'"></div></div><div class="control-row"><div class="control-group"><label class="control-label">X 偏移</label><input type="number" class="control-input" id="cropX" value="0"></div><div class="control-group"><label class="control-label">Y 偏移</label><input type="number" class="control-input" id="cropY" value="0"></div></div>';break;case'rotate':html='<div class="control-group"><label class="control-label">旋转</label><div class="rotate-btns"><button class="rotate-btn" data-rotate="-90"><span>↺</span><span>左转90°</span></button><button class="rotate-btn" data-rotate="90"><span>↻</span><span>右转90°</span></button><button class="rotate-btn" data-rotate="180"><span>↻↺</span><span>180°</span></button></div></div><div class="control-group"><label class="control-label">翻转</label><div class="rotate-btns"><button class="rotate-btn" data-flip="h"><span>↔</span><span>水平</span></button><button class="rotate-btn" data-flip="v"><span>↕</span><span>垂直</span></button></div></div><div class="control-group" style="margin-top:8px"><label class="control-label">输出格式</label><select class="control-select" id="outputFormat"><option value="image/png">PNG</option><option value="image/jpeg" selected>JPG</option><option value="image/webp">WebP</option></select></div><div class="control-group"><label class="control-label">质量 <span id="qualityValue">85%</span></label><input type="range" class="control-range" id="quality" min="10" max="100" value="85"></div>';break;case'adjust':html='<div class="control-group"><label class="control-label">亮度 <span id="brightnessValue">100%</span></label><input type="range" class="control-range" id="brightness" min="0" max="200" value="100"></div><div class="control-group"><label class="control-label">对比度 <span id="contrastValue">100%</span></label><input type="range" class="control-range" id="contrast" min="0" max="200" value="100"></div><div class="control-group"><label class="control-label">饱和度 <span id="saturationValue">100%</span></label><input type="range" class="control-range" id="saturation" min="0" max="200" value="100"></div><div class="control-group"><label class="control-label">色相 <span id="hueValue">0°</span></label><input type="range" class="control-range" id="hue" min="0" max="360" value="0"></div><div class="control-group" style="margin-top:8px"><label class="control-label">输出格式</label><select class="control-select" id="outputFormat"><option value="image/png">PNG</option><option value="image/jpeg" selected>JPG</option><option value="image/webp">WebP</option></select></div><div class="control-group"><label class="control-label">质量 <span id="qualityValue">85%</span></label><input type="range" class="control-range" id="quality" min="10" max="100" value="85"></div>';break;case'watermark':html='<div class="control-group"><label class="control-label">水印类型</label><select class="control-select" id="watermarkType"><option value="text" selected>文字水印</option><option value="image">图片水印</option></select></div><div class="control-group" id="textWatermarkGroup"><label class="control-label">水印文字</label><input type="text" class="control-input" id="watermarkText" value="pumf.top" placeholder="输入水印文字"></div><div class="control-group" id="imageWatermarkGroup" style="display:none"><label class="control-label">水印图片</label><input type="file" class="control-input" id="watermarkImageInput" accept="image/*"></div><div class="control-group"><label class="control-label">字体大小 <span id="fontSizeValue">24px</span></label><input type="range" class="control-range" id="fontSize" min="12" max="72" value="24"></div><div class="control-group"><label class="control-label">水印颜色</label><input type="color" class="control-input" id="watermarkColor" value="#ffffff" style="height:36px;padding:2px"></div><div class="control-group"><label class="control-label">透明度 <span id="opacityValue">50%</span></label><input type="range" class="control-range" id="opacity" min="10" max="100" value="50"></div><div class="control-group"><label class="control-label">位置</label><select class="control-select" id="watermarkPosition"><option value="top-left">左上</option><option value="top-right">右上</option><option value="bottom-left">左下</option><option value="bottom-right" selected>右下</option><option value="center">居中</option></select></div><div class="control-group" style="margin-top:8px"><label class="control-label">输出格式</label><select class="control-select" id="outputFormat"><option value="image/png">PNG</option><option value="image/jpeg" selected>JPG</option><option value="image/webp">WebP</option></select></div><div class="control-group"><label class="control-label">质量 <span id="qualityValue">85%</span></label><input type="range" class="control-range" id="quality" min="10" max="100" value="85"></div>';break;case'blur':html='<div class="control-group"><label class="control-label">模糊程度 <span id="blurValue">10px</span></label><input type="range" class="control-range" id="blur" min="1" max="50" value="10"></div><div class="control-row"><div class="control-group"><label class="control-label">区域宽度</label><input type="number" class="control-input" id="blurWidth" value="'+Math.round(originalImage.width/4)+'"></div><div class="control-group"><label class="control-label">区域高度</label><input type="number" class="control-input" id="blurHeight" value="'+Math.round(originalImage.height/4)+'"></div></div><div class="control-row"><div class="control-group"><label class="control-label">X 偏移</label><input type="number" class="control-input" id="blurX" value="0"></div><div class="control-group"><label class="control-label">Y 偏移</label><input type="number" class="control-input" id="blurY" value="0"></div></div><div class="control-group" style="margin-top:8px"><label class="control-label">输出格式</label><select class="control-select" id="outputFormat"><option value="image/png">PNG</option><option value="image/jpeg" selected>JPG</option></select></div>';break;case'rounded':html='<div class="control-group"><label class="control-label">圆角大小 <span id="radiusValue">20px</span></label><input type="range" class="control-range" id="radius" min="0" max="100" value="20"></div><div class="control-group"><label class="control-label">边框宽度 <span id="borderWidthValue">0px</span></label><input type="range" class="control-range" id="borderWidth" min="0" max="20" value="0"></div><div class="control-group"><label class="control-label">边框颜色</label><input type="color" class="control-input" id="borderColor" value="#cccccc" style="height:36px;padding:2px"></div><div class="control-group"><label class="control-label">阴影大小 <span id="shadowValue">0px</span></label><input type="range" class="control-range" id="shadow" min="0" max="30" value="0"></div><div class="control-group" style="margin-top:8px"><label class="control-label">输出格式</label><select class="control-select" id="outputFormat"><option value="image/png">PNG</option><option value="image/jpeg" selected>JPG</option></select></div>';break;case'base64':html='<div class="control-group"><label class="control-label">输出格式</label><select class="control-select" id="base64Format"><option value="image/png">PNG</option><option value="image/jpeg" selected>JPG</option><option value="image/webp">WebP</option></select></div><div class="control-group"><label class="control-label">编码质量 <span id="base64QualityValue">85%</span></label><input type="range" class="control-range" id="base64Quality" min="10" max="100" value="85"></div><div class="control-group" style="margin-top:8px"><label class="control-label">Base64 输出</label><textarea class="base64-output" id="base64Output" readonly placeholder="点击"处理图片"生成 Base64 编码"></textarea></div>';break;case'ico':html='<div class="control-group"><label class="control-label">输出尺寸</label><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" class="ico-check" value="16" checked> 16px</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" class="ico-check" value="32" checked> 32px</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" class="ico-check" value="48" checked> 48px</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" class="ico-check" value="64" checked> 64px</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" class="ico-check" value="128" checked> 128px</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px"><input type="checkbox" class="ico-check" value="256" checked> 256px</label></div></div><div class="control-group" style="margin-top:8px"><label class="control-label">ICO 输出预览</label><div class="ico-sizes" id="icoPreview"></div></div>';break;case'gif':html='<div class="control-group"><label class="control-label">提示：GIF 动画会被分解为多帧静态图片</label></div><div class="gif-frames" id="gifFrames"></div>';break}controls.innerHTML=html;setupEventListeners()}
+    function setupEventListeners(){
+      if(currentTool==='resize'){const w=document.getElementById('newWidth'),h=document.getElementById('newHeight'),m=document.getElementById('maintainAspect');if(w&&h&&m){let ar=originalImage.width/originalImage.height;w.addEventListener('input',()=>{if(m.checked)h.value=Math.round(w.value/ar);processImage()});h.addEventListener('input',()=>{if(m.checked)w.value=Math.round(h.value*ar);processImage()});m.addEventListener('change',()=>{if(m.checked){ar=originalImage.width/originalImage.height;h.value=Math.round(w.value/ar)}processImage()})}}
+      if(currentTool==='rotate'){document.querySelectorAll('.rotate-btn[data-rotate]').forEach(btn=>{btn.addEventListener('click',()=>{const deg=parseInt(btn.dataset.rotate);rotateAndFlip(deg,null);processImage()})});document.querySelectorAll('.rotate-btn[data-flip]').forEach(btn=>{btn.addEventListener('click',()=>{const dir=btn.dataset.flip;rotateAndFlip(null,dir);processImage()})})}
+      if(currentTool==='adjust'){['brightness','contrast','saturation','hue'].forEach(id=>{const el=document.getElementById(id);if(el){const label=document.getElementById(id+'Value');el.addEventListener('input',()=>{label.textContent=el.value+'%';processImage()})}})}
+      if(currentTool==='watermark'){const type=document.getElementById('watermarkType');if(type){type.addEventListener('change',()=>{document.getElementById('textWatermarkGroup').style.display=type.value==='text'?'flex':'none';document.getElementById('imageWatermarkGroup').style.display=type.value==='image'?'flex':'none';processImage()})};['watermarkText','fontSize','watermarkColor','opacity','watermarkPosition'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',processImage)});const wmInput=document.getElementById('watermarkImageInput');if(wmInput){wmInput.addEventListener('change',(e)=>{const file=e.target.files[0];if(file){const reader=new FileReader();reader.onload=(ev)=>{const img=new Image();img.onload=()=>{watermarkImageEl=img;processImage()};img.src=ev.target.result};reader.readAsDataURL(file)}})}}
+      if(currentTool==='blur'){['blur','blurWidth','blurHeight','blurX','blurY'].forEach(id=>{const el=document.getElementById(id);if(el){const label=document.getElementById(id+'Value');el.addEventListener('input',()=>{if(label)label.textContent=el.value+'px';processImage()})}})}
+      if(currentTool==='rounded'){['radius','borderWidth','shadow'].forEach(id=>{const el=document.getElementById(id);if(el){const label=document.getElementById(id+'Value');el.addEventListener('input',()=>{label.textContent=el.value+'px';processImage()})}})}
+      if(currentTool==='base64'){const fmt=document.getElementById('base64Format'),q=document.getElementById('base64Quality');if(fmt)fmt.addEventListener('change',processImage);if(q){const label=document.getElementById('base64QualityValue');q.addEventListener('input',()=>{label.textContent=q.value+'%';processImage()})}}
+      if(currentTool==='ico'){document.querySelectorAll('.ico-check').forEach(cb=>{cb.addEventListener('change',updateIcoPreview)})}
+      if(currentTool==='gif'){document.getElementById('gifFrames').innerHTML='<div style="padding:20px;text-align:center;color:var(--color-muted)">请上传 GIF 图片</div>';processImage()}
+      const quality=document.getElementById('quality');const qualityValue=document.getElementById('qualityValue');if(quality&&qualityValue){quality.addEventListener('input',()=>{qualityValue.textContent=quality.value+'%';processImage()})}
+      const outputFormat=document.getElementById('outputFormat');if(outputFormat){outputFormat.addEventListener('change',()=>{const qg=document.getElementById('qualityGroup');if(qg)qg.style.display=outputFormat.value==='image/png'?'none':'flex';processImage()})}
+      processBtn.addEventListener('click',processImage);downloadBtn.addEventListener('click',downloadImage);downloadAllBtn.addEventListener('click',downloadAllImages);resetBtn.addEventListener('click',reset)}
+    let currentRotation=0,currentFlipH=false,currentFlipV=false;
+    function rotateAndFlip(deg,flip){if(deg!==null)currentRotation=(currentRotation+deg)%360;if(flip==='h')currentFlipH=!currentFlipH;if(flip==='v')currentFlipV=!currentFlipV}
+    function processImage(){if(!originalImage)return;const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d');let srcX=0,srcY=0,srcW=originalImage.width,srcH=originalImage.height,destW=originalImage.width,destH=originalImage.height;switch(currentTool){case'convert':case'compress':case'adjust':case'base64':case'ico':case'gif':destW=originalImage.width;destH=originalImage.height;break;case'resize':destW=parseInt(document.getElementById('newWidth').value)||originalImage.width;destH=parseInt(document.getElementById('newHeight').value)||originalImage.height;break;case'crop':srcX=Math.max(0,parseInt(document.getElementById('cropX').value)||0);srcY=Math.max(0,parseInt(document.getElementById('cropY').value)||0);srcW=Math.max(1,parseInt(document.getElementById('cropWidth').value)||originalImage.width);srcH=Math.max(1,parseInt(document.getElementById('cropHeight').value)||originalImage.height);destW=srcW;destH=srcH;break;case'rotate':destW=originalImage.width;destH=originalImage.height;break;case'watermark':destW=originalImage.width;destH=originalImage.height;break;case'blur':destW=originalImage.width;destH=originalImage.height;break;case'rounded':destW=originalImage.width;destH=originalImage.height;break}canvas.width=destW;canvas.height=destH;let outputFormat='image/jpeg',quality=0.85;switch(currentTool){case'convert':case'resize':case'rotate':case'watermark':case'blur':case'rounded':outputFormat=document.getElementById('outputFormat')?.value||'image/jpeg';quality=(parseInt(document.getElementById('quality')?.value||85))/100;break;case'compress':outputFormat=document.getElementById('outputFormat')?.value||'image/jpeg';quality=(parseInt(document.getElementById('quality')?.value||60))/100;break;case'adjust':outputFormat=document.getElementById('outputFormat')?.value||'image/jpeg';quality=(parseInt(document.getElementById('quality')?.value||85))/100;break;case'base64':outputFormat=document.getElementById('base64Format')?.value||'image/jpeg';quality=(parseInt(document.getElementById('base64Quality')?.value||85))/100;break;case'ico':outputFormat='image/png';break;case'gif':outputFormat='image/png';break}if(outputFormat==='image/jpeg'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,destW,destH)}ctx.save();if(currentTool==='rotate'&&(currentRotation!==0||currentFlipH||currentFlipV)){const cx=destW/2,cy=destH/2;ctx.translate(cx,cy);if(currentFlipH)ctx.scale(-1,1);if(currentFlipV)ctx.scale(1,-1);ctx.rotate(currentRotation*Math.PI/180);ctx.translate(-cx,-cy)}else if(currentFlipH||currentFlipV){ctx.translate(destW,0);ctx.scale(-1,1)}if(currentTool==='adjust'){const brightness=parseInt(document.getElementById('brightness')?.value||100)/100;const contrast=parseInt(document.getElementById('contrast')?.value||100)/100;const saturation=parseInt(document.getElementById('saturation')?.value||100)/100;const hue=parseInt(document.getElementById('hue')?.value||0);ctx.filter=`brightness(${brightness}) contrast(${contrast}) saturate(${saturation}) hue-rotate(${hue}deg)`}ctx.drawImage(originalImage,srcX,srcY,srcW,srcH,0,0,destW,destH);ctx.restore();if(currentTool==='watermark'){const type=document.getElementById('watermarkType')?.value||'text';const opacity=(parseInt(document.getElementById('opacity')?.value||50))/100;const position=document.getElementById('watermarkPosition')?.value||'bottom-right';ctx.globalAlpha=opacity;if(type==='text'){const text=document.getElementById('watermarkText')?.value||'pumf.top';const fontSize=parseInt(document.getElementById('fontSize')?.value||24);const color=document.getElementById('watermarkColor')?.value||'#ffffff';ctx.font=`${fontSize}px Arial`;ctx.fillStyle=color;const tw=ctx.measureText(text).width;const tx=position==='top-left'||position==='bottom-left'?10:position==='center'?(destW-tw)/2:destW-tw-10;const ty=position==='top-left'||position==='top-right'?fontSize+10:position==='center'?(destH+fontSize)/2:destH-10;ctx.fillText(text,tx,ty)}else if(watermarkImageEl){const wmW=watermarkImageEl.width,wmH=watermarkImageEl.height;const scale=Math.min(1,(destW*0.3)/wmW,(destH*0.3)/wmH);const wmw=wmW*scale,wmh=wmH*scale;const wx=position==='top-left'||position==='bottom-left'?10:position==='center'?(destW-wmw)/2:destW-wmw-10;const wy=position==='top-left'||position==='top-right'?10:position==='center'?(destH-wmh)/2:destH-wmh-10;ctx.drawImage(watermarkImageEl,wx,wy,wmw,wmh)}}if(currentTool==='blur'){const bx=parseInt(document.getElementById('blurX')?.value||0);const by=parseInt(document.getElementById('blurY')?.value||0);const bw=parseInt(document.getElementById('blurWidth')?.value)||Math.round(originalImage.width/4);const bh=parseInt(document.getElementById('blurHeight')?.value)||Math.round(originalImage.height/4);const bsize=parseInt(document.getElementById('blur')?.value||10);const tmpCanvas=document.createElement('canvas');tmpCanvas.width=bw;tmpCanvas.height=bh;const tmpCtx=tmpCanvas.getContext('2d');tmpCtx.filter=`blur(${bsize}px)`;tmpCtx.drawImage(canvas,bx,by,bw,bh,0,0,bw,bh);ctx.clearRect(0,0,destW,destH);ctx.drawImage(originalImage,0,0,destW,destH);ctx.drawImage(tmpCanvas,0,0,bw,bh,bx,by,bw,bh)}if(currentTool==='rounded'){const r=parseInt(document.getElementById('radius')?.value||20);const bw=parseInt(document.getElementById('borderWidth')?.value||0);const bc=document.getElementById('borderColor')?.value||'#cccccc';const sh=parseInt(document.getElementById('shadow')?.value||0);if(r>0||sh>0){const tmpCanvas=document.createElement('canvas');tmpCanvas.width=destW;tmpCanvas.height=destH;const tmpCtx=tmpCanvas.getContext('2d');if(sh>0){tmpCtx.shadowColor='rgba(0,0,0,0.5)';tmpCtx.shadowBlur=sh;tmpCtx.shadowOffsetX=sh/2;tmpCtx.shadowOffsetY=sh/2}tmpCtx.beginPath();if(r>0){tmpCtx.moveTo(r,0);tmpCtx.lineTo(destW-r,0);tmpCtx.quadraticCurveTo(destW,0,destW,r);tmpCtx.lineTo(destW,destH-r);tmpCtx.quadraticCurveTo(destW,destH,destW-r,destH);tmpCtx.lineTo(r,destH);tmpCtx.quadraticCurveTo(0,destH,0,destH-r);tmpCtx.lineTo(0,r);tmpCtx.quadraticCurveTo(0,0,r,0)}else{tmpCtx.rect(0,0,destW,destH)}tmpCtx.closePath();if(sh>0)tmpCtx.fill();tmpCtx.clip();tmpCtx.drawImage(canvas,0,0);if(bw>0){ctx.clearRect(0,0,destW,destH);ctx.drawImage(tmpCanvas,0,0);ctx.strokeStyle=bc;ctx.lineWidth=bw;ctx.stroke()}else{ctx.clearRect(0,0,destW,destH);ctx.drawImage(tmpCanvas,0,0)}}}if(currentTool==='base64'){const dataUrl=canvas.toDataURL(outputFormat,quality);document.getElementById('base64Output').value=dataUrl;processedBlob=null;outputInfo.style.display='block';outputSizeEl.textContent=formatBytes(dataUrl.length);savedSizeEl.textContent='N/A'}else if(currentTool==='ico'){updateIcoPreview();processedBlob=null;outputInfo.style.display='none'}else if(currentTool==='gif'){processGifFrames();processedBlob=null;outputInfo.style.display='none'}else{canvas.toBlob((blob)=>{processedBlob=blob;const url=URL.createObjectURL(blob);previewPlaceholder.style.display='none';previewBox.innerHTML=`<img src="${url}" alt="Preview">`;outputInfo.style.display='block';outputSizeEl.textContent=formatBytes(blob.size);const saved=originalSize-blob.size;const pct=((saved/originalSize)*100).toFixed(1);savedSizeEl.textContent=saved>0?`${formatBytes(saved)} (${pct}%)`:'0 B (0%)';downloadBtn.disabled=false},outputFormat,quality)}}
+    function updateIcoPreview(){if(!originalImage)return;const sizes=[16,32,48,64,128,256].filter(s=>document.querySelector(`.ico-check[value="${s}"]`)?.checked);const container=document.getElementById('icoPreview');container.innerHTML=sizes.map(s=>{const c=document.createElement('canvas');c.width=s;c.height=s;const cx=c.getContext('2d');cx.drawImage(originalImage,0,0,s,s);return`<div class="ico-size"><canvas width="${s}" height="${s}"></canvas><span>${s}px</span></div>`}).join('');sizes.forEach((s,i)=>{const targetCanvas=container.querySelectorAll('.ico-size canvas')[i];if(targetCanvas){const cx=targetCanvas.getContext('2d');cx.drawImage(originalImage,0,0,s,s)}})}
+    function processGifFrames(){const container=document.getElementById('gifFrames');if(!originalImage.dataset.gif||originalImage.dataset.gif!=='true'){container.innerHTML='<div style="padding:20px;text-align:center;color:var(--color-muted)">仅 GIF 图片支持帧分解<br>当前图片为静态图片</div>';return}}
+    function downloadImage(){if(!processedBlob)return;const fmt=document.getElementById('outputFormat')?.value||'image/jpeg';const ext=fmt.split('/')[1];const a=document.createElement('a');a.href=URL.createObjectURL(processedBlob);a.download=`${originalFileName}_${currentTool}.${ext}`;a.click()}
+    function downloadAllImages(){}
+    function reset(){originalImage=null;processedBlob=null;originalFileName='';originalSize=0;currentRotation=0;currentFlipH=false;currentFlipV=false;gifFrames=[];watermarkImageEl=null;workspace.classList.remove('visible');previewBox.innerHTML=`<div class="preview-placeholder" id="previewPlaceholder"><div class="preview-placeholder-icon">🖼️</div><p>图片预览</p></div>`;outputInfo.style.display='none';downloadBtn.disabled=true;downloadAllBtn.style.display='none';fileInput.value=''}
+    function formatBytes(bytes){if(bytes===0)return'0 B';const k=1024;const sizes=['B','KB','MB','GB'];const i=Math.floor(Math.log(bytes)/Math.log(k));return parseFloat((bytes/Math.pow(k,i)).toFixed(2))+' '+sizes[i]}
+  <\/script>
 </body>
 </html>
