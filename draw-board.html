@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>画板 - tool.pumf.top</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-canvas-soft-2: #f0f2f8;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --color-border-hover: rgba(10, 191, 165, 0.3);
+      --color-shadow: rgba(0, 0, 0, 0.08);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    html, body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      height: 100vh;
+      overflow: hidden;
+      touch-action: none;
+    }
+    
+    /* Navigation */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px;
+      display: flex; align-items: center;
+      backdrop-filter: blur(10px);
+    }
+    .nav-inner {
+      max-width: 100%; margin: 0 auto; padding: 0 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back { font-size: 14px; color: var(--color-body); text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .nav-back:hover { color: var(--color-primary); }
+    
+    /* Toolbar */
+    .toolbar {
+      position: fixed; top: 56px; left: 0; right: 0; z-index: 99;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .toolbar::-webkit-scrollbar { display: none; }
+    
+    .tool-group {
+      display: flex; align-items: center; gap: 4px;
+      padding-right: 12px;
+      border-right: 1px solid var(--color-border);
+    }
+    .tool-group:last-child { border-right: none; padding-right: 0; }
+    
+    .tool-btn {
+      width: 40px; height: 40px;
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      color: var(--color-body);
+      flex-shrink: 0;
+    }
+    .tool-btn:hover { background: var(--color-canvas-soft); color: var(--color-ink); }
+    .tool-btn.active { 
+      background: var(--color-primary-soft); 
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    .tool-btn svg { width: 20px; height: 20px; }
+    .tool-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    
+    .color-picker-wrapper {
+      position: relative;
+      width: 40px; height: 40px;
+      flex-shrink: 0;
+    }
+    .color-picker {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer;
+    }
+    .color-preview {
+      width: 100%; height: 100%;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--color-border);
+      pointer-events: none;
+      transition: transform 0.2s;
+    }
+    .color-picker-wrapper:hover .color-preview { transform: scale(1.1); }
+    
+    .size-slider {
+      width: 100px; height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--color-canvas-soft-2);
+      border-radius: 3px;
+      outline: none;
+      flex-shrink: 0;
+    }
+    .size-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      background: var(--color-primary);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .size-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    
+    .size-display {
+      width: 28px; text-align: center;
+      font-size: 12px; color: var(--color-muted);
+      flex-shrink: 0;
+    }
+    
+    /* Canvas Container */
+    .canvas-container {
+      position: fixed;
+      top: 113px; left: 0; right: 0; bottom: 0;
+      background: var(--color-canvas-soft-2);
+      overflow: auto;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px;
+    }
+    
+    .canvas-wrapper {
+      position: relative;
+      box-shadow: 0 8px 40px var(--color-shadow);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: white;
+    }
+    
+    #drawCanvas {
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+    
+    /* Cursor Preview */
+    .cursor-preview {
+      position: fixed;
+      pointer-events: none;
+      border-radius: 50%;
+      border: 2px solid var(--color-primary);
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      display: none;
+      mix-blend-mode: difference;
+    }
+    
+    /* Status Bar */
+    .status-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--color-canvas);
+      border-top: 1px solid var(--color-border);
+      padding: 8px 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--color-muted);
+      z-index: 99;
+    }
+    .status-left { display: flex; gap: 16px; }
+    .status-item { display: flex; align-items: center; gap: 4px; }
+    
+    /* Keyboard Shortcuts Hint */
+    .shortcuts-hint {
+      position: fixed; bottom: 44px; right: 16px;
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-size: 12px; color: var(--color-body);
+      box-shadow: 0 4px 20px var(--color-shadow);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 98;
+    }
+    .shortcuts-hint.show { opacity: 1; }
+    .shortcuts-hint kbd {
+      background: var(--color-canvas-soft-2);
+      padding: 2px 6px; border-radius: 4px;
+      font-family: var(--font-mono, monospace);
+      font-size: 11px;
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 60px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--color-ink); color: white;
+      padding: 10px 20px; border-radius: var(--radius-sm);
+      font-size: 13px; z-index: 1001;
+      opacity: 0; transition: all 0.3s;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    
+    /* Mobile */
+    @media (max-width: 768px) {
+      .canvas-container { padding: 20px; }
+      .toolbar { padding: 8px 12px; }
+      .size-slider { width: 80px; }
+      .status-bar { font-size: 11px; padding: 6px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">tool<span>.pumf.top</span></a>
+      <a href="/" class="nav-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        返回
+      </a>
+    </div>
+  </nav>
+  
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <!-- Drawing Tools -->
+    <div class="tool-group">
+      <button class="tool-btn active" id="penTool" onclick="setTool('pen')" title="画笔 (B)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+          <path d="M2 2l7.586 7.586"/>
+          <circle cx="11" cy="11" r="2"/>
+        </svg>
+      </button>
+      <button class="tool-btn" id="eraserTool" onclick="setTool('eraser')" title="橡皮擦 (E)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 20H7L3 16C2 15 2 13 3 12L13 2L22 11L20 20Z"/>
+          <path d="M17 17L7 7"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Color -->
+    <div class="tool-group">
+      <div class="color-picker-wrapper" title="选择颜色">
+        <div class="color-preview" id="colorPreview" style="background: #1a1a2e;"></div>
+        <input type="color" class="color-picker" id="colorPicker" value="#1a1a2e" onchange="setColor(this.value)">
+      </div>
+      <button class="tool-btn" onclick="setColor('#1a1a2e')" title="黑色">
+        <div style="width: 16px; height: 16px; background: #1a1a2e; border-radius: 50%;"></div>
+      </button>
+      <button class="tool-btn" onclick="setColor('#ef4444')" title="红色">
+        <div style="width: 16px; height: 16px; background: #ef4444; border-radius: 50%;"></div>
+      </button>
+      <button class="tool-btn" onclick="setColor('#0abFA5')" title="青色">
+        <div style="width: 16px; height: 16px; background: #0abFA5; border-radius: 50%;"></div>
+      </button>
+      <button class="tool-btn" onclick="setColor('#f59e0b')" title="黄色">
+        <div style="width: 16px; height: 16px; background: #f59e0b; border-radius: 50%;"></div>
+      </button>
+    </div>
+    
+    <!-- Size -->
+    <div class="tool-group" style="align-items: center; gap: 8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-muted);">
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <input type="range" class="size-slider" id="sizeSlider" min="1" max="50" value="5" oninput="setSize(this.value)">
+      <span class="size-display" id="sizeDisplay">5</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-muted);">
+        <circle cx="12" cy="12" r="8"/>
+      </svg>
+    </div>
+    
+    <!-- History -->
+    <div class="tool-group">
+      <button class="tool-btn" id="undoBtn" onclick="undo()" disabled title="撤销 (Ctrl+Z)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7v6h6"/>
+          <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/>
+        </svg>
+      </button>
+      <button class="tool-btn" id="redoBtn" onclick="redo()" disabled title="重做 (Ctrl+Y)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 7v6h-6"/>
+          <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3L21 13"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Actions -->
+    <div class="tool-group">
+      <button class="tool-btn" onclick="clearCanvas()" title="清空画布 (C)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </button>
+      <button class="tool-btn" onclick="saveCanvas()" title="保存图片 (S)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+      <button class="tool-btn" onclick="toggleShortcuts()" title="快捷键">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Canvas -->
+  <div class="canvas-container" id="canvasContainer">
+    <div class="canvas-wrapper">
+      <canvas id="drawCanvas" width="1200" height="800"></canvas>
+    </div>
+  </div>
+  
+  <!-- Cursor Preview -->
+  <div class="cursor-preview" id="cursorPreview"></div>
+  
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="status-left">
+      <span class="status-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="strokeCount">0 笔</span>
+      </span>
+      <span class="status-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span id="canvasSize">1200 x 800</span>
+      </span>
+    </div>
+    <span id="coords">0, 0</span>
+  </div>
+  
+  <!-- Shortcuts Hint -->
+  <div class="shortcuts-hint" id="shortcutsHint">
+    <div style="margin-bottom: 8px; font-weight: 500; color: var(--color-ink);">快捷键</div>
+    <div style="display: grid; gap: 6px;">
+      <div><kbd>B</kbd> 画笔</div>
+      <div><kbd>E</kbd> 橡皮擦</div>
+      <div><kbd>Ctrl+Z</kbd> 撤销</div>
+      <div><kbd>Ctrl+Y</kbd> 重做</div>
+      <div><kbd>S</kbd> 保存</div>
+      <div><kbd>C</kbd> 清空</div>
+      <div><kbd>[</kbd> <kbd>]</kbd> 调整粗细</div>
+    </div>
+  </div>
+  
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+  
+  <script>
+    // Canvas Setup
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const container = document.getElementById('canvasContainer');
+    const cursorPreview = document.getElementById('cursorPreview');
+    
+    // State
+    let isDrawing = false;
+    let currentTool = 'pen';
+    let currentColor = '#1a1a2e';
+    let currentSize = 5;
+    let currentStroke = [];
+    
+    // History
+    let strokes = [];
+    let redoStack = [];
+    const MAX_HISTORY = 100;
+    
+    // Initialize
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Load from localStorage
+    function loadCanvas() {
+      const saved = localStorage.getItem('drawboard_canvas');
+      const savedStrokes = localStorage.getItem('drawboard_strokes');
+      
+      if (saved) {
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0);
+          updateStrokeCount();
+        };
+        img.src = saved;
+      }
+      
+      if (savedStrokes) {
+        strokes = JSON.parse(savedStrokes);
+        updateHistoryButtons();
+        updateStrokeCount();
+      }
+    }
+    
+    // Save to localStorage
+    function saveToStorage() {
+      localStorage.setItem('drawboard_canvas', canvas.toDataURL());
+      localStorage.setItem('drawboard_strokes', JSON.stringify(strokes.slice(-MAX_HISTORY)));
+    }
+    
+    // Get coordinates
+    function getCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      let clientX, clientY;
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+    
+    // Start drawing
+    function startDrawing(e) {
+      e.preventDefault();
+      isDrawing = true;
+      const coords = getCoords(e);
+      currentStroke = [coords];
+      
+      ctx.beginPath();
+      ctx.moveTo(coords.x, coords.y);
+      
+      if (currentTool === 'pen') {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = currentSize;
+      } else {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = currentSize * 3;
+      }
+      
+      // Draw single dot
+      ctx.lineTo(coords.x, coords.y);
+      ctx.stroke();
+    }
+    
+    // Draw
+    function draw(e) {
+      e.preventDefault();
+      const coords = getCoords(e);
+      
+      // Update cursor preview
+      updateCursorPreview(e);
+      
+      // Update coordinates display
+      document.getElementById('coords').textContent = `${Math.round(coords.x)}, ${Math.round(coords.y)}`;
+      
+      if (!isDrawing) return;
+      
+      currentStroke.push(coords);
+      
+      ctx.lineTo(coords.x, coords.y);
+      ctx.stroke();
+    }
+    
+    // End drawing
+    function endDrawing() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      
+      // Save stroke
+      strokes.push({
+        points: currentStroke,
+        tool: currentTool,
+        color: currentColor,
+        size: currentSize,
+        timestamp: Date.now()
+      });
+      
+      // Clear redo stack
+      redoStack = [];
+      
+      // Update UI
+      updateHistoryButtons();
+      updateStrokeCount();
+      
+      // Auto save
+      saveToStorage();
+    }
+    
+    // Tool Functions
+    function setTool(tool) {
+      currentTool = tool;
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tool + 'Tool').classList.add('active');
+      updateCursor();
+    }
+    
+    function setColor(color) {
+      currentColor = color;
+      document.getElementById('colorPicker').value = color;
+      document.getElementById('colorPreview').style.background = color;
+      if (currentTool === 'eraser') setTool('pen');
+    }
+    
+    function setSize(size) {
+      currentSize = parseInt(size);
+      document.getElementById('sizeSlider').value = currentSize;
+      document.getElementById('sizeDisplay').textContent = currentSize;
+      updateCursor();
+    }
+    
+    // History Functions
+    function undo() {
+      if (strokes.length === 0) return;
+      
+      redoStack.push(strokes.pop());
+      redrawCanvas();
+      updateHistoryButtons();
+      updateStrokeCount();
+      saveToStorage();
+      showToast('已撤销');
+    }
+    
+    function redo() {
+      if (redoStack.length === 0) return;
+      
+      strokes.push(redoStack.pop());
+      redrawCanvas();
+      updateHistoryButtons();
+      updateStrokeCount();
+      saveToStorage();
+      showToast('已重做');
+    }
+    
+    function redrawCanvas() {
+      // Clear canvas
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Redraw all strokes
+      strokes.forEach(stroke => {
+        if (stroke.tool === 'pen') {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.strokeStyle = stroke.color;
+          ctx.lineWidth = stroke.size;
+        } else {
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.lineWidth = stroke.size * 3;
+        }
+        
+        ctx.beginPath();
+        if (stroke.points.length > 0) {
+          ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+          for (let i = 1; i < stroke.points.length; i++) {
+            ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+          }
+        }
+        ctx.stroke();
+      });
+    }
+    
+    function updateHistoryButtons() {
+      document.getElementById('undoBtn').disabled = strokes.length === 0;
+      document.getElementById('redoBtn').disabled = redoStack.length === 0;
+    }
+    
+    function updateStrokeCount() {
+      document.getElementById('strokeCount').textContent = `${strokes.length} 笔`;
+    }
+    
+    // Canvas Actions
+    function clearCanvas() {
+      if (strokes.length === 0) return;
+      if (!confirm('确定要清空画布吗？此操作无法撤销。')) return;
+      
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      strokes = [];
+      redoStack = [];
+      updateHistoryButtons();
+      updateStrokeCount();
+      saveToStorage();
+      showToast('画布已清空');
+    }
+    
+    function saveCanvas() {
+      const link = document.createElement('a');
+      link.download = `drawing-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('图片已保存');
+    }
+    
+    // Cursor Preview
+    function updateCursorPreview(e) {
+      if (e.target !== canvas) {
+        cursorPreview.style.display = 'none';
+        return;
+      }
+      
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+      
+      cursorPreview.style.display = 'block';
+      cursorPreview.style.left = clientX + 'px';
+      cursorPreview.style.top = clientY + 'px';
+      cursorPreview.style.width = currentSize + 'px';
+      cursorPreview.style.height = currentSize + 'px';
+      cursorPreview.style.background = currentTool === 'eraser' ? 'rgba(255,255,255,0.5)' : currentColor;
+    }
+    
+    function updateCursor() {
+      canvas.style.cursor = currentTool === 'pen' ? 'crosshair' : 'cell';
+    }
+    
+    // Shortcuts
+    function toggleShortcuts() {
+      document.getElementById('shortcutsHint').classList.toggle('show');
+    }
+    
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z') {
+          e.preventDefault();
+          undo();
+        } else if (e.key === 'y') {
+          e.preventDefault();
+          redo();
+        }
+      } else {
+        switch(e.key.toLowerCase()) {
+          case 'b': setTool('pen'); break;
+          case 'e': setTool('eraser'); break;
+          case 's': saveCanvas(); break;
+          case 'c': clearCanvas(); break;
+          case '[': setSize(Math.max(1, currentSize - 1)); break;
+          case ']': setSize(Math.min(50, currentSize + 1)); break;
+        }
+      }
+    });
+    
+    // Hide shortcuts on click outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.tool-btn') || !e.target.closest('.shortcuts-hint')) {
+        document.getElementById('shortcutsHint').classList.remove('show');
+      }
+    });
+    
+    // Toast
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+    
+    // Event Listeners
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', endDrawing);
+    canvas.addEventListener('mouseout', () => {
+      endDrawing();
+      cursorPreview.style.display = 'none';
+    });
+    canvas.addEventListener('mouseover', () => cursorPreview.style.display = 'block');
+    
+    // Touch events
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', endDrawing);
+    
+    // Prevent scrolling on touch
+    document.body.addEventListener('touchmove', (e) => {
+      if (e.target === canvas) e.preventDefault();
+    }, { passive: false });
+    
+    // Init
+    loadCanvas();
+    updateCursor();
+  </script>
+</body>
+</html>
