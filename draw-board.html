@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>画板 - tool.pumf.top</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --color-primary: #0abFA5;
@@ -24,10 +24,7 @@
       --radius-sm: 6px;
       --radius-md: 12px;
       --radius-lg: 16px;
-      --space-xs: 8px;
-      --space-sm: 12px;
-      --space-md: 16px;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-sans: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -38,57 +35,172 @@
       color: var(--color-ink);
       height: 100vh;
       overflow: hidden;
-      touch-action: none;
     }
     
-    /* Navigation */
-    .nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    /* Layout */
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+    
+    /* Sidebar - History */
+    .sidebar {
+      width: 220px;
+      background: var(--color-canvas);
+      border-right: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .btn-small {
+      padding: 6px 12px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--color-body);
+    }
+    .btn-small:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .btn-small.primary {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+    
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .history-item {
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-bottom: 6px;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .history-item:hover {
+      background: var(--color-canvas-soft);
+    }
+    .history-item.active {
+      border-color: var(--color-primary);
+      background: var(--color-primary-soft);
+    }
+    .history-thumb {
+      width: 100%;
+      height: 100px;
+      background: #fff;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      object-fit: cover;
+      border: 1px solid var(--color-border);
+    }
+    .history-name {
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .history-time {
+      font-size: 11px;
+      color: var(--color-muted);
+    }
+    .history-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .history-btn {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .history-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    
+    /* Main Area */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Top Toolbar */
+    .top-bar {
+      height: 56px;
       background: var(--color-canvas);
       border-bottom: 1px solid var(--color-border);
-      height: 56px;
-      display: flex; align-items: center;
-      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
     }
-    .nav-inner {
-      max-width: 100%; margin: 0 auto; padding: 0 20px;
-      display: flex; align-items: center; justify-content: space-between;
-      width: 100%;
+    .logo {
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--color-ink);
     }
-    .nav-logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); }
-    .nav-logo span { color: var(--color-primary); }
-    .nav-back { font-size: 14px; color: var(--color-body); text-decoration: none; display: flex; align-items: center; gap: 6px; }
-    .nav-back:hover { color: var(--color-primary); }
+    .logo span { color: var(--color-primary); }
     
     /* Toolbar */
     .toolbar {
-      position: fixed; top: 56px; left: 0; right: 0; z-index: 99;
       background: var(--color-canvas);
       border-bottom: 1px solid var(--color-border);
-      padding: 12px 16px;
-      display: flex; align-items: center; gap: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
     }
-    .toolbar::-webkit-scrollbar { display: none; }
-    
-    .tool-group {
-      display: flex; align-items: center; gap: 4px;
+    .tool-section {
+      display: flex;
+      align-items: center;
+      gap: 4px;
       padding-right: 12px;
       border-right: 1px solid var(--color-border);
     }
-    .tool-group:last-child { border-right: none; padding-right: 0; }
+    .tool-section:last-child { border-right: none; padding-right: 0; }
     
     .tool-btn {
-      width: 40px; height: 40px;
+      width: 38px;
+      height: 38px;
       border: 1px solid transparent;
       background: transparent;
       border-radius: var(--radius-sm);
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: all 0.2s;
       color: var(--color-body);
-      flex-shrink: 0;
+      position: relative;
     }
     .tool-btn:hover { background: var(--color-canvas-soft); color: var(--color-ink); }
     .tool-btn.active { 
@@ -97,345 +209,498 @@
       border-color: var(--color-primary);
     }
     .tool-btn svg { width: 20px; height: 20px; }
-    .tool-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .tool-btn .shortcut {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 9px;
+      opacity: 0.6;
+    }
     
-    .color-picker-wrapper {
-      position: relative;
-      width: 40px; height: 40px;
-      flex-shrink: 0;
+    /* Color Palette */
+    .color-palette {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-    .color-picker {
-      position: absolute; inset: 0;
-      opacity: 0; cursor: pointer;
+    .color-row {
+      display: flex;
+      gap: 4px;
     }
-    .color-preview {
-      width: 100%; height: 100%;
-      border-radius: var(--radius-sm);
-      border: 2px solid var(--color-border);
-      pointer-events: none;
-      transition: transform 0.2s;
-    }
-    .color-picker-wrapper:hover .color-preview { transform: scale(1.1); }
-    
-    .size-slider {
-      width: 100px; height: 6px;
-      -webkit-appearance: none;
-      appearance: none;
-      background: var(--color-canvas-soft-2);
-      border-radius: 3px;
-      outline: none;
-      flex-shrink: 0;
-    }
-    .size-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px; height: 16px;
-      background: var(--color-primary);
-      border-radius: 50%;
+    .color-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 2px solid transparent;
       cursor: pointer;
       transition: transform 0.2s;
     }
-    .size-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
-    
-    .size-display {
-      width: 28px; text-align: center;
-      font-size: 12px; color: var(--color-muted);
-      flex-shrink: 0;
+    .color-btn:hover { transform: scale(1.1); }
+    .color-btn.active {
+      border-color: var(--color-ink);
+      box-shadow: 0 0 0 2px var(--color-canvas);
     }
     
-    /* Canvas Container */
-    .canvas-container {
-      position: fixed;
-      top: 113px; left: 0; right: 0; bottom: 0;
+    .color-picker-wrapper {
+      position: relative;
+      width: 24px;
+      height: 24px;
+    }
+    .color-picker {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .color-preview {
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff);
+      pointer-events: none;
+      border: 2px solid var(--color-border);
+    }
+    
+    /* Size Slider */
+    .size-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .size-slider {
+      width: 80px;
+      height: 6px;
+      -webkit-appearance: none;
       background: var(--color-canvas-soft-2);
+      border-radius: 3px;
+      outline: none;
+    }
+    .size-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--color-primary);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .size-value {
+      font-size: 12px;
+      color: var(--color-muted);
+      min-width: 24px;
+    }
+    
+    /* Font Control */
+    .font-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .font-select, .font-input {
+      padding: 6px 10px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--color-canvas);
+    }
+    .font-input { width: 60px; }
+    
+    /* Canvas Area */
+    .canvas-area {
+      flex: 1;
+      background: var(--color-canvas-soft-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       overflow: auto;
-      display: flex; align-items: center; justify-content: center;
       padding: 40px;
+      position: relative;
     }
     
     .canvas-wrapper {
       position: relative;
+      background: white;
       box-shadow: 0 8px 40px var(--color-shadow);
       border-radius: var(--radius-sm);
       overflow: hidden;
-      background: white;
     }
     
-    #drawCanvas {
+    #mainCanvas, #tempCanvas {
       display: block;
-      cursor: crosshair;
-      touch-action: none;
     }
-    
-    /* Cursor Preview */
-    .cursor-preview {
-      position: fixed;
+    #tempCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
       pointer-events: none;
-      border-radius: 50%;
-      border: 2px solid var(--color-primary);
-      transform: translate(-50%, -50%);
-      z-index: 1000;
-      display: none;
-      mix-blend-mode: difference;
     }
     
-    /* Status Bar */
-    .status-bar {
-      position: fixed; bottom: 0; left: 0; right: 0;
+    /* Image Transform Handle */
+    .transform-handle {
+      position: absolute;
+      border: 2px dashed var(--color-primary);
+      cursor: move;
+    }
+    .transform-handle .resize-handle {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: var(--color-primary);
+      border-radius: 50%;
+    }
+    .transform-handle .resize-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+    .transform-handle .resize-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+    .transform-handle .resize-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+    .transform-handle .resize-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+    .transform-handle .rotate-handle {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 20px;
+      background: var(--color-primary);
+      border-radius: 50%;
+      cursor: grab;
+    }
+    
+    /* Text Input Overlay */
+    .text-input-overlay {
+      position: absolute;
+      border: 2px dashed var(--color-primary);
+      padding: 8px;
+      background: transparent;
+      min-width: 100px;
+      outline: none;
+    }
+    
+    /* Bottom Bar */
+    .bottom-bar {
+      height: 40px;
       background: var(--color-canvas);
       border-top: 1px solid var(--color-border);
-      padding: 8px 20px;
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 12px; color: var(--color-muted);
-      z-index: 99;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 12px;
+      color: var(--color-muted);
     }
-    .status-left { display: flex; gap: 16px; }
-    .status-item { display: flex; align-items: center; gap: 4px; }
-    
-    /* Keyboard Shortcuts Hint */
-    .shortcuts-hint {
-      position: fixed; bottom: 44px; right: 16px;
-      background: var(--color-canvas);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      padding: 12px 16px;
-      font-size: 12px; color: var(--color-body);
-      box-shadow: 0 4px 20px var(--color-shadow);
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.3s;
-      z-index: 98;
-    }
-    .shortcuts-hint.show { opacity: 1; }
-    .shortcuts-hint kbd {
-      background: var(--color-canvas-soft-2);
-      padding: 2px 6px; border-radius: 4px;
-      font-family: var(--font-mono, monospace);
-      font-size: 11px;
-    }
+    .bottom-left { display: flex; gap: 16px; }
     
     /* Toast */
     .toast {
-      position: fixed; bottom: 60px; left: 50%;
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background: var(--color-ink); color: white;
-      padding: 10px 20px; border-radius: var(--radius-sm);
-      font-size: 13px; z-index: 1001;
-      opacity: 0; transition: all 0.3s;
+      background: var(--color-ink);
+      color: white;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      z-index: 1000;
+      opacity: 0;
+      transition: all 0.3s;
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     
-    /* Mobile */
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--color-canvas);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .modal-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    
+    /* Hidden file input */
+    #fileInput { display: none; }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .sidebar { display: none; }
+    }
     @media (max-width: 768px) {
-      .canvas-container { padding: 20px; }
-      .toolbar { padding: 8px 12px; }
-      .size-slider { width: 80px; }
-      .status-bar { font-size: 11px; padding: 6px 12px; }
+      .toolbar { padding: 8px; gap: 8px; }
+      .tool-section { padding-right: 8px; }
+      .font-control { display: none; }
+      .canvas-area { padding: 20px; }
     }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="nav">
-    <div class="nav-inner">
-      <a href="/" class="nav-logo">tool<span>.pumf.top</span></a>
-      <a href="/" class="nav-back">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        返回
-      </a>
-    </div>
-  </nav>
-  
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <!-- Drawing Tools -->
-    <div class="tool-group">
-      <button class="tool-btn active" id="penTool" onclick="setTool('pen')" title="画笔 (B)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 19l7-7 3 3-7 7-3-3z"/>
-          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
-          <path d="M2 2l7.586 7.586"/>
-          <circle cx="11" cy="11" r="2"/>
-        </svg>
-      </button>
-      <button class="tool-btn" id="eraserTool" onclick="setTool('eraser')" title="橡皮擦 (E)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 20H7L3 16C2 15 2 13 3 12L13 2L22 11L20 20Z"/>
-          <path d="M17 17L7 7"/>
-        </svg>
-      </button>
-    </div>
-    
-    <!-- Color -->
-    <div class="tool-group">
-      <div class="color-picker-wrapper" title="选择颜色">
-        <div class="color-preview" id="colorPreview" style="background: #1a1a2e;"></div>
-        <input type="color" class="color-picker" id="colorPicker" value="#1a1a2e" onchange="setColor(this.value)">
+  <div class="app">
+    <!-- Sidebar - History -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">📁 画板历史</span>
+        <button class="btn-small primary" onclick="newCanvas()">+ 新建</button>
       </div>
-      <button class="tool-btn" onclick="setColor('#1a1a2e')" title="黑色">
-        <div style="width: 16px; height: 16px; background: #1a1a2e; border-radius: 50%;"></div>
-      </button>
-      <button class="tool-btn" onclick="setColor('#ef4444')" title="红色">
-        <div style="width: 16px; height: 16px; background: #ef4444; border-radius: 50%;"></div>
-      </button>
-      <button class="tool-btn" onclick="setColor('#0abFA5')" title="青色">
-        <div style="width: 16px; height: 16px; background: #0abFA5; border-radius: 50%;"></div>
-      </button>
-      <button class="tool-btn" onclick="setColor('#f59e0b')" title="黄色">
-        <div style="width: 16px; height: 16px; background: #f59e0b; border-radius: 50%;"></div>
-      </button>
+      <div class="history-list" id="historyList">
+        <!-- History items will be added here -->
+      </div>
     </div>
     
-    <!-- Size -->
-    <div class="tool-group" style="align-items: center; gap: 8px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-muted);">
-        <circle cx="12" cy="12" r="3"/>
-      </svg>
-      <input type="range" class="size-slider" id="sizeSlider" min="1" max="50" value="5" oninput="setSize(this.value)">
-      <span class="size-display" id="sizeDisplay">5</span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-muted);">
-        <circle cx="12" cy="12" r="8"/>
-      </svg>
-    </div>
-    
-    <!-- History -->
-    <div class="tool-group">
-      <button class="tool-btn" id="undoBtn" onclick="undo()" disabled title="撤销 (Ctrl+Z)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7v6h6"/>
-          <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/>
-        </svg>
-      </button>
-      <button class="tool-btn" id="redoBtn" onclick="redo()" disabled title="重做 (Ctrl+Y)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 7v6h-6"/>
-          <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3L21 13"/>
-        </svg>
-      </button>
-    </div>
-    
-    <!-- Actions -->
-    <div class="tool-group">
-      <button class="tool-btn" onclick="clearCanvas()" title="清空画布 (C)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-          <line x1="10" y1="11" x2="10" y2="17"/>
-          <line x1="14" y1="11" x2="14" y2="17"/>
-        </svg>
-      </button>
-      <button class="tool-btn" onclick="saveCanvas()" title="保存图片 (S)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-      </button>
-      <button class="tool-btn" onclick="toggleShortcuts()" title="快捷键">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="4" width="20" height="16" rx="2"/>
-          <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
-        </svg>
-      </button>
+    <!-- Main Area -->
+    <div class="main">
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <a href="/" class="logo">tool<span>.pumf.top</span></a>
+        <div>
+          <button class="btn-small" onclick="saveCanvas()">💾 保存</button>
+          <button class="btn-small" onclick="exportCanvas()">📤 导出</button>
+        </div>
+      </div>
+      
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <!-- Tools -->
+        <div class="tool-section">
+          <button class="tool-btn active" id="tool-pen" onclick="setTool('pen')" title="画笔">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+            <span class="shortcut">B</span>
+          </button>
+          <button class="tool-btn" id="tool-marker" onclick="setTool('marker')" title="荧光笔">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19l-5 2 2-5L16 6l3 3-10 10z"/><path d="M17 8l3-3"/><path d="M2 22l5-2"/></svg>
+            <span class="shortcut">M</span>
+          </button>
+          <button class="tool-btn" id="tool-eraser" onclick="setTool('eraser')" title="橡皮擦">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C2 15 2 13 3 12L13 2L22 11L20 20Z"/></svg>
+            <span class="shortcut">E</span>
+          </button>
+          <button class="tool-btn" id="tool-line" onclick="setTool('line')" title="直线">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
+            <span class="shortcut">L</span>
+          </button>
+          <button class="tool-btn" id="tool-rect" onclick="setTool('rect')" title="矩形">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            <span class="shortcut">R</span>
+          </button>
+          <button class="tool-btn" id="tool-circle" onclick="setTool('circle')" title="圆形">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+            <span class="shortcut">C</span>
+          </button>
+          <button class="tool-btn" id="tool-text" onclick="setTool('text')" title="文字">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+            <span class="shortcut">T</span>
+          </button>
+          <button class="tool-btn" id="tool-image" onclick="addImage()" title="插入图片">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            <span class="shortcut">I</span>
+          </button>
+        </div>
+        
+        <!-- Color Palette -->
+        <div class="tool-section">
+          <div class="color-palette">
+            <div class="color-row">
+              <div class="color-btn active" style="background: #1a1a2e;" onclick="setColor('#1a1a2e')"></div>
+              <div class="color-btn" style="background: #ef4444;" onclick="setColor('#ef4444')"></div>
+              <div class="color-btn" style="background: #f59e0b;" onclick="setColor('#f59e0b')"></div>
+              <div class="color-btn" style="background: #10b981;" onclick="setColor('#10b981')"></div>
+              <div class="color-btn" style="background: #0abFA5;" onclick="setColor('#0abFA5')"></div>
+              <div class="color-btn" style="background: #3b82f6;" onclick="setColor('#3b82f6')"></div>
+              <div class="color-btn" style="background: #8b5cf6;" onclick="setColor('#8b5cf6')"></div>
+            </div>
+            <div class="color-row">
+              <div class="color-btn" style="background: #6b7280;" onclick="setColor('#6b7280')"></div>
+              <div class="color-btn" style="background: #fca5a5;" onclick="setColor('#fca5a5')"></div>
+              <div class="color-btn" style="background: #fcd34d;" onclick="setColor('#fcd34d')"></div>
+              <div class="color-btn" style="background: #6ee7b7;" onclick="setColor('#6ee7b7')"></div>
+              <div class="color-btn" style="background: #93c5fd;" onclick="setColor('#93c5fd')"></div>
+              <div class="color-btn" style="background: #c4b5fd;" onclick="setColor('#c4b5fd')"></div>
+              <div class="color-picker-wrapper">
+                <div class="color-preview"></div>
+                <input type="color" class="color-picker" id="colorPicker" value="#1a1a2e" onchange="setColor(this.value)">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Size -->
+        <div class="tool-section">
+          <div class="size-control">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-muted);"><circle cx="12" cy="12" r="3"/></svg>
+            <input type="range" class="size-slider" id="sizeSlider" min="1" max="50" value="3" oninput="setSize(this.value)">
+            <span class="size-value" id="sizeValue">3px</span>
+          </div>
+        </div>
+        
+        <!-- Font (only for text tool) -->
+        <div class="tool-section font-control" id="fontControl" style="display: none;">
+          <select class="font-select" id="fontFamily" onchange="setFont(this.value)">
+            <option value="'Noto Sans SC', sans-serif">思源黑体</option>
+            <option value="'Inter', sans-serif">Inter</option>
+            <option value="serif">宋体</option>
+            <option value="monospace">等宽</option>
+          </select>
+          <input type="number" class="font-input" id="fontSize" value="24" min="12" max="120" onchange="setFontSize(this.value)">
+        </div>
+        
+        <!-- History -->
+        <div class="tool-section">
+          <button class="tool-btn" id="btn-undo" onclick="undo()" disabled title="撤销">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+            <span class="shortcut">Z</span>
+          </button>
+          <button class="tool-btn" id="btn-redo" onclick="redo()" disabled title="重做">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3L21 13"/></svg>
+            <span class="shortcut">Y</span>
+          </button>
+          <button class="tool-btn" onclick="clearCanvas()" title="清空">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Canvas Area -->
+      <div class="canvas-area" id="canvasArea">
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <canvas id="mainCanvas" width="1200" height="800"></canvas>
+          <canvas id="tempCanvas" width="1200" height="800"></canvas>
+        </div>
+      </div>
+      
+      <!-- Bottom Bar -->
+      <div class="bottom-bar">
+        <div class="bottom-left">
+          <span>📐 1200 x 800</span>
+          <span id="strokeInfo">0 笔</span>
+          <span id="zoomInfo">100%</span>
+        </div>
+        <span id="coords">0, 0</span>
+      </div>
     </div>
   </div>
   
-  <!-- Canvas -->
-  <div class="canvas-container" id="canvasContainer">
-    <div class="canvas-wrapper">
-      <canvas id="drawCanvas" width="1200" height="800"></canvas>
+  <!-- Text Input Modal -->
+  <div class="modal-overlay" id="textModal">
+    <div class="modal">
+      <div class="modal-title">输入文字</div>
+      <textarea class="modal-input" id="textInput" rows="4" placeholder="输入文字内容..."></textarea>
+      <div class="modal-actions">
+        <button class="btn-small" onclick="closeTextModal()">取消</button>
+        <button class="btn-small primary" onclick="confirmText()">确定</button>
+      </div>
     </div>
   </div>
   
-  <!-- Cursor Preview -->
-  <div class="cursor-preview" id="cursorPreview"></div>
-  
-  <!-- Status Bar -->
-  <div class="status-bar">
-    <div class="status-left">
-      <span class="status-item">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span id="strokeCount">0 笔</span>
-      </span>
-      <span class="status-item">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        <span id="canvasSize">1200 x 800</span>
-      </span>
-    </div>
-    <span id="coords">0, 0</span>
-  </div>
-  
-  <!-- Shortcuts Hint -->
-  <div class="shortcuts-hint" id="shortcutsHint">
-    <div style="margin-bottom: 8px; font-weight: 500; color: var(--color-ink);">快捷键</div>
-    <div style="display: grid; gap: 6px;">
-      <div><kbd>B</kbd> 画笔</div>
-      <div><kbd>E</kbd> 橡皮擦</div>
-      <div><kbd>Ctrl+Z</kbd> 撤销</div>
-      <div><kbd>Ctrl+Y</kbd> 重做</div>
-      <div><kbd>S</kbd> 保存</div>
-      <div><kbd>C</kbd> 清空</div>
-      <div><kbd>[</kbd> <kbd>]</kbd> 调整粗细</div>
-    </div>
-  </div>
+  <!-- Hidden File Input -->
+  <input type="file" id="fileInput" accept="image/*" onchange="handleImageFile(event)">
   
   <!-- Toast -->
   <div class="toast" id="toast"></div>
   
   <script>
     // Canvas Setup
-    const canvas = document.getElementById('drawCanvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const container = document.getElementById('canvasContainer');
-    const cursorPreview = document.getElementById('cursorPreview');
+    const mainCanvas = document.getElementById('mainCanvas');
+    const tempCanvas = document.getElementById('tempCanvas');
+    const mainCtx = mainCanvas.getContext('2d');
+    const tempCtx = tempCanvas.getContext('2d');
+    const wrapper = document.getElementById('canvasWrapper');
     
     // State
-    let isDrawing = false;
     let currentTool = 'pen';
     let currentColor = '#1a1a2e';
-    let currentSize = 5;
-    let currentStroke = [];
+    let currentSize = 3;
+    let currentFont = "'Noto Sans SC', sans-serif";
+    let currentFontSize = 24;
+    let isDrawing = false;
+    let startX, startY;
+    let currentImage = null;
+    let textPosition = null;
     
-    // History
-    let strokes = [];
+    // History System
+    let drawings = []; // Array of canvas image data
+    let currentDrawingIndex = -1;
+    let drawingNames = [];
+    
+    // Undo/Redo System
+    let historyStack = [];
     let redoStack = [];
-    const MAX_HISTORY = 100;
+    const MAX_HISTORY = 50;
     
     // Initialize
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    mainCtx.fillStyle = 'white';
+    mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+    mainCtx.lineCap = 'round';
+    mainCtx.lineJoin = 'round';
+    tempCtx.lineCap = 'round';
+    tempCtx.lineJoin = 'round';
     
-    // Load from localStorage
-    function loadCanvas() {
-      const saved = localStorage.getItem('drawboard_canvas');
-      const savedStrokes = localStorage.getItem('drawboard_strokes');
+    // Create first drawing
+    newCanvas();
+    
+    // ==================== Tools ====================
+    function setTool(tool) {
+      currentTool = tool;
+      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('tool-' + tool)?.classList.add('active');
       
-      if (saved) {
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0);
-          updateStrokeCount();
-        };
-        img.src = saved;
-      }
+      // Show/hide font control
+      document.getElementById('fontControl').style.display = 
+        (tool === 'text') ? 'flex' : 'none';
       
-      if (savedStrokes) {
-        strokes = JSON.parse(savedStrokes);
-        updateHistoryButtons();
-        updateStrokeCount();
-      }
+      // Set cursor
+      mainCanvas.style.cursor = tool === 'text' ? 'text' : 'crosshair';
+      
+      // Clear temp canvas
+      tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
     }
     
-    // Save to localStorage
-    function saveToStorage() {
-      localStorage.setItem('drawboard_canvas', canvas.toDataURL());
-      localStorage.setItem('drawboard_strokes', JSON.stringify(strokes.slice(-MAX_HISTORY)));
+    function setColor(color) {
+      currentColor = color;
+      document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('colorPicker').value = color;
     }
     
-    // Get coordinates
+    function setSize(size) {
+      currentSize = parseInt(size);
+      document.getElementById('sizeValue').textContent = size + 'px';
+    }
+    
+    function setFont(font) {
+      currentFont = font;
+    }
+    
+    function setFontSize(size) {
+      currentFontSize = parseInt(size);
+    }
+    
+    // ==================== Drawing ====================
     function getCoords(e) {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
+      const rect = mainCanvas.getBoundingClientRect();
+      const scaleX = mainCanvas.width / rect.width;
+      const scaleY = mainCanvas.height / rect.height;
       
       let clientX, clientY;
       if (e.touches && e.touches.length > 0) {
@@ -452,239 +717,334 @@
       };
     }
     
-    // Start drawing
+    mainCanvas.addEventListener('mousedown', startDrawing);
+    mainCanvas.addEventListener('mousemove', draw);
+    mainCanvas.addEventListener('mouseup', endDrawing);
+    mainCanvas.addEventListener('mouseout', endDrawing);
+    mainCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+    mainCanvas.addEventListener('touchmove', draw, { passive: false });
+    mainCanvas.addEventListener('touchend', endDrawing);
+    
     function startDrawing(e) {
+      if (currentTool === 'text') {
+        const coords = getCoords(e);
+        textPosition = coords;
+        openTextModal();
+        return;
+      }
+      
       e.preventDefault();
       isDrawing = true;
       const coords = getCoords(e);
-      currentStroke = [coords];
+      startX = coords.x;
+      startY = coords.y;
       
-      ctx.beginPath();
-      ctx.moveTo(coords.x, coords.y);
-      
-      if (currentTool === 'pen') {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = currentColor;
-        ctx.lineWidth = currentSize;
-      } else {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.lineWidth = currentSize * 3;
+      if (currentTool === 'pen' || currentTool === 'eraser' || currentTool === 'marker') {
+        mainCtx.beginPath();
+        mainCtx.moveTo(startX, startY);
+        
+        setupContext(mainCtx);
+        
+        // Draw dot
+        mainCtx.lineTo(startX, startY);
+        mainCtx.stroke();
       }
-      
-      // Draw single dot
-      ctx.lineTo(coords.x, coords.y);
-      ctx.stroke();
     }
     
-    // Draw
     function draw(e) {
       e.preventDefault();
       const coords = getCoords(e);
-      
-      // Update cursor preview
-      updateCursorPreview(e);
-      
-      // Update coordinates display
       document.getElementById('coords').textContent = `${Math.round(coords.x)}, ${Math.round(coords.y)}`;
       
       if (!isDrawing) return;
       
-      currentStroke.push(coords);
-      
-      ctx.lineTo(coords.x, coords.y);
-      ctx.stroke();
+      if (currentTool === 'pen' || currentTool === 'eraser') {
+        mainCtx.lineTo(coords.x, coords.y);
+        mainCtx.stroke();
+      } else if (currentTool === 'marker') {
+        mainCtx.lineTo(coords.x, coords.y);
+        mainCtx.stroke();
+      } else {
+        // Shape preview on temp canvas
+        tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+        tempCtx.beginPath();
+        setupContext(tempCtx);
+        
+        if (currentTool === 'line') {
+          tempCtx.moveTo(startX, startY);
+          tempCtx.lineTo(coords.x, coords.y);
+        } else if (currentTool === 'rect') {
+          tempCtx.rect(startX, startY, coords.x - startX, coords.y - startY);
+        } else if (currentTool === 'circle') {
+          const radius = Math.sqrt(Math.pow(coords.x - startX, 2) + Math.pow(coords.y - startY, 2));
+          tempCtx.arc(startX, startY, radius, 0, 2 * Math.PI);
+        }
+        
+        tempCtx.stroke();
+      }
     }
     
-    // End drawing
     function endDrawing() {
       if (!isDrawing) return;
       isDrawing = false;
       
-      // Save stroke
-      strokes.push({
-        points: currentStroke,
-        tool: currentTool,
-        color: currentColor,
-        size: currentSize,
-        timestamp: Date.now()
-      });
+      if (currentTool === 'line' || currentTool === 'rect' || currentTool === 'circle') {
+        // Copy from temp to main
+        mainCtx.drawImage(tempCanvas, 0, 0);
+        tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+      }
       
-      // Clear redo stack
+      saveHistory();
+      updateUndoRedoButtons();
+    }
+    
+    function setupContext(ctx) {
+      if (currentTool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+        ctx.lineWidth = currentSize * 3;
+      } else if (currentTool === 'marker') {
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.strokeStyle = currentColor + '66'; // 40% opacity
+        ctx.lineWidth = currentSize * 2;
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = currentSize;
+      }
+    }
+    
+    // ==================== Text ====================
+    function openTextModal() {
+      document.getElementById('textModal').classList.add('show');
+      document.getElementById('textInput').value = '';
+      document.getElementById('textInput').focus();
+    }
+    
+    function closeTextModal() {
+      document.getElementById('textModal').classList.remove('show');
+      textPosition = null;
+    }
+    
+    function confirmText() {
+      const text = document.getElementById('textInput').value.trim();
+      if (text && textPosition) {
+        mainCtx.globalCompositeOperation = 'source-over';
+        mainCtx.fillStyle = currentColor;
+        mainCtx.font = `${currentFontSize}px ${currentFont}`;
+        mainCtx.textBaseline = 'top';
+        
+        const lines = text.split('\n');
+        lines.forEach((line, i) => {
+          mainCtx.fillText(line, textPosition.x, textPosition.y + i * (currentFontSize * 1.4));
+        });
+        
+        saveHistory();
+        updateUndoRedoButtons();
+      }
+      closeTextModal();
+    }
+    
+    // ==================== Image ====================
+    function addImage() {
+      document.getElementById('fileInput').click();
+    }
+    
+    function handleImageFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          // Draw image centered on canvas
+          const scale = Math.min(400 / img.width, 300 / img.height, 1);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          const x = (mainCanvas.width - w) / 2;
+          const y = (mainCanvas.height - h) / 2;
+          
+          mainCtx.drawImage(img, x, y, w, h);
+          saveHistory();
+          updateUndoRedoButtons();
+          showToast('图片已插入');
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    // ==================== History System ====================
+    function saveHistory() {
+      const imageData = mainCanvas.toDataURL();
+      historyStack.push(imageData);
+      if (historyStack.length > MAX_HISTORY) {
+        historyStack.shift();
+      }
       redoStack = [];
       
-      // Update UI
-      updateHistoryButtons();
-      updateStrokeCount();
-      
-      // Auto save
-      saveToStorage();
+      // Update current drawing
+      if (currentDrawingIndex >= 0) {
+        drawings[currentDrawingIndex] = imageData;
+        updateHistoryList();
+      }
     }
     
-    // Tool Functions
-    function setTool(tool) {
-      currentTool = tool;
-      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(tool + 'Tool').classList.add('active');
-      updateCursor();
-    }
-    
-    function setColor(color) {
-      currentColor = color;
-      document.getElementById('colorPicker').value = color;
-      document.getElementById('colorPreview').style.background = color;
-      if (currentTool === 'eraser') setTool('pen');
-    }
-    
-    function setSize(size) {
-      currentSize = parseInt(size);
-      document.getElementById('sizeSlider').value = currentSize;
-      document.getElementById('sizeDisplay').textContent = currentSize;
-      updateCursor();
-    }
-    
-    // History Functions
     function undo() {
-      if (strokes.length === 0) return;
+      if (historyStack.length <= 1) return;
       
-      redoStack.push(strokes.pop());
-      redrawCanvas();
-      updateHistoryButtons();
-      updateStrokeCount();
-      saveToStorage();
+      redoStack.push(historyStack.pop());
+      const previous = historyStack[historyStack.length - 1];
+      loadImageData(previous);
+      updateUndoRedoButtons();
       showToast('已撤销');
     }
     
     function redo() {
       if (redoStack.length === 0) return;
       
-      strokes.push(redoStack.pop());
-      redrawCanvas();
-      updateHistoryButtons();
-      updateStrokeCount();
-      saveToStorage();
+      const next = redoStack.pop();
+      historyStack.push(next);
+      loadImageData(next);
+      updateUndoRedoButtons();
       showToast('已重做');
     }
     
-    function redrawCanvas() {
-      // Clear canvas
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Redraw all strokes
-      strokes.forEach(stroke => {
-        if (stroke.tool === 'pen') {
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.strokeStyle = stroke.color;
-          ctx.lineWidth = stroke.size;
-        } else {
-          ctx.globalCompositeOperation = 'destination-out';
-          ctx.lineWidth = stroke.size * 3;
-        }
+    function loadImageData(dataUrl) {
+      const img = new Image();
+      img.onload = function() {
+        mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+        mainCtx.drawImage(img, 0, 0);
         
-        ctx.beginPath();
-        if (stroke.points.length > 0) {
-          ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-          for (let i = 1; i < stroke.points.length; i++) {
-            ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
-          }
+        // Update current drawing
+        if (currentDrawingIndex >= 0) {
+          drawings[currentDrawingIndex] = dataUrl;
+          updateHistoryList();
         }
-        ctx.stroke();
-      });
+      };
+      img.src = dataUrl;
     }
     
-    function updateHistoryButtons() {
-      document.getElementById('undoBtn').disabled = strokes.length === 0;
-      document.getElementById('redoBtn').disabled = redoStack.length === 0;
+    function updateUndoRedoButtons() {
+      document.getElementById('btn-undo').disabled = historyStack.length <= 1;
+      document.getElementById('btn-redo').disabled = redoStack.length === 0;
+      document.getElementById('strokeInfo').textContent = `${historyStack.length - 1} 笔`;
     }
     
-    function updateStrokeCount() {
-      document.getElementById('strokeCount').textContent = `${strokes.length} 笔`;
-    }
-    
-    // Canvas Actions
-    function clearCanvas() {
-      if (strokes.length === 0) return;
-      if (!confirm('确定要清空画布吗？此操作无法撤销。')) return;
+    // ==================== Multi Canvas ====================
+    function newCanvas() {
+      // Save current
+      if (currentDrawingIndex >= 0 && drawings[currentDrawingIndex]) {
+        drawings[currentDrawingIndex] = mainCanvas.toDataURL();
+      }
       
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Create new
+      mainCtx.fillStyle = 'white';
+      mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
       
-      strokes = [];
+      const imageData = mainCanvas.toDataURL();
+      drawings.push(imageData);
+      drawingNames.push(`画板 ${drawings.length}`);
+      currentDrawingIndex = drawings.length - 1;
+      
+      // Reset history
+      historyStack = [imageData];
       redoStack = [];
-      updateHistoryButtons();
-      updateStrokeCount();
-      saveToStorage();
-      showToast('画布已清空');
+      
+      updateHistoryList();
+      updateUndoRedoButtons();
+      showToast('新建画板');
+    }
+    
+    function switchDrawing(index) {
+      if (index === currentDrawingIndex) return;
+      
+      // Save current
+      if (currentDrawingIndex >= 0) {
+        drawings[currentDrawingIndex] = mainCanvas.toDataURL();
+      }
+      
+      // Load new
+      currentDrawingIndex = index;
+      loadImageData(drawings[index]);
+      
+      // Reset history for new drawing
+      historyStack = [drawings[index]];
+      redoStack = [];
+      
+      updateHistoryList();
+      updateUndoRedoButtons();
+    }
+    
+    function deleteDrawing(index, event) {
+      event.stopPropagation();
+      if (!confirm('确定删除这个画板吗？')) return;
+      
+      drawings.splice(index, 1);
+      drawingNames.splice(index, 1);
+      
+      if (drawings.length === 0) {
+        newCanvas();
+      } else {
+        currentDrawingIndex = Math.min(currentDrawingIndex, drawings.length - 1);
+        loadImageData(drawings[currentDrawingIndex]);
+        historyStack = [drawings[currentDrawingIndex]];
+        redoStack = [];
+        updateHistoryList();
+        updateUndoRedoButtons();
+      }
+    }
+    
+    function renameDrawing(index, event) {
+      event.stopPropagation();
+      const newName = prompt('重命名画板:', drawingNames[index]);
+      if (newName) {
+        drawingNames[index] = newName;
+        updateHistoryList();
+      }
+    }
+    
+    function updateHistoryList() {
+      const list = document.getElementById('historyList');
+      list.innerHTML = drawings.map((data, i) => `
+        <div class="history-item ${i === currentDrawingIndex ? 'active' : ''}" onclick="switchDrawing(${i})">
+          <img class="history-thumb" src="${data}" alt="">
+          <div class="history-name">${drawingNames[i]}</div>
+          <div class="history-actions">
+            <button class="history-btn" onclick="renameDrawing(${i}, event)">重命名</button>
+            <button class="history-btn" onclick="deleteDrawing(${i}, event)">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // ==================== Actions ====================
+    function clearCanvas() {
+      if (!confirm('确定清空当前画板？')) return;
+      
+      mainCtx.fillStyle = 'white';
+      mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+      saveHistory();
+      updateUndoRedoButtons();
+      showToast('已清空');
     }
     
     function saveCanvas() {
+      if (currentDrawingIndex >= 0) {
+        drawings[currentDrawingIndex] = mainCanvas.toDataURL();
+      }
+      showToast('已保存到历史');
+    }
+    
+    function exportCanvas() {
       const link = document.createElement('a');
       link.download = `drawing-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = mainCanvas.toDataURL('image/png');
       link.click();
-      showToast('图片已保存');
+      showToast('已导出');
     }
     
-    // Cursor Preview
-    function updateCursorPreview(e) {
-      if (e.target !== canvas) {
-        cursorPreview.style.display = 'none';
-        return;
-      }
-      
-      const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-      const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-      
-      cursorPreview.style.display = 'block';
-      cursorPreview.style.left = clientX + 'px';
-      cursorPreview.style.top = clientY + 'px';
-      cursorPreview.style.width = currentSize + 'px';
-      cursorPreview.style.height = currentSize + 'px';
-      cursorPreview.style.background = currentTool === 'eraser' ? 'rgba(255,255,255,0.5)' : currentColor;
-    }
-    
-    function updateCursor() {
-      canvas.style.cursor = currentTool === 'pen' ? 'crosshair' : 'cell';
-    }
-    
-    // Shortcuts
-    function toggleShortcuts() {
-      document.getElementById('shortcutsHint').classList.toggle('show');
-    }
-    
-    document.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'INPUT') return;
-      
-      if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'z') {
-          e.preventDefault();
-          undo();
-        } else if (e.key === 'y') {
-          e.preventDefault();
-          redo();
-        }
-      } else {
-        switch(e.key.toLowerCase()) {
-          case 'b': setTool('pen'); break;
-          case 'e': setTool('eraser'); break;
-          case 's': saveCanvas(); break;
-          case 'c': clearCanvas(); break;
-          case '[': setSize(Math.max(1, currentSize - 1)); break;
-          case ']': setSize(Math.min(50, currentSize + 1)); break;
-        }
-      }
-    });
-    
-    // Hide shortcuts on click outside
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.tool-btn') || !e.target.closest('.shortcuts-hint')) {
-        document.getElementById('shortcutsHint').classList.remove('show');
-      }
-    });
-    
-    // Toast
     function showToast(msg) {
       const toast = document.getElementById('toast');
       toast.textContent = msg;
@@ -692,29 +1052,36 @@
       setTimeout(() => toast.classList.remove('show'), 2000);
     }
     
-    // Event Listeners
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', endDrawing);
-    canvas.addEventListener('mouseout', () => {
-      endDrawing();
-      cursorPreview.style.display = 'none';
+    // ==================== Keyboard Shortcuts ====================
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+      
+      if (e.ctrlKey || e.metaKey) {
+        switch(e.key.toLowerCase()) {
+          case 'z': e.preventDefault(); undo(); break;
+          case 'y': e.preventDefault(); redo(); break;
+          case 's': e.preventDefault(); saveCanvas(); break;
+        }
+      } else {
+        switch(e.key.toLowerCase()) {
+          case 'b': setTool('pen'); break;
+          case 'm': setTool('marker'); break;
+          case 'e': setTool('eraser'); break;
+          case 'l': setTool('line'); break;
+          case 'r': setTool('rect'); break;
+          case 'c': setTool('circle'); break;
+          case 't': setTool('text'); break;
+          case 'i': addImage(); break;
+          case '[': setSize(Math.max(1, currentSize - 1)); document.getElementById('sizeSlider').value = currentSize; break;
+          case ']': setSize(Math.min(50, currentSize + 1)); document.getElementById('sizeSlider').value = currentSize; break;
+        }
+      }
     });
-    canvas.addEventListener('mouseover', () => cursorPreview.style.display = 'block');
     
-    // Touch events
-    canvas.addEventListener('touchstart', startDrawing, { passive: false });
-    canvas.addEventListener('touchmove', draw, { passive: false });
-    canvas.addEventListener('touchend', endDrawing);
-    
-    // Prevent scrolling on touch
+    // Prevent scrolling
     document.body.addEventListener('touchmove', (e) => {
-      if (e.target === canvas) e.preventDefault();
+      if (e.target === mainCanvas) e.preventDefault();
     }, { passive: false });
-    
-    // Init
-    loadCanvas();
-    updateCursor();
   </script>
 </body>
 </html>
