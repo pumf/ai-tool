@@ -36,52 +36,30 @@
       overflow: hidden;
     }
     
-    .app {
-      display: flex;
-      height: 100vh;
-    }
+    .app { display: flex; height: 100vh; }
     
     /* Sidebar */
     .sidebar {
-      width: 220px;
-      background: var(--color-canvas);
+      width: 220px; background: var(--color-canvas);
       border-right: 1px solid var(--color-border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
+      display: flex; flex-direction: column; flex-shrink: 0;
     }
     .sidebar-header {
-      padding: 16px;
-      border-bottom: 1px solid var(--color-border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 16px; border-bottom: 1px solid var(--color-border);
+      display: flex; justify-content: space-between; align-items: center;
     }
     .sidebar-title { font-size: 14px; font-weight: 600; }
     .btn-small {
-      padding: 6px 12px;
-      border: 1px solid var(--color-border);
-      background: var(--color-canvas);
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      cursor: pointer;
-      color: var(--color-body);
+      padding: 6px 12px; border: 1px solid var(--color-border);
+      background: var(--color-canvas); border-radius: var(--radius-sm);
+      font-size: 12px; cursor: pointer; color: var(--color-body);
     }
     .btn-small:hover { border-color: var(--color-primary); color: var(--color-primary); }
     .btn-small.primary { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }
-    
-    .history-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px;
-    }
+    .history-list { flex: 1; overflow-y: auto; padding: 8px; }
     .history-item {
-      padding: 10px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      margin-bottom: 6px;
-      border: 2px solid transparent;
-      transition: all 0.2s;
+      padding: 10px; border-radius: var(--radius-sm); cursor: pointer;
+      margin-bottom: 6px; border: 2px solid transparent; transition: all 0.2s;
     }
     .history-item:hover { background: var(--color-canvas-soft); }
     .history-item.active { border-color: var(--color-primary); background: var(--color-primary-soft); }
@@ -93,59 +71,35 @@
     
     /* Main */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    
     .top-bar {
-      height: 56px;
-      background: var(--color-canvas);
+      height: 56px; background: var(--color-canvas);
       border-bottom: 1px solid var(--color-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; flex-shrink: 0;
     }
     .logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); }
     .logo span { color: var(--color-primary); }
     
     /* Toolbar */
     .toolbar {
-      background: var(--color-canvas);
-      border-bottom: 1px solid var(--color-border);
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      flex-shrink: 0;
+      background: var(--color-canvas); border-bottom: 1px solid var(--color-border);
+      padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap; flex-shrink: 0;
     }
-    .tool-section {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding-right: 12px;
-      border-right: 1px solid var(--color-border);
-    }
+    .tool-section { display: flex; align-items: center; gap: 4px; padding-right: 12px; border-right: 1px solid var(--color-border); }
     .tool-section:last-child { border-right: none; padding-right: 0; }
     
     .tool-btn {
-      width: 38px; height: 38px;
-      border: 1px solid transparent;
-      background: transparent;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      color: var(--color-body);
-      position: relative;
+      width: 38px; height: 38px; border: 1px solid transparent; background: transparent;
+      border-radius: var(--radius-sm); cursor: pointer; display: flex;
+      align-items: center; justify-content: center; transition: all 0.2s;
+      color: var(--color-body); position: relative;
     }
     .tool-btn:hover { background: var(--color-canvas-soft); color: var(--color-ink); }
     .tool-btn.active { background: var(--color-primary-soft); color: var(--color-primary); border-color: var(--color-primary); }
     .tool-btn svg { width: 20px; height: 20px; }
     .tool-btn .shortcut { position: absolute; bottom: 2px; right: 4px; font-size: 9px; opacity: 0.6; }
     
-    /* Color Palette */
     .color-palette { display: flex; flex-direction: column; gap: 4px; }
     .color-row { display: flex; gap: 4px; }
     .color-btn { width: 20px; height: 20px; border-radius: 4px; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; }
@@ -166,62 +120,72 @@
     
     /* Canvas Area */
     .canvas-area {
-      flex: 1;
-      background: var(--color-canvas-soft-2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: auto;
-      padding: 40px;
-      position: relative;
+      flex: 1; background: var(--color-canvas-soft-2);
+      display: flex; align-items: center; justify-content: center;
+      overflow: auto; padding: 40px; position: relative;
     }
     .canvas-wrapper { position: relative; background: white; box-shadow: 0 8px 40px var(--color-shadow); border-radius: var(--radius-sm); overflow: hidden; }
     #mainCanvas, #tempCanvas { display: block; }
     #tempCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
     
-    /* Selection Box */
-    .selection-box {
-      position: absolute;
-      border: 2px dashed var(--color-primary);
-      pointer-events: none;
-      display: none;
+    /* Transform Box - For move/resize/rotate */
+    .transform-box {
+      position: absolute; border: 2px dashed var(--color-primary); display: none; z-index: 10;
     }
-    .selection-box.show { display: block; }
-    .selection-handle {
-      position: absolute;
-      width: 10px; height: 10px;
+    .transform-box.show { display: block; }
+    .transform-box .move-area {
+      position: absolute; inset: 8px; cursor: move;
+    }
+    .transform-handle {
+      position: absolute; width: 12px; height: 12px;
+      background: var(--color-primary); border: 2px solid white;
+      border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .transform-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+    .transform-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+    .transform-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+    .transform-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+    .transform-handle.n { top: -6px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+    .transform-handle.s { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+    .transform-handle.w { left: -6px; top: 50%; transform: translateY(-50%); cursor: w-resize; }
+    .transform-handle.e { right: -6px; top: 50%; transform: translateY(-50%); cursor: e-resize; }
+    
+    .rotate-handle {
+      position: absolute; top: -35px; left: 50%;
+      transform: translateX(-50%); width: 20px; height: 20px;
+      background: var(--color-primary); border: 2px solid white;
+      border-radius: 50%; cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .rotate-handle::after {
+      content: ''; position: absolute; top: 20px; left: 50%;
+      transform: translateX(-50%); width: 2px; height: 15px;
       background: var(--color-primary);
-      border: 2px solid white;
-      border-radius: 50%;
     }
-    .selection-handle.nw { top: -6px; left: -6px; }
-    .selection-handle.ne { top: -6px; right: -6px; }
-    .selection-handle.sw { bottom: -6px; left: -6px; }
-    .selection-handle.se { bottom: -6px; right: -6px; }
+    .rotate-handle:active { cursor: grabbing; }
+    
+    .rotate-value {
+      position: absolute; top: -55px; left: 50%;
+      transform: translateX(-50%); background: var(--color-ink);
+      color: white; padding: 4px 8px; border-radius: 4px;
+      font-size: 11px; white-space: nowrap;
+    }
     
     /* Bottom Bar */
     .bottom-bar {
-      height: 40px;
-      background: var(--color-canvas);
+      height: 40px; background: var(--color-canvas);
       border-top: 1px solid var(--color-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      font-size: 12px;
-      color: var(--color-muted);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; font-size: 12px; color: var(--color-muted);
     }
     .bottom-left { display: flex; gap: 16px; }
     
-    /* Modals */
+    /* Modals & Toast */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
     .modal-overlay.show { display: flex; }
     .modal { background: var(--color-canvas); border-radius: var(--radius-md); padding: 24px; max-width: 400px; width: 90%; }
     .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
     .modal-input { width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 14px; margin-bottom: 16px; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-    
-    /* Toast */
     .toast { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-ink); color: white; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; z-index: 1000; opacity: 0; transition: all 0.3s; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     
@@ -337,7 +301,7 @@
           <button class="tool-btn" id="btn-redo" onclick="redo()" disabled title="重做">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3L21 13"/></svg>
           </button>
-          <button class="tool-btn" id="btn-delete" onclick="deleteSelected()" disabled title="删除选中">
+          <button class="tool-btn" id="btn-delete" onclick="deleteSelected()" disabled title="删除 (Del)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
           </button>
           <button class="tool-btn" onclick="clearCanvas()" title="清空">
@@ -351,12 +315,21 @@
         <div class="canvas-wrapper" id="canvasWrapper">
           <canvas id="mainCanvas" width="1200" height="800"></canvas>
           <canvas id="tempCanvas" width="1200" height="800"></canvas>
-          <!-- Selection Box -->
-          <div class="selection-box" id="selectionBox">
-            <div class="selection-handle nw"></div>
-            <div class="selection-handle ne"></div>
-            <div class="selection-handle sw"></div>
-            <div class="selection-handle se"></div>
+          
+          <!-- Transform Box with handles -->
+          <div class="transform-box" id="transformBox">
+            <div class="move-area" id="moveArea"></div>
+            <div class="transform-handle nw" data-handle="nw"></div>
+            <div class="transform-handle ne" data-handle="ne"></div>
+            <div class="transform-handle sw" data-handle="sw"></div>
+            <div class="transform-handle se" data-handle="se"></div>
+            <div class="transform-handle n" data-handle="n"></div>
+            <div class="transform-handle s" data-handle="s"></div>
+            <div class="transform-handle w" data-handle="w"></div>
+            <div class="transform-handle e" data-handle="e"></div>
+            <div class="rotate-handle" id="rotateHandle">
+              <div class="rotate-value" id="rotateValue">0°</div>
+            </div>
           </div>
         </div>
       </div>
@@ -395,7 +368,10 @@
     const mainCtx = mainCanvas.getContext('2d');
     const tempCtx = tempCanvas.getContext('2d');
     const wrapper = document.getElementById('canvasWrapper');
-    const selectionBox = document.getElementById('selectionBox');
+    const transformBox = document.getElementById('transformBox');
+    const moveArea = document.getElementById('moveArea');
+    const rotateHandle = document.getElementById('rotateHandle');
+    const rotateValue = document.getElementById('rotateValue');
     
     // State
     let currentTool = 'pen';
@@ -404,36 +380,29 @@
     let currentFont = "'Noto Sans SC', sans-serif";
     let currentFontSize = 24;
     
-    // Element-based storage
-    let elements = []; // {id, type, x, y, width, height, color, size, data, ...}
+    // Elements
+    let elements = [];
     let selectedElement = null;
     let isDrawing = false;
-    let isDragging = false;
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
-    let dragStartX = 0;
-    let dragStartY = 0;
     let tempElement = null;
     
-    // Multi-canvas
-    let canvases = [];
-    let currentCanvasIndex = -1;
+    // Transform state
+    let transformMode = null; // 'move', 'resize', 'rotate'
+    let resizeHandle = null;
+    let transformStart = { x: 0, y: 0, elX: 0, elY: 0, elW: 0, elH: 0, elRot: 0, elPoints: null };
+    let initialAngle = 0;
+    let centerPoint = { x: 0, y: 0 };
     
-    // Undo/Redo
+    // History
     let historyStack = [];
     let redoStack = [];
     const MAX_HISTORY = 50;
+    let canvases = [];
+    let currentCanvasIndex = -1;
     
-    // Tool names
     const toolNames = {
-      select: '选择/移动',
-      pen: '画笔',
-      marker: '荧光笔',
-      eraser: '橡皮擦',
-      line: '直线',
-      rect: '矩形',
-      circle: '圆形',
-      text: '文字'
+      select: '选择/移动', pen: '画笔', marker: '荧光笔', eraser: '橡皮擦',
+      line: '直线', rect: '矩形', circle: '圆形', text: '文字'
     };
     
     // Init
@@ -441,33 +410,18 @@
     mainCtx.lineJoin = 'round';
     tempCtx.lineCap = 'round';
     tempCtx.lineJoin = 'round';
-    
-    // Create first canvas
     newCanvas();
+    setupTransformHandlers();
     
     // ==================== Tool Functions ====================
     function setTool(tool) {
       currentTool = tool;
       document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById('tool-' + tool)?.classList.add('active');
-      
       document.getElementById('fontControl').style.display = (tool === 'text') ? 'flex' : 'none';
       document.getElementById('toolInfo').textContent = toolNames[tool] || tool;
-      
-      // Set cursor
-      if (tool === 'select') {
-        mainCanvas.style.cursor = 'default';
-      } else if (tool === 'text') {
-        mainCanvas.style.cursor = 'text';
-      } else {
-        mainCanvas.style.cursor = 'crosshair';
-      }
-      
-      // Clear selection when switching tools
-      if (tool !== 'select') {
-        deselect();
-      }
-      
+      mainCanvas.style.cursor = tool === 'select' ? 'default' : (tool === 'text' ? 'text' : 'crosshair');
+      if (tool !== 'select') deselect();
       tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
       render();
     }
@@ -477,8 +431,6 @@
       document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
       document.getElementById('colorPicker').value = color;
-      
-      // Update selected element
       if (selectedElement) {
         selectedElement.color = color;
         saveHistory();
@@ -489,7 +441,6 @@
     function setSize(size) {
       currentSize = parseInt(size);
       document.getElementById('sizeValue').textContent = size + 'px';
-      
       if (selectedElement) {
         selectedElement.size = currentSize;
         saveHistory();
@@ -505,46 +456,45 @@
       return {
         id: Date.now() + Math.random(),
         type: type,
-        x: data.x || 0,
-        y: data.y || 0,
-        width: data.width || 0,
-        height: data.height || 0,
-        color: data.color || currentColor,
-        size: data.size || currentSize,
-        font: data.font || currentFont,
-        fontSize: data.fontSize || currentFontSize,
-        points: data.points || [],
-        text: data.text || '',
+        x: data.x ?? 0, y: data.y ?? 0,
+        width: data.width ?? 0, height: data.height ?? 0,
+        color: data.color ?? currentColor,
+        size: data.size ?? currentSize,
+        font: data.font ?? currentFont,
+        fontSize: data.fontSize ?? currentFontSize,
+        points: data.points ? [...data.points] : [],
+        text: data.text ?? '',
         image: data.image || null,
-        rotation: data.rotation || 0
+        rotation: data.rotation ?? 0
       };
     }
     
     function render() {
-      // Clear main canvas
       mainCtx.fillStyle = 'white';
       mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-      
-      // Render all elements
-      elements.forEach(el => {
-        renderElement(mainCtx, el);
-      });
-      
-      // Update UI
+      elements.forEach(el => renderElement(mainCtx, el));
       document.getElementById('elementInfo').textContent = elements.length + ' 个元素';
-      updateSelectionBox();
+      updateTransformBox();
     }
     
     function renderElement(ctx, el, isTemp = false) {
       ctx.save();
-      
-      // Apply rotation if exists
       if (el.rotation) {
-        const centerX = el.x + (el.width || 0) / 2;
-        const centerY = el.y + (el.height || 0) / 2;
-        ctx.translate(centerX, centerY);
+        const cx = el.x + (el.width || 0) / 2;
+        const cy = el.y + (el.height || 0) / 2;
+        if (el.type === 'path' || el.type === 'line' || el.type === 'circle') {
+          // For paths, use bounding box center
+          const bounds = getElementBounds(el);
+          ctx.translate(bounds.cx, bounds.cy);
+        } else {
+          ctx.translate(el.x + el.width / 2, el.y + el.height / 2);
+        }
         ctx.rotate(el.rotation * Math.PI / 180);
-        ctx.translate(-centerX, -centerY);
+        if (el.type === 'path' || el.type === 'line' || el.type === 'circle') {
+          ctx.translate(-bounds.cx, -bounds.cy);
+        } else {
+          ctx.translate(-el.x - el.width / 2, -el.y - el.height / 2);
+        }
       }
       
       switch(el.type) {
@@ -552,14 +502,11 @@
           if (el.points.length > 1) {
             ctx.beginPath();
             ctx.moveTo(el.points[0].x, el.points[0].y);
-            for (let i = 1; i < el.points.length; i++) {
-              ctx.lineTo(el.points[i].x, el.points[i].y);
-            }
+            for (let i = 1; i < el.points.length; i++) ctx.lineTo(el.points[i].x, el.points[i].y);
             setupStroke(ctx, el);
             ctx.stroke();
           }
           break;
-          
         case 'line':
           ctx.beginPath();
           ctx.moveTo(el.x, el.y);
@@ -567,14 +514,12 @@
           setupStroke(ctx, el);
           ctx.stroke();
           break;
-          
         case 'rect':
           ctx.beginPath();
           ctx.rect(el.x, el.y, el.width, el.height);
           setupStroke(ctx, el);
           ctx.stroke();
           break;
-          
         case 'circle':
           ctx.beginPath();
           const radius = Math.sqrt(el.width * el.width + el.height * el.height);
@@ -582,24 +527,17 @@
           setupStroke(ctx, el);
           ctx.stroke();
           break;
-          
         case 'text':
           ctx.fillStyle = el.color;
           ctx.font = `${el.fontSize}px ${el.font}`;
           ctx.textBaseline = 'top';
           const lines = el.text.split('\n');
-          lines.forEach((line, i) => {
-            ctx.fillText(line, el.x, el.y + i * (el.fontSize * 1.4));
-          });
+          lines.forEach((line, i) => ctx.fillText(line, el.x, el.y + i * (el.fontSize * 1.4)));
           break;
-          
         case 'image':
-          if (el.image) {
-            ctx.drawImage(el.image, el.x, el.y, el.width, el.height);
-          }
+          if (el.image) ctx.drawImage(el.image, el.x, el.y, el.width, el.height);
           break;
       }
-      
       ctx.restore();
     }
     
@@ -619,72 +557,37 @@
       }
     }
     
-    // ==================== Mouse Events ====================
+    function getElementBounds(el) {
+      switch(el.type) {
+        case 'path':
+          if (!el.points.length) return { x: 0, y: 0, width: 0, height: 0, cx: 0, cy: 0 };
+          let minX = el.points[0].x, maxX = el.points[0].x;
+          let minY = el.points[0].y, maxY = el.points[0].y;
+          el.points.forEach(p => {
+            minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+            minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+          });
+          return { x: minX, y: minY, width: maxX - minX, height: maxY - minY, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+        case 'line':
+          return { x: Math.min(el.x, el.x + el.width), y: Math.min(el.y, el.y + el.height), width: Math.abs(el.width), height: Math.abs(el.height), cx: el.x + el.width / 2, cy: el.y + el.height / 2 };
+        case 'circle':
+          const r = Math.sqrt(el.width * el.width + el.height * el.height);
+          return { x: el.x - r, y: el.y - r, width: r * 2, height: r * 2, cx: el.x, cy: el.y };
+        default:
+          return { x: el.x, y: el.y, width: el.width, height: el.height, cx: el.x + el.width / 2, cy: el.y + el.height / 2 };
+      }
+    }
+    
+    // ==================== Canvas Events ====================
     function getCoords(e) {
       const rect = mainCanvas.getBoundingClientRect();
       const scaleX = mainCanvas.width / rect.width;
       const scaleY = mainCanvas.height / rect.height;
-      
-      let clientX, clientY;
-      if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-      }
-      
-      return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY
-      };
+      let clientX = e.touches?.[0]?.clientX ?? e.clientX;
+      let clientY = e.touches?.[0]?.clientY ?? e.clientY;
+      return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
     }
     
-    function hitTest(x, y) {
-      // Check from top to bottom (reverse order)
-      for (let i = elements.length - 1; i >= 0; i--) {
-        const el = elements[i];
-        if (isPointInElement(x, y, el)) {
-          return el;
-        }
-      }
-      return null;
-    }
-    
-    function isPointInElement(x, y, el) {
-      switch(el.type) {
-        case 'path':
-          // Approximate with bounding box
-          const bounds = getPathBounds(el.points);
-          return x >= bounds.minX - el.size && x <= bounds.maxX + el.size &&
-                 y >= bounds.minY - el.size && y <= bounds.maxY + el.size;
-        case 'line':
-        case 'rect':
-        case 'text':
-        case 'image':
-          return x >= el.x && x <= el.x + el.width && y >= el.y && y <= el.y + el.height;
-        case 'circle':
-          const radius = Math.sqrt(el.width * el.width + el.height * el.height);
-          const dist = Math.sqrt((x - el.x) ** 2 + (y - el.y) ** 2);
-          return dist <= radius;
-      }
-      return false;
-    }
-    
-    function getPathBounds(points) {
-      if (!points.length) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-      let minX = points[0].x, maxX = points[0].x;
-      let minY = points[0].y, maxY = points[0].y;
-      points.forEach(p => {
-        minX = Math.min(minX, p.x);
-        maxX = Math.max(maxX, p.x);
-        minY = Math.min(minY, p.y);
-        maxY = Math.max(maxY, p.y);
-      });
-      return { minX, minY, maxX, maxY };
-    }
-    
-    // Event listeners
     mainCanvas.addEventListener('mousedown', onPointerDown);
     mainCanvas.addEventListener('mousemove', onPointerMove);
     mainCanvas.addEventListener('mouseup', onPointerUp);
@@ -700,37 +603,25 @@
         const hit = hitTest(coords.x, coords.y);
         if (hit) {
           selectElement(hit);
-          isDragging = true;
-          dragOffsetX = coords.x - hit.x;
-          dragOffsetY = coords.y - hit.y;
-          dragStartX = hit.x;
-          dragStartY = hit.y;
+          transformMode = 'move';
+          const bounds = getElementBounds(hit);
+          transformStart = { x: coords.x, y: coords.y, elX: hit.x, elY: hit.y, elW: hit.width, elH: hit.height, bounds };
         } else {
           deselect();
         }
         return;
       }
       
-      isDrawing = true;
-      
       if (currentTool === 'text') {
         openTextModal(coords.x, coords.y);
         return;
       }
       
+      isDrawing = true;
       if (currentTool === 'pen' || currentTool === 'eraser' || currentTool === 'marker') {
-        tempElement = createElement('path', {
-          x: coords.x,
-          y: coords.y,
-          points: [{x: coords.x, y: coords.y}]
-        });
+        tempElement = createElement('path', { x: coords.x, y: coords.y, points: [{x: coords.x, y: coords.y}] });
       } else {
-        tempElement = createElement(currentTool, {
-          x: coords.x,
-          y: coords.y,
-          width: 0,
-          height: 0
-        });
+        tempElement = createElement(currentTool, { x: coords.x, y: coords.y, width: 0, height: 0 });
       }
     }
     
@@ -739,10 +630,27 @@
       const coords = getCoords(e);
       document.getElementById('coords').textContent = `${Math.round(coords.x)}, ${Math.round(coords.y)}`;
       
-      if (isDragging && selectedElement) {
-        selectedElement.x = coords.x - dragOffsetX;
-        selectedElement.y = coords.y - dragOffsetY;
-        render();
+      // Transform mode
+      if (transformMode && selectedElement) {
+        if (transformMode === 'move') {
+          const dx = coords.x - transformStart.x;
+          const dy = coords.y - transformStart.y;
+          if (selectedElement.type === 'path') {
+            selectedElement.points = transformStart.elPoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
+          } else if (selectedElement.type === 'line' || selectedElement.type === 'circle') {
+            selectedElement.x = transformStart.elX + dx;
+            selectedElement.y = transformStart.elY + dy;
+          } else {
+            selectedElement.x = transformStart.elX + dx;
+            selectedElement.y = transformStart.elY + dy;
+          }
+          updateTransformBox();
+          render();
+        } else if (transformMode === 'resize') {
+          applyResize(coords);
+        } else if (transformMode === 'rotate') {
+          applyRotate(coords);
+        }
         return;
       }
       
@@ -750,7 +658,6 @@
       
       if (tempElement.type === 'path') {
         tempElement.points.push({x: coords.x, y: coords.y});
-        // Render path on temp canvas
         tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
         renderElement(tempCtx, tempElement, true);
       } else {
@@ -762,87 +669,191 @@
     }
     
     function onPointerUp() {
-      if (isDragging) {
-        isDragging = false;
-        if (selectedElement && (selectedElement.x !== dragStartX || selectedElement.y !== dragStartY)) {
+      if (transformMode) {
+        if (transformMode === 'move') {
+          // Check if actually moved
+          const el = selectedElement;
+          let moved = false;
+          if (el.type === 'path') {
+            moved = JSON.stringify(el.points) !== JSON.stringify(transformStart.elPoints);
+          } else {
+            moved = el.x !== transformStart.elX || el.y !== transformStart.elY;
+          }
+          if (moved) saveHistory();
+        } else {
           saveHistory();
         }
+        transformMode = null;
+        resizeHandle = null;
         return;
       }
       
       if (!isDrawing || !tempElement) return;
       isDrawing = false;
       
-      // Add element to list
+      let shouldAdd = false;
       if (tempElement.type === 'path' && tempElement.points.length > 1) {
-        elements.push(tempElement);
-        saveHistory();
+        shouldAdd = true;
       } else if (tempElement.type !== 'path' && (Math.abs(tempElement.width) > 5 || Math.abs(tempElement.height) > 5)) {
+        shouldAdd = true;
+      }
+      
+      if (shouldAdd) {
         elements.push(tempElement);
         saveHistory();
       }
-      
       tempElement = null;
       tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
       render();
       updateUndoRedoButtons();
     }
     
+    // ==================== Transform Handlers ====================
+    function setupTransformHandlers() {
+      // Move area
+      moveArea.addEventListener('mousedown', (e) => {
+        if (!selectedElement || currentTool !== 'select') return;
+        e.stopPropagation();
+        transformMode = 'move';
+        const coords = getCoords({ clientX: e.clientX, clientY: e.clientY });
+        const bounds = getElementBounds(selectedElement);
+        transformStart = { 
+          x: coords.x, y: coords.y, 
+          elX: selectedElement.x, elY: selectedElement.y, 
+          elW: selectedElement.width, elH: selectedElement.height,
+          bounds,
+          elPoints: selectedElement.type === 'path' ? selectedElement.points.map(p => ({...p})) : null
+        };
+      });
+      
+      // Resize handles
+      document.querySelectorAll('.transform-handle').forEach(handle => {
+        handle.addEventListener('mousedown', (e) => {
+          if (!selectedElement) return;
+          e.stopPropagation();
+          transformMode = 'resize';
+          resizeHandle = e.target.dataset.handle;
+          const coords = getCoords({ clientX: e.clientX, clientY: e.clientY });
+          const bounds = getElementBounds(selectedElement);
+          transformStart = {
+            x: coords.x, y: coords.y,
+            elX: selectedElement.x, elY: selectedElement.y,
+            elW: selectedElement.width, elH: selectedElement.height,
+            elRot: selectedElement.rotation || 0,
+            bounds
+          };
+        });
+      });
+      
+      // Rotate handle
+      rotateHandle.addEventListener('mousedown', (e) => {
+        if (!selectedElement) return;
+        e.stopPropagation();
+        transformMode = 'rotate';
+        const coords = getCoords({ clientX: e.clientX, clientY: e.clientY });
+        const bounds = getElementBounds(selectedElement);
+        centerPoint = { x: bounds.cx, y: bounds.cy };
+        initialAngle = Math.atan2(coords.y - centerPoint.y, coords.x - centerPoint.x) * 180 / Math.PI;
+        transformStart = { elRot: selectedElement.rotation || 0 };
+      });
+    }
+    
+    function applyResize(coords) {
+      if (!selectedElement || !resizeHandle) return;
+      const el = selectedElement;
+      const start = transformStart;
+      let dx = coords.x - start.x;
+      let dy = coords.y - start.y;
+      
+      // Simple resize logic
+      if (resizeHandle.includes('e')) el.width = Math.max(10, start.elW + dx);
+      if (resizeHandle.includes('w')) {
+        const newW = Math.max(10, start.elW - dx);
+        el.x = start.elX + start.elW - newW;
+        el.width = newW;
+      }
+      if (resizeHandle.includes('s')) el.height = Math.max(10, start.elH + dy);
+      if (resizeHandle.includes('n')) {
+        const newH = Math.max(10, start.elH - dy);
+        el.y = start.elY + start.elH - newH;
+        el.height = newH;
+      }
+      
+      // For images, maintain aspect ratio if shift is held (simplified)
+      if (el.type === 'image') {
+        // Keep aspect ratio
+        const ratio = el.image.width / el.image.height;
+        if (resizeHandle.includes('e') || resizeHandle.includes('w')) {
+          el.height = el.width / ratio;
+        } else {
+          el.width = el.height * ratio;
+        }
+      }
+      
+      updateTransformBox();
+      render();
+    }
+    
+    function applyRotate(coords) {
+      if (!selectedElement) return;
+      const currentAngle = Math.atan2(coords.y - centerPoint.y, coords.x - centerPoint.x) * 180 / Math.PI;
+      const deltaAngle = currentAngle - initialAngle;
+      selectedElement.rotation = (transformStart.elRot + deltaAngle) % 360;
+      rotateValue.textContent = Math.round(selectedElement.rotation) + '°';
+      updateTransformBox();
+      render();
+    }
+    
+    // ==================== Hit Testing ====================
+    function hitTest(x, y) {
+      for (let i = elements.length - 1; i >= 0; i--) {
+        if (isPointInElement(x, y, elements[i])) return elements[i];
+      }
+      return null;
+    }
+    
+    function isPointInElement(x, y, el) {
+      const bounds = getElementBounds(el);
+      // Simple bounding box test with padding
+      const padding = Math.max(el.size || 3, 5);
+      return x >= bounds.x - padding && x <= bounds.x + bounds.width + padding &&
+             y >= bounds.y - padding && y <= bounds.y + bounds.height + padding;
+    }
+    
     // ==================== Selection ====================
     function selectElement(el) {
       selectedElement = el;
-      updateSelectionBox();
       document.getElementById('btn-delete').disabled = false;
-      
-      // Update toolbar to show element properties
       document.getElementById('sizeSlider').value = el.size || 3;
       document.getElementById('sizeValue').textContent = (el.size || 3) + 'px';
+      updateTransformBox();
     }
     
     function deselect() {
       selectedElement = null;
-      selectionBox.classList.remove('show');
+      transformBox.classList.remove('show');
       document.getElementById('btn-delete').disabled = true;
     }
     
-    function updateSelectionBox() {
+    function updateTransformBox() {
       if (!selectedElement) {
-        selectionBox.classList.remove('show');
+        transformBox.classList.remove('show');
         return;
       }
-      
-      const el = selectedElement;
-      let x, y, w, h;
-      
-      switch(el.type) {
-        case 'path':
-          const bounds = getPathBounds(el.points);
-          x = bounds.minX; y = bounds.minY;
-          w = bounds.maxX - bounds.minX;
-          h = bounds.maxY - bounds.minY;
-          break;
-        case 'circle':
-          const r = Math.sqrt(el.width * el.width + el.height * el.height);
-          x = el.x - r; y = el.y - r;
-          w = r * 2; h = r * 2;
-          break;
-        default:
-          x = el.x; y = el.y;
-          w = Math.abs(el.width); h = Math.abs(el.height);
-      }
-      
-      selectionBox.style.left = x + 'px';
-      selectionBox.style.top = y + 'px';
-      selectionBox.style.width = w + 'px';
-      selectionBox.style.height = h + 'px';
-      selectionBox.classList.add('show');
+      const bounds = getElementBounds(selectedElement);
+      transformBox.style.left = bounds.x + 'px';
+      transformBox.style.top = bounds.y + 'px';
+      transformBox.style.width = bounds.width + 'px';
+      transformBox.style.height = bounds.height + 'px';
+      rotateValue.textContent = Math.round(selectedElement.rotation || 0) + '°';
+      transformBox.classList.add('show');
     }
     
     function deleteSelected() {
       if (!selectedElement) return;
-      const index = elements.indexOf(selectedElement);
-      if (index > -1) {
-        elements.splice(index, 1);
+      const idx = elements.indexOf(selectedElement);
+      if (idx > -1) {
+        elements.splice(idx, 1);
         deselect();
         saveHistory();
         render();
@@ -858,24 +869,14 @@
       document.getElementById('textInput').value = '';
       document.getElementById('textInput').focus();
     }
-    
-    function closeTextModal() {
-      document.getElementById('textModal').classList.remove('show');
-      textPos = null;
-      isDrawing = false;
-    }
-    
+    function closeTextModal() { document.getElementById('textModal').classList.remove('show'); textPos = null; isDrawing = false; }
     function confirmText() {
       const text = document.getElementById('textInput').value.trim();
       if (text && textPos) {
         const el = createElement('text', {
-          x: textPos.x,
-          y: textPos.y,
-          width: 200,
+          x: textPos.x, y: textPos.y, width: 200,
           height: text.split('\n').length * currentFontSize * 1.4,
-          text: text,
-          font: currentFont,
-          fontSize: currentFontSize
+          text: text, font: currentFont, fontSize: currentFontSize
         });
         elements.push(el);
         saveHistory();
@@ -887,11 +888,9 @@
     
     // ==================== Image ====================
     function addImage() { document.getElementById('fileInput').click(); }
-    
     function handleImageFile(e) {
       const file = e.target.files[0];
       if (!file) return;
-      
       const reader = new FileReader();
       reader.onload = function(event) {
         const img = new Image();
@@ -900,8 +899,7 @@
           const el = createElement('image', {
             x: (mainCanvas.width - img.width * scale) / 2,
             y: (mainCanvas.height - img.height * scale) / 2,
-            width: img.width * scale,
-            height: img.height * scale,
+            width: img.width * scale, height: img.height * scale,
             image: img
           });
           elements.push(el);
@@ -917,11 +915,8 @@
     
     // ==================== History ====================
     function saveHistory() {
-      const state = JSON.stringify(elements.map(el => ({
-        ...el,
-        image: el.image ? '[Image]' : null
-      })));
-      historyStack.push({ elements: state, dataUrl: mainCanvas.toDataURL() });
+      const state = JSON.stringify(elements.map(el => ({ ...el, image: el.image ? '[Image]' : null })));
+      historyStack.push({ elements: state });
       if (historyStack.length > MAX_HISTORY) historyStack.shift();
       redoStack = [];
     }
@@ -929,8 +924,7 @@
     function undo() {
       if (historyStack.length <= 1) return;
       redoStack.push(historyStack.pop());
-      const prev = historyStack[historyStack.length - 1];
-      loadState(prev);
+      loadState(historyStack[historyStack.length - 1]);
       showToast('已撤销');
     }
     
@@ -943,16 +937,10 @@
     }
     
     function loadState(state) {
-      // Note: This is a simplified version. For full restoration, 
-      // we'd need to store element data and recreate images
-      const img = new Image();
-      img.onload = () => {
-        mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-        mainCtx.drawImage(img, 0, 0);
-      };
-      img.src = state.dataUrl;
+      // Simplified - in production would need to restore images
       deselect();
       updateUndoRedoButtons();
+      render();
     }
     
     function updateUndoRedoButtons() {
@@ -962,45 +950,25 @@
     
     // ==================== Canvas Management ====================
     function newCanvas() {
-      if (currentCanvasIndex >= 0) {
-        canvases[currentCanvasIndex] = { elements: [...elements], thumbnail: mainCanvas.toDataURL() };
-      }
-      
-      elements = [];
-      historyStack = [{ dataUrl: mainCanvas.toDataURL() }];
-      redoStack = [];
-      
-      mainCtx.fillStyle = 'white';
-      mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-      
+      if (currentCanvasIndex >= 0) canvases[currentCanvasIndex] = { elements: [...elements], thumbnail: mainCanvas.toDataURL() };
+      elements = []; historyStack = []; redoStack = [];
+      mainCtx.fillStyle = 'white'; mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
       canvases.push({ elements: [], thumbnail: null, name: `画板 ${canvases.length + 1}` });
       currentCanvasIndex = canvases.length - 1;
-      
-      deselect();
-      render();
-      updateHistoryList();
-      updateUndoRedoButtons();
-      showToast('新建画板');
+      deselect(); render(); updateHistoryList(); updateUndoRedoButtons(); showToast('新建画板');
     }
     
     function switchCanvas(index) {
       if (index === currentCanvasIndex) return;
-      
       canvases[currentCanvasIndex] = { elements: [...elements], thumbnail: mainCanvas.toDataURL() };
-      
       currentCanvasIndex = index;
-      const canvas = canvases[index];
-      elements = canvas.elements || [];
-      
-      render();
-      deselect();
-      updateHistoryList();
-      updateUndoRedoButtons();
+      const c = canvases[index];
+      elements = c.elements || [];
+      deselect(); render(); updateHistoryList(); updateUndoRedoButtons();
     }
     
     function updateHistoryList() {
-      const list = document.getElementById('historyList');
-      list.innerHTML = canvases.map((c, i) => `
+      document.getElementById('historyList').innerHTML = canvases.map((c, i) => `
         <div class="history-item ${i === currentCanvasIndex ? 'active' : ''}" onclick="switchCanvas(${i})">
           <img class="history-thumb" src="${c.thumbnail || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}" alt="">
           <div class="history-name">${c.name || `画板 ${i + 1}`}</div>
@@ -1014,60 +982,39 @@
     
     function renameCanvas(i) {
       const name = prompt('重命名画板:', canvases[i].name || `画板 ${i + 1}`);
-      if (name) {
-        canvases[i].name = name;
-        updateHistoryList();
-      }
+      if (name) { canvases[i].name = name; updateHistoryList(); }
     }
     
     function deleteCanvas(i) {
       if (!confirm('确定删除这个画板吗？')) return;
       canvases.splice(i, 1);
-      if (canvases.length === 0) {
-        newCanvas();
-      } else {
-        currentCanvasIndex = Math.min(currentCanvasIndex, canvases.length - 1);
-        switchCanvas(currentCanvasIndex);
-      }
+      if (canvases.length === 0) newCanvas();
+      else { currentCanvasIndex = Math.min(currentCanvasIndex, canvases.length - 1); switchCanvas(currentCanvasIndex); }
       updateHistoryList();
     }
     
-    function saveCanvas() {
-      canvases[currentCanvasIndex] = { elements: [...elements], thumbnail: mainCanvas.toDataURL() };
-      showToast('已保存');
-    }
-    
+    function saveCanvas() { canvases[currentCanvasIndex] = { elements: [...elements], thumbnail: mainCanvas.toDataURL() }; showToast('已保存'); }
     function exportCanvas() {
       const link = document.createElement('a');
       link.download = `drawing-${Date.now()}.png`;
       link.href = mainCanvas.toDataURL('image/png');
-      link.click();
-      showToast('已导出');
+      link.click(); showToast('已导出');
     }
-    
     function clearCanvas() {
       if (!confirm('确定清空当前画板？')) return;
-      elements = [];
-      deselect();
-      mainCtx.fillStyle = 'white';
-      mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-      saveHistory();
-      render();
-      updateUndoRedoButtons();
-      showToast('已清空');
+      elements = []; deselect();
+      mainCtx.fillStyle = 'white'; mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+      saveHistory(); render(); updateUndoRedoButtons(); showToast('已清空');
     }
-    
     function showToast(msg) {
       const toast = document.getElementById('toast');
-      toast.textContent = msg;
-      toast.classList.add('show');
+      toast.textContent = msg; toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2000);
     }
     
-    // ==================== Keyboard ====================
+    // Keyboard
     document.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
-      
       if (e.ctrlKey || e.metaKey) {
         switch(e.key.toLowerCase()) {
           case 'z': e.preventDefault(); undo(); break;
@@ -1085,17 +1032,11 @@
           case 'o': setTool('circle'); break;
           case 't': setTool('text'); break;
           case 'delete':
-          case 'backspace':
-            if (selectedElement) deleteSelected();
-            break;
+          case 'backspace': if (selectedElement) deleteSelected(); break;
         }
       }
     });
-    
-    // Prevent scroll
-    document.body.addEventListener('touchmove', (e) => {
-      if (e.target === mainCanvas) e.preventDefault();
-    }, { passive: false });
+    document.body.addEventListener('touchmove', (e) => { if (e.target === mainCanvas) e.preventDefault(); }, { passive: false });
   </script>
 </body>
 </html>
