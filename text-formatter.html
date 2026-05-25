@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文案排版器 - tool.pumf.top</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back { font-size: 14px; color: var(--color-body); text-decoration: none; }
+    .nav-back:hover { color: var(--color-primary); }
+    .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+    .header { margin-bottom: 24px; }
+    .header h1 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+    .header p { font-size: 14px; color: var(--color-body); }
+    
+    .platform-tabs {
+      display: flex; gap: 8px; margin-bottom: 20px;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .platform-tab {
+      padding: 8px 16px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--color-body);
+    }
+    .platform-tab:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .platform-tab.active {
+      background: var(--color-primary); color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+    
+    .panel {
+      background: var(--color-canvas); border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px;
+    }
+    
+    .input-area textarea {
+      width: 100%; min-height: 200px;
+      border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+      padding: 16px; font-size: 15px; line-height: 1.8;
+      resize: vertical; outline: none;
+    }
+    .input-area textarea:focus { border-color: var(--color-primary); }
+    
+    .stats-bar {
+      display: flex; gap: 20px; margin-top: 12px;
+      font-size: 12px; color: var(--color-muted);
+    }
+    .stat-item { display: flex; align-items: center; gap: 4px; }
+    .stat-value { color: var(--color-ink); font-weight: 500; }
+    .stat-warning { color: #ef4444; }
+    
+    .action-bar {
+      display: flex; gap: 10px; margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--color-body);
+      transition: all 0.2s;
+    }
+    .btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .btn-primary {
+      background: var(--color-primary); color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    
+    .output-panel { position: relative; }
+    .output-area {
+      background: var(--color-canvas-soft);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      min-height: 150px;
+      white-space: pre-wrap;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+    .output-area.xiaohongshu {
+      background: linear-gradient(135deg, #ff6b6b, #feca57);
+      color: white;
+      font-weight: 500;
+    }
+    .output-area.douyin {
+      background: #000;
+      color: #fff;
+    }
+    .output-actions {
+      position: absolute; top: 12px; right: 12px;
+      display: flex; gap: 8px;
+    }
+    .output-actions .btn {
+      padding: 6px 12px; font-size: 12px;
+      background: rgba(255,255,255,0.9);
+    }
+    
+    .tips {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--color-primary-soft);
+      border-radius: var(--radius-sm);
+    }
+    .tips-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--color-ink); margin-bottom: 8px;
+    }
+    .tips-list {
+      font-size: 12px; color: var(--color-body);
+      line-height: 1.8;
+    }
+    .tips-list li { margin-left: 16px; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">tool<span>.pumf.top</span></a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <div class="header">
+      <h1>文案排版器</h1>
+      <p>一键优化文案格式，适配小红书、微博、抖音等平台风格。</p>
+    </div>
+    
+    <div class="platform-tabs">
+      <button class="platform-tab active" onclick="setPlatform('clean')">🧹 简洁版</button>
+      <button class="platform-tab" onclick="setPlatform('xiaohongshu')">📕 小红书</button>
+      <button class="platform-tab" onclick="setPlatform('weibo')">📢 微博</button>
+      <button class="platform-tab" onclick="setPlatform('douyin')">🎵 抖音</button>
+      <button class="platform-tab" onclick="setPlatform('gongzhonghao')">📰 公众号</button>
+    </div>
+    
+    <div class="panel input-area">
+      <textarea id="inputText" placeholder="粘贴你的文案 here...">今天给大家分享几个提高工作效率的小技巧
+
+第一，做好每日计划，明确优先级
+第二，番茄工作法，专注25分钟休息5分钟  
+第三，减少无效会议，能文字沟通就不要开会
+
+你觉得哪个最有用？评论区告诉我
+
+#职场 #效率 #工作技巧</textarea>
+      <div class="stats-bar">
+        <span class="stat-item">字数: <span class="stat-value" id="charCount">0</span></span>
+        <span class="stat-item">行数: <span class="stat-value" id="lineCount">0</span></span>
+        <span class="stat-item">预估阅读: <span class="stat-value" id="readTime">0</span>秒</span>
+        <span class="stat-item" id="limitWarning"></span>
+      </div>
+    </div>
+    
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="formatText()">✨ 一键排版</button>
+      <button class="btn" onclick="addEmoji()">😊 插入 Emoji</button>
+      <button class="btn" onclick="addHashtags()"># 添加话题</button>
+      <button class="btn" onclick="splitParagraphs()">¶ 智能分段</button>
+      <button class="btn" onclick="removeExtraSpaces()">⌫ 清除多余空格</button>
+      <button class="btn" onclick="addReadMore()">👀 加「展开」</button>
+      <button class="btn" onclick="clearText()">清空</button>
+    </div>
+    
+    <div class="panel output-panel">
+      <div class="output-actions">
+        <button class="btn" onclick="copyOutput()">📋 复制</button>
+        <button class="btn" onclick="downloadText()">💾 下载</button>
+      </div>
+      <div id="outputArea" class="output-area">点击「一键排版」查看效果</div>
+    </div>
+    
+    <div class="tips">
+      <div class="tips-title">💡 各平台特点</div>
+      <ul class="tips-list" id="platformTips">
+        <li>小红书：喜欢 emoji、分段清晰、每段不宜过长</li>
+        <li>微博：控制在 140 字内最佳，适合热点话题</li>
+        <li>抖音：文案要短，重点在前 3 秒能读完</li>
+        <li>公众号：可以长文，但要有小标题分隔</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const inputText = document.getElementById('inputText');
+    const outputArea = document.getElementById('outputArea');
+    const charCount = document.getElementById('charCount');
+    const lineCount = document.getElementById('lineCount');
+    const readTime = document.getElementById('readTime');
+    const limitWarning = document.getElementById('limitWarning');
+    const platformTips = document.getElementById('platformTips');
+    
+    let currentPlatform = 'clean';
+    
+    const platformConfig = {
+      clean: {
+        maxChars: Infinity,
+        tips: ['通用简洁格式', '自动去除多余空格和换行', '保持段落清晰'],
+        className: ''
+      },
+      xiaohongshu: {
+        maxChars: 1000,
+        tips: ['每段前加相关 emoji', '多用换行，短段落', '结尾加 3-5 个话题标签', '多用「姐妹们」「家人们」'],
+        className: 'xiaohongshu'
+      },
+      weibo: {
+        maxChars: 5000,
+        tips: ['控制在 140 字内传播最佳', '适当使用 ## 话题', '可以 @ 相关人士', '重要内容放前面'],
+        className: ''
+      },
+      douyin: {
+        maxChars: 500,
+        tips: ['文案要极短，55 字内最佳', '重点在前 15 字', '用疑问或悬念吸引人', '配热门 BGM'],
+        className: 'douyin'
+      },
+      gongzhonghao: {
+        maxChars: 20000,
+        tips: ['可用小标题分隔', '段落 3-4 行为宜', '重点内容加粗', '结尾引导关注/点赞/在看'],
+        className: ''
+      }
+    };
+    
+    const emojis = ['✨', '💡', '📌', '💪', '🔥', '⭐', '📢', '🎯', '💯', '🚀', 
+                    '😊', '😂', '🤔', '👍', '❤️', '🎉', '💬', '👀', '✅', '📝'];
+    
+    function updateStats() {
+      const text = inputText.value;
+      const chars = text.length;
+      const lines = text.split('\n').length;
+      const seconds = Math.ceil(chars / 10);
+      
+      charCount.textContent = chars.toLocaleString();
+      lineCount.textContent = lines;
+      readTime.textContent = seconds;
+      
+      const config = platformConfig[currentPlatform];
+      if (chars > config.maxChars) {
+        limitWarning.innerHTML = `<span class="stat-warning">⚠️ 超出限制 ${config.maxChars}</span>`;
+      } else if (config.maxChars !== Infinity) {
+        const remain = config.maxChars - chars;
+        limitWarning.innerHTML = `还可输入 ${remain} 字`;
+      } else {
+        limitWarning.textContent = '';
+      }
+    }
+    
+    function setPlatform(platform) {
+      currentPlatform = platform;
+      document.querySelectorAll('.platform-tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      const config = platformConfig[platform];
+      platformTips.innerHTML = config.tips.map(tip => `<li>${tip}</li>`).join('');
+      outputArea.className = 'output-area ' + config.className;
+      
+      updateStats();
+      formatText();
+    }
+    
+    function formatText() {
+      let text = inputText.value;
+      const config = platformConfig[currentPlatform];
+      
+      // Base cleanup
+      text = text.replace(/[\s\u200b]+/g, ' ');
+      text = text.replace(/\n{3,}/g, '\n\n');
+      text = text.trim();
+      
+      switch(currentPlatform) {
+        case 'xiaohongshu':
+          text = formatForXiaohongshu(text);
+          break;
+        case 'weibo':
+          text = formatForWeibo(text);
+          break;
+        case 'douyin':
+          text = formatForDouyin(text);
+          break;
+        case 'gongzhonghao':
+          text = formatForGongzhonghao(text);
+          break;
+      }
+      
+      outputArea.textContent = text;
+      localStorage.setItem('copywriter_text', inputText.value);
+    }
+    
+    function formatForXiaohongshu(text) {
+      const lines = text.split('\n').filter(l => l.trim());
+      const emojiLines = ['✨', '💡', '📝', '🎯', '💪'];
+      return lines.map((line, i) => {
+        const prefix = emojiLines[i % emojiLines.length];
+        return prefix + ' ' + line.trim();
+      }).join('\n\n') + '\n\n' + generateHashtags(3);
+    }
+    
+    function formatForWeibo(text) {
+      return text.slice(0, 140) + (text.length > 140 ? '...' : '');
+    }
+    
+    function formatForDouyin(text) {
+      const lines = text.split('\n').filter(l => l.trim());
+      return lines.slice(0, 2).join(' | ').slice(0, 55);
+    }
+    
+    function formatForGongzhonghao(text) {
+      return text.replace(/\n/g, '\n\n');
+    }
+    
+    function addEmoji() {
+      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+      insertAtCursor(inputText, randomEmoji + ' ');
+      updateStats();
+    }
+    
+    function addHashtags() {
+      const hashtag = generateHashtags(3);
+      insertAtCursor(inputText, '\n\n' + hashtag);
+      updateStats();
+    }
+    
+    function generateHashtags(count) {
+      const topics = ['职场', '效率', '生活', '干货', '分享', '技巧', '成长', '学习'];
+      const shuffled = topics.sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count).map(t => '#' + t + '#').join(' ');
+    }
+    
+    function splitParagraphs() {
+      let text = inputText.value;
+      text = text.replace(/([。！？；.!?;])\s*/g, '$1\n\n');
+      text = text.replace(/\n{3,}/g, '\n\n');
+      inputText.value = text.trim();
+      updateStats();
+    }
+    
+    function removeExtraSpaces() {
+      let text = inputText.value;
+      text = text.replace(/\s+/g, ' ');
+      text = text.replace(/\n\s+/g, '\n');
+      inputText.value = text.trim();
+      updateStats();
+    }
+    
+    function addReadMore() {
+      const text = inputText.value;
+      const sentences = text.split(/([。！？])/);
+      if (sentences.length > 2) {
+        const preview = sentences.slice(0, 4).join('');
+        const hidden = sentences.slice(4).join('');
+        inputText.value = preview + '\n\n👇 展开查看全文\n\n' + hidden;
+      }
+      updateStats();
+    }
+    
+    function clearText() {
+      inputText.value = '';
+      outputArea.textContent = '点击「一键排版」查看效果';
+      updateStats();
+    }
+    
+    function copyOutput() {
+      const text = outputArea.textContent;
+      navigator.clipboard.writeText(text);
+      showToast('已复制到剪贴板');
+    }
+    
+    function downloadText() {
+      const text = outputArea.textContent;
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'formatted-text.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    function insertAtCursor(textarea, text) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const value = textarea.value;
+      textarea.value = value.substring(0, start) + text + value.substring(end);
+      textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      textarea.focus();
+    }
+    
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.textContent = msg;
+      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--color-ink);color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;z-index:9999;';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 1500);
+    }
+    
+    // Init
+    inputText.addEventListener('input', updateStats);
+    const saved = localStorage.getItem('copywriter_text');
+    if (saved) inputText.value = saved;
+    updateStats();
+    formatText();
+  </script>
+</body>
+</html>

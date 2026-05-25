@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文本转图片 - tool.pumf.top</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1400px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back { font-size: 14px; color: var(--color-body); text-decoration: none; }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 1400px; margin: 0 auto; padding: 24px;
+    }
+    .header { margin-bottom: 20px; }
+    .header h1 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+    .header p { font-size: 14px; color: var(--color-body); }
+    
+    .editor-layout {
+      display: grid; grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 1000px) {
+      .editor-layout { grid-template-columns: 1fr; }
+    }
+    
+    .panel {
+      background: var(--color-canvas); border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); padding: 20px;
+    }
+    
+    .panel-title {
+      font-size: 14px; font-weight: 600;
+      margin-bottom: 16px; color: var(--color-ink);
+    }
+    
+    .template-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 10px; margin-bottom: 20px;
+    }
+    .template-item {
+      aspect-ratio: 1; border-radius: var(--radius-sm);
+      cursor: pointer; border: 2px solid transparent;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; transition: all 0.2s;
+    }
+    .template-item:hover { transform: scale(1.05); }
+    .template-item.active { border-color: var(--color-primary); }
+    
+    .template-clean { background: #fff; }
+    .template-paper { background: #f5f0e6; }
+    .template-dark { background: #1a1a2e; color: #fff; }
+    .template-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
+    .template-warm { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; }
+    .template-nature { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff; }
+    .template-sunset { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: #fff; }
+    .template-forest { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: #fff; }
+    
+    .control-group { margin-bottom: 16px; }
+    .control-label {
+      font-size: 12px; color: var(--color-muted);
+      margin-bottom: 6px; display: block;
+    }
+    .control-input {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm); font-size: 14px;
+    }
+    .control-input:focus { outline: none; border-color: var(--color-primary); }
+    
+    .size-options {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .size-btn {
+      padding: 8px 12px; border: 1px solid var(--color-border);
+      background: var(--color-canvas); border-radius: var(--radius-sm);
+      font-size: 12px; cursor: pointer;
+    }
+    .size-btn:hover, .size-btn.active {
+      border-color: var(--color-primary); color: var(--color-primary);
+    }
+    
+    .preview-area {
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    
+    #canvasPreview {
+      max-width: 100%; max-height: 600px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .text-input {
+      width: 100%; min-height: 150px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm); padding: 16px;
+      font-size: 15px; line-height: 1.8; resize: vertical;
+    }
+    .text-input:focus { outline: none; border-color: var(--color-primary); }
+    
+    .btn {
+      padding: 12px 24px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      font-size: 14px; cursor: pointer;
+      color: var(--color-body);
+      transition: all 0.2s;
+    }
+    .btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .btn-primary {
+      background: var(--color-primary); color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+    .btn-primary:hover { background: var(--color-primary-hover); }
+    
+    .action-bar { display: flex; gap: 12px; justify-content: center; margin-top: 12px; }
+    
+    .hint {
+      text-align: center; font-size: 12px;
+      color: var(--color-muted); margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">tool<span>.pumf.top</span></a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <div class="header">
+      <h1>文本转图片</h1>
+      <p>将文字转为精美图片，适合朋友圈、小红书、微博分享。多种模板可选。</p>
+    </div>
+    
+    <div class="editor-layout">
+      <div class="settings-panel">
+        <div class="panel">
+          <div class="panel-title">选择模板</div>
+          <div class="template-grid">
+            <div class="template-item template-clean active" onclick="setTemplate('clean')" title="简洁白">🤍</div>
+            <div class="template-item template-paper" onclick="setTemplate('paper')" title="纸张">📜</div>
+            <div class="template-item template-dark" onclick="setTemplate('dark')" title="深色">🖤</div>
+            <div class="template-item template-gradient" onclick="setTemplate('gradient')" title="渐变紫">💜</div>
+            <div class="template-item template-warm" onclick="setTemplate('warm')" title="温暖粉">💖</div>
+            <div class="template-item template-nature" onclick="setTemplate('nature')" title="清新蓝">💙</div>
+            <div class="template-item template-sunset" onclick="setTemplate('sunset')" title="日落">🧡</div>
+            <div class="template-item template-forest" onclick="setTemplate('forest')" title="森林">💚</div>
+          </div>
+          
+          <div class="panel-title">尺寸</div>
+          <div class="size-options" style="margin-bottom: 20px;">
+            <button class="size-btn active" onclick="setSize(1080, 1080, this)">正方形</button>
+            <button class="size-btn" onclick="setSize(1080, 1920, this)">9:16</button>
+            <button class="size-btn" onclick="setSize(1080, 1350, this)">4:5</button>
+            <button class="size-btn" onclick="setSize(1200, 630, this)">2:1</button>
+          </div>
+          
+          <div class="panel-title">样式设置</div>
+          <div class="control-group">
+            <label class="control-label">字体大小</label>
+            <input type="range" id="fontSize" min="24" max="72" value="48" class="control-input" onchange="updatePreview()">
+          </div>
+          <div class="control-group">
+            <label class="control-label">行间距</label>
+            <input type="range" id="lineHeight" min="1.2" max="2.5" step="0.1" value="1.8" class="control-input" onchange="updatePreview()">
+          </div>
+          <div class="control-group">
+            <label class="control-label">边距</label>
+            <input type="range" id="padding" min="40" max="120" value="80" class="control-input" onchange="updatePreview()">
+          </div>
+          <div class="control-group">
+            <label class="control-label">圆角</label>
+            <input type="range" id="borderRadius" min="0" max="40" value="12" class="control-input" onchange="updatePreview()">
+          </div>
+          <div class="control-group">
+            <label class="control-label">对齐方式</label>
+            <div class="size-options">
+              <button class="size-btn active" onclick="setAlign('center', this)">居中</button>
+              <button class="size-btn" onclick="setAlign('left', this)">左对齐</button>
+              <button class="size-btn" onclick="setAlign('right', this)">右对齐</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="preview-area">
+        <div class="panel">
+          <div class="panel-title">编辑内容</div>
+          <textarea id="textInput" class="text-input" placeholder="输入你想转为图片的文字...">生活不是等待暴风雨过去
+而是学会在雨中跳舞
+
+每一天都是新的开始</textarea>
+        </div>
+        
+        <div class="panel" style="text-align: center;">
+          <canvas id="canvasPreview"></canvas>
+          <div class="hint">实时预览 · 点击下载保存</div>
+          <div class="action-bar">
+            <button class="btn btn-primary" onclick="downloadImage()">💾 下载图片</button>
+            <button class="btn" onclick="copyImage()">📋 复制图片</button>
+            <button class="btn" onclick="randomize()">🎲 随机样式</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvasPreview');
+    const ctx = canvas.getContext('2d');
+    const textInput = document.getElementById('textInput');
+    
+    let currentTemplate = 'clean';
+    let currentWidth = 1080;
+    let currentHeight = 1080;
+    let currentAlign = 'center';
+    
+    const templates = {
+      clean: { bg: '#ffffff', text: '#1a1a2e', shadow: false },
+      paper: { bg: '#f5f0e6', text: '#3d3d3d', shadow: false },
+      dark: { bg: '#1a1a2e', text: '#ffffff', shadow: true },
+      gradient: { bg: null, gradient: ['#667eea', '#764ba2'], text: '#ffffff', shadow: true },
+      warm: { bg: null, gradient: ['#f093fb', '#f5576c'], text: '#ffffff', shadow: true },
+      nature: { bg: null, gradient: ['#4facfe', '#00f2fe'], text: '#ffffff', shadow: true },
+      sunset: { bg: null, gradient: ['#fa709a', '#fee140'], text: '#ffffff', shadow: true },
+      forest: { bg: null, gradient: ['#30cfd0', '#330867'], text: '#ffffff', shadow: true }
+    };
+    
+    function setTemplate(name) {
+      currentTemplate = name;
+      document.querySelectorAll('.template-item').forEach(el => el.classList.remove('active'));
+      event.target.classList.add('active');
+      updatePreview();
+    }
+    
+    function setSize(w, h, btn) {
+      currentWidth = w;
+      currentHeight = h;
+      document.querySelectorAll('.size-btn').forEach(el => {
+        if (el.textContent.includes('方形') || el.textContent.includes(':')) {
+          el.classList.remove('active');
+        }
+      });
+      btn.classList.add('active');
+      updatePreview();
+    }
+    
+    function setAlign(align, btn) {
+      currentAlign = align;
+      btn.parentElement.querySelectorAll('.size-btn').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      updatePreview();
+    }
+    
+    function updatePreview() {
+      const fontSize = parseInt(document.getElementById('fontSize').value);
+      const lineHeight = parseFloat(document.getElementById('lineHeight').value);
+      const padding = parseInt(document.getElementById('padding').value);
+      const borderRadius = parseInt(document.getElementById('borderRadius').value);
+      const text = textInput.value;
+      
+      canvas.width = currentWidth;
+      canvas.height = currentHeight;
+      
+      const template = templates[currentTemplate];
+      
+      // Background
+      if (template.gradient) {
+        const grad = ctx.createLinearGradient(0, 0, currentWidth, currentHeight);
+        grad.addColorStop(0, template.gradient[0]);
+        grad.addColorStop(1, template.gradient[1]);
+        ctx.fillStyle = grad;
+      } else {
+        ctx.fillStyle = template.bg;
+      }
+      ctx.fillRect(0, 0, currentWidth, currentHeight);
+      
+      // Shadow for dark/gradient templates
+      if (template.shadow) {
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 10;
+      }
+      
+      // Text area
+      ctx.fillStyle = template.shadow ? 'rgba(255,255,255,0.1)' : 'transparent';
+      ctx.beginPath();
+      ctx.roundRect(padding - 20, padding - 20, currentWidth - padding * 2 + 40, currentHeight - padding * 2 + 40, borderRadius);
+      ctx.fill();
+      
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      
+      // Text
+      ctx.fillStyle = template.text;
+      ctx.font = `${fontSize}px "Inter", -apple-system, sans-serif`;
+      ctx.textAlign = currentAlign;
+      
+      const lines = text.split('\n');
+      const maxWidth = currentWidth - padding * 2;
+      let y = padding + fontSize;
+      
+      lines.forEach(line => {
+        if (currentAlign === 'center') {
+          ctx.fillText(line, currentWidth / 2, y);
+        } else if (currentAlign === 'left') {
+          ctx.fillText(line, padding, y);
+        } else {
+          ctx.fillText(line, currentWidth - padding, y);
+        }
+        y += fontSize * lineHeight;
+      });
+      
+      // Watermark
+      ctx.font = '14px "Inter", sans-serif';
+      ctx.fillStyle = template.text;
+      ctx.globalAlpha = 0.3;
+      ctx.textAlign = 'center';
+      ctx.fillText('tool.pumf.top', currentWidth / 2, currentHeight - 30);
+      ctx.globalAlpha = 1;
+    }
+    
+    function downloadImage() {
+      const link = document.createElement('a');
+      link.download = `text-image-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    async function copyImage() {
+      canvas.toBlob(async blob => {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          showToast('图片已复制');
+        } catch (e) {
+          showToast('复制失败，请下载');
+        }
+      });
+    }
+    
+    function randomize() {
+      const templateNames = Object.keys(templates);
+      const randomTemplate = templateNames[Math.floor(Math.random() * templateNames.length)];
+      setTemplate(randomTemplate);
+      document.querySelectorAll('.template-item').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.template-${randomTemplate}`).classList.add('active');
+      
+      document.getElementById('fontSize').value = 40 + Math.floor(Math.random() * 20);
+      document.getElementById('lineHeight').value = 1.5 + Math.random() * 0.5;
+      updatePreview();
+    }
+    
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.textContent = msg;
+      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--color-ink);color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;z-index:9999;';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 1500);
+    }
+    
+    // Init
+    textInput.addEventListener('input', updatePreview);
+    updatePreview();
+  </script>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>九宫格切图 - tool.pumf.top</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back { font-size: 14px; color: var(--color-body); text-decoration: none; }
+    .nav-back:hover { color: var(--color-primary); }
+    .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+    .header { margin-bottom: 24px; }
+    .header h1 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+    .header p { font-size: 14px; color: var(--color-body); }
+    
+    .panel {
+      background: var(--color-canvas); border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); padding: 24px; margin-bottom: 20px;
+    }
+    
+    .drop-zone {
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 60px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-soft);
+    }
+    .drop-zone-icon { font-size: 48px; margin-bottom: 12px; }
+    .drop-zone-text { font-size: 15px; color: var(--color-body); }
+    .drop-zone-hint { font-size: 12px; color: var(--color-muted); margin-top: 8px; }
+    
+    .options {
+      display: flex; gap: 16px; margin: 20px 0;
+      flex-wrap: wrap; align-items: center;
+    }
+    .option-group { display: flex; align-items: center; gap: 8px; }
+    .option-label { font-size: 13px; color: var(--color-body); }
+    select, input[type="number"] {
+      padding: 8px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      background: var(--color-canvas);
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--color-body);
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .btn-primary {
+      background: var(--color-primary); color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      color: var(--color-on-primary);
+    }
+    
+    .preview-area { margin-top: 24px; }
+    .preview-title {
+      font-size: 14px; font-weight: 500;
+      color: var(--color-body); margin-bottom: 12px;
+    }
+    
+    .grid-preview {
+      display: grid;
+      gap: 4px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .grid-preview img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .grid-preview img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .grid-3x3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4x4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-6 { grid-template-columns: repeat(3, 1fr); }
+    .grid-2x2 { grid-template-columns: repeat(2, 1fr); }
+    
+    .action-bar {
+      display: flex; gap: 12px; margin-top: 20px;
+      justify-content: center;
+    }
+    
+    .tip {
+      background: var(--color-primary-soft);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--color-body);
+      margin-top: 16px;
+    }
+    
+    #fileInput { display: none; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">tool<span>.pumf.top</span></a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+  
+  <div class="container">
+    <div class="header">
+      <h1>九宫格切图</h1>
+      <p>一键切分图片为社交媒体九宫格。支持下载单张或打包。</p>
+    </div>
+    
+    <div class="panel">
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="drop-zone-icon">🖼️</div>
+        <div class="drop-zone-text">点击或拖拽上传图片</div>
+        <div class="drop-zone-hint">支持 JPG、PNG、WebP</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
+      
+      <div class="options">
+        <div class="option-group">
+          <span class="option-label">切分方式：</span>
+          <select id="gridType" onchange="updatePreview()">
+            <option value="3x3">九宫格 (3×3)</option>
+            <option value="4x4">十六宫格 (4×4)</option>
+            <option value="6">六宫格 (2行)</option>
+            <option value="2x2">四宫格 (2×2)</option>
+          </select>
+        </div>
+        <div class="option-group">
+          <span class="option-label">边距：</span>
+          <input type="number" id="gapSize" value="4" min="0" max="20" onchange="updatePreview()">
+          <span class="option-label">px</span>
+        </div>
+      </div>
+      
+      <div class="preview-area" id="previewArea" style="display:none;">
+        <div class="preview-title">预览效果</div>
+        <div class="grid-preview" id="gridPreview"></div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="downloadAll()">📦 打包下载</button>
+          <button class="btn" onclick="clearAll()">清空</button>
+        </div>
+      </div>
+      
+      <div class="tip">
+        💡 提示：九宫格发朋友圈时，按顺序选择图片即可呈现完整大图效果
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let originalImage = null;
+    let gridImages = [];
+    
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewArea = document.getElementById('previewArea');
+    const gridPreview = document.getElementById('gridPreview');
+    
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        processImage(file);
+      }
+    });
+    
+    function handleFile(event) {
+      const file = event.target.files[0];
+      if (file) processImage(file);
+    }
+    
+    function processImage(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          originalImage = img;
+          splitImage();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function splitImage() {
+      if (!originalImage) return;
+      
+      const gridType = document.getElementById('gridType').value;
+      let cols, rows;
+      
+      switch(gridType) {
+        case '3x3': cols = 3; rows = 3; break;
+        case '4x4': cols = 4; rows = 4; break;
+        case '6': cols = 3; rows = 2; break;
+        case '2x2': cols = 2; rows = 2; break;
+      }
+      
+      const pieceWidth = originalImage.width / cols;
+      const pieceHeight = originalImage.height / rows;
+      
+      gridImages = [];
+      
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const canvas = document.createElement('canvas');
+          canvas.width = pieceWidth;
+          canvas.height = pieceHeight;
+          const ctx = canvas.getContext('2d');
+          
+          ctx.drawImage(
+            originalImage,
+            col * pieceWidth, row * pieceHeight,
+            pieceWidth, pieceHeight,
+            0, 0,
+            pieceWidth, pieceHeight
+          );
+          
+          gridImages.push({
+            dataUrl: canvas.toDataURL('image/jpeg', 0.95),
+            index: gridImages.length + 1
+          });
+        }
+      }
+      
+      renderPreview();
+      previewArea.style.display = 'block';
+    }
+    
+    function renderPreview() {
+      const gridType = document.getElementById('gridType').value;
+      const gap = document.getElementById('gapSize').value;
+      
+      gridPreview.className = 'grid-preview grid-' + gridType;
+      gridPreview.style.gap = gap + 'px';
+      
+      gridPreview.innerHTML = gridImages.map((img, i) => `
+        <img src="${img.dataUrl}" onclick="downloadSingle(${i})" title="点击下载第${i+1}张">
+      `).join('');
+    }
+    
+    function updatePreview() {
+      if (originalImage) {
+        splitImage();
+      }
+    }
+    
+    function downloadSingle(index) {
+      const link = document.createElement('a');
+      link.download = `grid-${String(index + 1).padStart(2, '0')}.jpg`;
+      link.href = gridImages[index].dataUrl;
+      link.click();
+    }
+    
+    async function downloadAll() {
+      const zip = new JSZip();
+      const folder = zip.folder('grid-images');
+      
+      gridImages.forEach((img, i) => {
+        const base64Data = img.dataUrl.split(',')[1];
+        folder.file(`grid-${String(i + 1).padStart(2, '0')}.jpg`, base64Data, {base64: true});
+      });
+      
+      const content = await zip.generateAsync({type: 'blob'});
+      const link = document.createElement('a');
+      link.download = 'grid-images.zip';
+      link.href = URL.createObjectURL(content);
+      link.click();
+    }
+    
+    function clearAll() {
+      originalImage = null;
+      gridImages = [];
+      previewArea.style.display = 'none';
+      gridPreview.innerHTML = '';
+      fileInput.value = '';
+    }
+  </script>
+</body>
+</html>
