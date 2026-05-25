@@ -132,14 +132,20 @@
     .transform-box {
       position: absolute; border: 2px dashed var(--color-primary); display: none; z-index: 10;
     }
-    .transform-box.show { display: block; }
+    .transform-box.show { display: block; cursor: move; }
     .transform-box .move-area {
-      position: absolute; inset: 8px; cursor: move;
+      position: absolute; inset: 0; cursor: move; z-index: 1;
     }
     .transform-handle {
       position: absolute; width: 12px; height: 12px;
       background: var(--color-primary); border: 2px solid white;
       border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .transform-handle {
+      position: absolute; width: 12px; height: 12px;
+      background: var(--color-primary); border: 2px solid white;
+      border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      z-index: 10;
     }
     .transform-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
     .transform-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
