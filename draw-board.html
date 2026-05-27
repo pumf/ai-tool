@@ -394,6 +394,7 @@
     
     // Transform state
     let transformMode = null; // 'move', 'resize', 'rotate'
+    let isDragging = false; // 是否在拖动中
     let resizeHandle = null;
     let transformStart = { x: 0, y: 0, elX: 0, elY: 0, elW: 0, elH: 0, elRot: 0, elPoints: null };
     let initialAngle = 0;
@@ -609,7 +610,7 @@
         const hit = hitTest(coords.x, coords.y);
         if (hit) {
           selectElement(hit);
-          transformMode = 'move';
+          // 只有点击在选中框内部才开始拖动
           const bounds = getElementBounds(hit);
           transformStart = { x: coords.x, y: coords.y, elX: hit.x, elY: hit.y, elW: hit.width, elH: hit.height, bounds };
         } else {
@@ -636,8 +637,8 @@
       const coords = getCoords(e);
       document.getElementById('coords').textContent = `${Math.round(coords.x)}, ${Math.round(coords.y)}`;
       
-      // Transform mode
-      if (transformMode && selectedElement) {
+      // Transform mode - 只有在isDragging为true时才进行拖动
+      if (isDragging && selectedElement) {
         if (transformMode === 'move') {
           const dx = coords.x - transformStart.x;
           const dy = coords.y - transformStart.y;
@@ -675,7 +676,8 @@
     }
     
     function onPointerUp() {
-      if (transformMode) {
+      // 松开鼠标时立即停止拖动
+      if (isDragging && transformMode) {
         if (transformMode === 'move') {
           // Check if actually moved
           const el = selectedElement;
@@ -689,8 +691,15 @@
         } else {
           saveHistory();
         }
-        transformMode = null;
-        resizeHandle = null;
+      }
+      // 重置拖动状态 - 关键：松开即停止
+      isDragging = false;
+      transformMode = null;
+      resizeHandle = null;
+      
+      if (isDrawing) {
+        // 绘图模式结束
+      } else {
         return;
       }
       
@@ -716,10 +725,13 @@
     
     // ==================== Transform Handlers ====================
     function setupTransformHandlers() {
-      // Move area
+      // Move area - 只在按住时拖动
       moveArea.addEventListener('mousedown', (e) => {
         if (!selectedElement || currentTool !== 'select') return;
         e.stopPropagation();
+        e.preventDefault();
+        // 开始拖动
+        isDragging = true;
         transformMode = 'move';
         const coords = getCoords({ clientX: e.clientX, clientY: e.clientY });
         const bounds = getElementBounds(selectedElement);
@@ -732,11 +744,22 @@
         };
       });
       
+      // 确保松开鼠标时停止拖动（全局监听，防止鼠标移出画布）
+      document.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          transformMode = null;
+          resizeHandle = null;
+        }
+      });
+      
       // Resize handles
       document.querySelectorAll('.transform-handle').forEach(handle => {
         handle.addEventListener('mousedown', (e) => {
           if (!selectedElement) return;
           e.stopPropagation();
+          e.preventDefault();
+          isDragging = true;
           transformMode = 'resize';
           resizeHandle = e.target.dataset.handle;
           const coords = getCoords({ clientX: e.clientX, clientY: e.clientY });
@@ -755,6 +778,8 @@
       rotateHandle.addEventListener('mousedown', (e) => {
         if (!selectedElement) return;
         e.stopPropagation();
+        e.preventDefault();
+        isDragging = true;
         transformMode = 'rotate';
         const coords = getCoords({ clientX: e.clientX, clientY: e.clientY });
         const bounds = getElementBounds(selectedElement);
