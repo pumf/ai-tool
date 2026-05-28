@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="wingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0abFA5"/>
+      <stop offset="100%" style="stop-color:#08d9a3"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="url(#wingGradient)"/>
+  <path d="M25 55 Q35 35 50 40 Q45 50 50 55 Q55 60 65 50 Q70 45 75 50 Q70 65 50 70 Q30 75 25 55" fill="white"/>
+  <circle cx="35" cy="45" r="3" fill="white"/>
+</svg>
