@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>tool.pumf.top — 工具集</title>
+  <title>小飞 AI 工具 — 工具集</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     /* ═══════════════════════════════════════════════════════════════
-       DESIGN TOKENS — tool.pumf.top Design System
+       DESIGN TOKENS — 小飞 AI 工具 Design System
     ═══════════════════════════════════════════════════════════════ */
     :root {
       /* Brand & Accent */
@@ -184,11 +184,23 @@
       50% { opacity: 0.4; }
     }
     
-    .hero-emoji {
-      font-size: 56px;
+    .hero-logo {
       margin-bottom: var(--space-lg);
       opacity: 0;
       animation: fadeUp 0.7s ease forwards 0.4s;
+    }
+    
+    .hero-logo img {
+      width: 100px;
+      height: 100px;
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(10, 191, 165, 0.25);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .hero-logo img:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(10, 191, 165, 0.35);
     }
     
     .hero-title {
@@ -481,7 +493,7 @@
   <!-- Navigation -->
   <nav class="nav">
     <div class="container nav-inner">
-      <a href="/" class="nav-logo">tool<span>.pumf.top</span></a>
+      <a href="/" class="nav-logo">小飞<span> AI 工具</span></a>
       <div class="nav-links">
         <a href="#features" class="nav-link">功能</a>
         <a href="#coming-soon" class="nav-link">即将上线</a>
@@ -495,8 +507,10 @@
       <span class="hero-badge-dot"></span>
       持续构建中
     </div>
-    <div class="hero-emoji">🛠️</div>
-    <h1 class="hero-title">tool<span class="accent">.pumf.top</span></h1>
+    <div class="hero-logo">
+      <img src="logo.svg" alt="小飞 AI 工具" width="120" height="120">
+    </div>
+    <h1 class="hero-title">小飞<span class="accent"> AI 工具</span></h1>
     <p class="hero-subtitle">简洁工具，专注本质。<br>每个项目都在解决一个真实问题。</p>
     <div class="hero-divider"></div>
   </section>
@@ -531,7 +545,7 @@
           <span class="card-icon">🖼️</span>
           <h3 class="card-title">图片工具箱</h3>
           <p class="card-desc">格式转换、压缩、裁剪——你需要的图片处理，一个页面搞定。无需上传，纯浏览器端处理。</p>
-          <span class="card-url">tool.pumf.top/image-tools</span>
+          <span class="card-url">小飞 AI 工具/image-tools</span>
         </a>
 
         <a class="card reveal" href="/clipboard-manager.html">
@@ -540,7 +554,7 @@
           <span class="card-icon">📋</span>
           <h3 class="card-title">剪贴板管理器</h3>
           <p class="card-desc">跨设备同步剪贴板内容。复制一次，随时粘贴到任意设备。简洁高效，隐私优先。</p>
-          <span class="card-url">tool.pumf.top/clipboard-manager</span>
+          <span class="card-url">小飞 AI 工具/clipboard-manager</span>
         </a>
 
         <a class="card reveal" href="/markdown-editor.html">
@@ -549,7 +563,7 @@
           <span class="card-icon">📝</span>
           <h3 class="card-title">Markdown 编辑器</h3>
           <p class="card-desc">所见即所得的 Markdown 编辑器。实时预览、语法高亮、一键导出。纯浏览器端处理。</p>
-          <span class="card-url">tool.pumf.top/markdown-editor</span>
+          <span class="card-url">小飞 AI 工具/markdown-editor</span>
         </a>
 
         <a class="card reveal" href="/json-formatter.html">
@@ -558,7 +572,7 @@
           <span class="card-icon">{ }</span>
           <h3 class="card-title">JSON 格式化/验证器</h3>
           <p class="card-desc">格式化、压缩、验证 JSON。支持语法高亮、键名排序、Base64 转换。开发必备工具。</p>
-          <span class="card-url">tool.pumf.top/json-formatter</span>
+          <span class="card-url">小飞 AI 工具/json-formatter</span>
         </a>
 
         <a class="card reveal" href="/qr-code-tool.html">
@@ -567,7 +581,7 @@
           <span class="card-icon">📱</span>
           <h3 class="card-title">二维码生成/识别</h3>
           <p class="card-desc">生成个性化二维码，或上传图片识别二维码内容。支持粘贴图片、拖拽上传。</p>
-          <span class="card-url">tool.pumf.top/qr-code-tool</span>
+          <span class="card-url">小飞 AI 工具/qr-code-tool</span>
         </a>
 
         <a class="card reveal" href="/color-converter.html">
@@ -576,7 +590,7 @@
           <span class="card-icon">🎨</span>
           <h3 class="card-title">颜色转换器</h3>
           <p class="card-desc">HEX、RGB、HSL、CMYK 互转。配色方案生成、历史记录。设计师必备。</p>
-          <span class="card-url">tool.pumf.top/color-converter</span>
+          <span class="card-url">小飞 AI 工具/color-converter</span>
         </a>
 
         <a class="card reveal" href="/grid-splitter.html">
@@ -585,7 +599,7 @@
           <span class="card-icon">🖼️</span>
           <h3 class="card-title">九宫格切图</h3>
           <p class="card-desc">一键切分图片为社交媒体九宫格。支持多种布局、打包下载。朋友圈发图神器。</p>
-          <span class="card-url">tool.pumf.top/grid-splitter</span>
+          <span class="card-url">小飞 AI 工具/grid-splitter</span>
         </a>
 
         <a class="card reveal" href="/text-formatter.html">
@@ -594,7 +608,7 @@
           <span class="card-icon">✍️</span>
           <h3 class="card-title">文案排版器</h3>
           <p class="card-desc">一键优化文案格式，适配小红书、微博、抖音、公众号风格。自媒体创作者必备。</p>
-          <span class="card-url">tool.pumf.top/text-formatter</span>
+          <span class="card-url">小飞 AI 工具/text-formatter</span>
         </a>
 
         <a class="card reveal" href="/text-to-image.html">
@@ -603,7 +617,7 @@
           <span class="card-icon">🖼️</span>
           <h3 class="card-title">文本转图片</h3>
           <p class="card-desc">将文字转为精美图片，8种模板、自定义样式。适合朋友圈、小红书、微博分享。</p>
-          <span class="card-url">tool.pumf.top/text-to-image</span>
+          <span class="card-url">小飞 AI 工具/text-to-image</span>
         </a>
 
         <a class="card reveal" href="/pomodoro.html">
@@ -612,7 +626,7 @@
           <span class="card-icon">🍅</span>
           <h3 class="card-title">番茄专注钟</h3>
           <p class="card-desc">25分钟专注+5分钟休息，任务记录、统计分析。提升工作效率，养成专注习惯。</p>
-          <span class="card-url">tool.pumf.top/pomodoro</span>
+          <span class="card-url">小飞 AI 工具/pomodoro</span>
         </a>
 
         <a class="card reveal" href="/draw-board.html">
@@ -621,7 +635,7 @@
           <span class="card-icon">🎨</span>
           <h3 class="card-title">画板</h3>
           <p class="card-desc">自由涂鸦、撤销重做、历史保存。画笔橡皮擦、调色、导出图片。创意随手画。</p>
-          <span class="card-url">tool.pumf.top/draw-board</span>
+          <span class="card-url">小飞 AI 工具/draw-board</span>
         </a>
 
         <a class="card reveal" href="https://ai.pumf.top" target="_blank">
@@ -653,7 +667,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    tool.pumf.top · 用心做工具
+    小飞 AI 工具 · 用心做工具
   </footer>
 
   <!-- Scroll Animation Script -->

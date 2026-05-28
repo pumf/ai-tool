@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0abFA5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#08d9a3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 图标部分 -->
+  <g transform="translate(10, 10)">
+    <rect x="0" y="0" width="60" height="60" rx="15" ry="15" fill="url(#logoGrad)"/>
+    <g transform="translate(30, 30)" fill="#ffffff">
+      <circle cx="0" cy="-5" r="4"/>
+      <path d="M -3,-3 Q -12,-10 -16,-4 Q -12,-2 -8,2 Q -12,6 -14,10 Q -8,8 -3,3 Z" opacity="0.9"/>
+      <path d="M 3,-3 Q 12,-10 16,-4 Q 12,-2 8,2 Q 12,6 14,10 Q 8,8 3,3 Z" opacity="0.9"/>
+    </g>
+  </g>
+  
+  <!-- 文字部分 -->
+  <text x="85" y="48" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+        font-size="28" font-weight="700" fill="#1a1a2e">
+    小飞 AI 工具
+  </text>
+</svg>
