@@ -1,1073 +1,713 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>画板 - 小飞 AI 工具</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --color-primary: #0abFA5;
-      --color-on-primary: #ffffff;
-      --color-primary-hover: #08d9a3;
-      --color-primary-soft: rgba(10, 191, 165, 0.08);
-      --color-ink: #1a1a2e;
-      --color-body: #5c5c72;
-      --color-muted: #9494a8;
-      --color-canvas: #ffffff;
-      --color-canvas-soft: #f8f9fb;
-      --color-canvas-soft-2: #f0f2f8;
-      --color-border: rgba(0, 0, 0, 0.07);
-      --color-border-hover: rgba(10, 191, 165, 0.3);
-      --color-shadow: rgba(0, 0, 0, 0.08);
-      --radius-sm: 6px;
-      --radius-md: 12px;
-      --font-sans: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    
-    html, body {
-      font-family: var(--font-sans);
-      background: var(--color-canvas-soft);
-      color: var(--color-ink);
-      height: 100vh;
-      overflow: hidden;
-    }
-    
-    .app { display: flex; height: 100vh; }
-    
-    /* Sidebar */
-    .sidebar {
-      width: 220px; background: var(--color-canvas);
-      border-right: 1px solid var(--color-border);
-      display: flex; flex-direction: column; flex-shrink: 0;
-    }
-    .sidebar-header {
-      padding: 16px; border-bottom: 1px solid var(--color-border);
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .sidebar-title { font-size: 14px; font-weight: 600; }
-    .btn-small {
-      padding: 6px 12px; border: 1px solid var(--color-border);
-      background: var(--color-canvas); border-radius: var(--radius-sm);
-      font-size: 12px; cursor: pointer; color: var(--color-body);
-    }
-    .btn-small:hover { border-color: var(--color-primary); color: var(--color-primary); }
-    .btn-small.primary { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }
-    .history-list { flex: 1; overflow-y: auto; padding: 8px; }
-    .history-item {
-      padding: 10px; border-radius: var(--radius-sm); cursor: pointer;
-      margin-bottom: 6px; border: 2px solid transparent; transition: all 0.2s;
-    }
-    .history-item:hover { background: var(--color-canvas-soft); }
-    .history-item.active { border-color: var(--color-primary); background: var(--color-primary-soft); }
-    .history-thumb { width: 100%; height: 100px; background: #fff; border-radius: 4px; margin-bottom: 6px; object-fit: cover; border: 1px solid var(--color-border); }
-    .history-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .history-actions { display: flex; gap: 4px; margin-top: 6px; }
-    .history-btn { flex: 1; padding: 4px 8px; border: 1px solid var(--color-border); background: var(--color-canvas); border-radius: 4px; font-size: 11px; cursor: pointer; }
-    .history-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
-    
-    /* Main */
-    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .top-bar {
-      height: 56px; background: var(--color-canvas);
-      border-bottom: 1px solid var(--color-border);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px; flex-shrink: 0;
-    }
-    .logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); }
-    .logo span { color: var(--color-primary); }
-    
-    /* Toolbar */
-    .toolbar {
-      background: var(--color-canvas); border-bottom: 1px solid var(--color-border);
-      padding: 10px 16px; display: flex; align-items: center; gap: 12px;
-      flex-wrap: wrap; flex-shrink: 0;
-    }
-    .tool-section { display: flex; align-items: center; gap: 4px; padding-right: 12px; border-right: 1px solid var(--color-border); }
-    .tool-section:last-child { border-right: none; padding-right: 0; }
-    
-    .tool-btn {
-      width: 38px; height: 38px; border: 1px solid transparent; background: transparent;
-      border-radius: var(--radius-sm); cursor: pointer; display: flex;
-      align-items: center; justify-content: center; transition: all 0.2s;
-      color: var(--color-body); position: relative;
-    }
-    .tool-btn:hover { background: var(--color-canvas-soft); color: var(--color-ink); }
-    .tool-btn.active { background: var(--color-primary-soft); color: var(--color-primary); border-color: var(--color-primary); }
-    .tool-btn svg { width: 20px; height: 20px; }
-    .tool-btn .shortcut { position: absolute; bottom: 2px; right: 4px; font-size: 9px; opacity: 0.6; }
-    
-    .color-palette { display: flex; flex-direction: column; gap: 4px; }
-    .color-row { display: flex; gap: 4px; }
-    .color-btn { width: 20px; height: 20px; border-radius: 4px; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s; }
-    .color-btn:hover { transform: scale(1.1); }
-    .color-btn.active { border-color: var(--color-ink); box-shadow: 0 0 0 2px var(--color-canvas); }
-    .color-picker-wrapper { position: relative; width: 24px; height: 24px; }
-    .color-picker { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .color-preview { width: 100%; height: 100%; border-radius: 4px; background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff); pointer-events: none; border: 2px solid var(--color-border); }
-    
-    .size-control { display: flex; align-items: center; gap: 8px; }
-    .size-slider { width: 80px; height: 6px; -webkit-appearance: none; background: var(--color-canvas-soft-2); border-radius: 3px; outline: none; }
-    .size-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--color-primary); border-radius: 50%; cursor: pointer; }
-    .size-value { font-size: 12px; color: var(--color-muted); min-width: 32px; }
-    
-    .font-control { display: flex; align-items: center; gap: 8px; }
-    .font-select, .font-input { padding: 6px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 13px; background: var(--color-canvas); }
-    .font-input { width: 60px; }
-    
-    /* Canvas Area */
-    .canvas-area {
-      flex: 1; background: var(--color-canvas-soft-2);
-      display: flex; align-items: center; justify-content: center;
-      overflow: auto; padding: 40px; position: relative;
-    }
-    .canvas-wrapper { position: relative; background: white; box-shadow: 0 8px 40px var(--color-shadow); border-radius: var(--radius-sm); overflow: hidden; }
-    #mainCanvas, #tempCanvas { display: block; }
-    #tempCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
-    
-    /* Transform Box - For move/resize/rotate */
-    .transform-box {
-      position: absolute; border: 2px dashed var(--color-primary); display: none; z-index: 10;
-    }
-    .transform-box.show { display: block; cursor: move; }
-    .transform-box .move-area {
-      position: absolute; inset: 0; cursor: move; z-index: 1;
-    }
-    .transform-handle {
-      position: absolute; width: 12px; height: 12px;
-      background: var(--color-primary); border: 2px solid white;
-      border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    .transform-handle {
-      position: absolute; width: 12px; height: 12px;
-      background: var(--color-primary); border: 2px solid white;
-      border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      z-index: 10;
-    }
-    .transform-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
-    .transform-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
-    .transform-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
-    .transform-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
-    .transform-handle.n { top: -6px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
-    .transform-handle.s { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
-    .transform-handle.w { left: -6px; top: 50%; transform: translateY(-50%); cursor: w-resize; }
-    .transform-handle.e { right: -6px; top: 50%; transform: translateY(-50%); cursor: e-resize; }
-    
-    .rotate-handle {
-      position: absolute; top: -35px; left: 50%;
-      transform: translateX(-50%); width: 20px; height: 20px;
-      background: var(--color-primary); border: 2px solid white;
-      border-radius: 50%; cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    .rotate-handle::after {
-      content: ''; position: absolute; top: 20px; left: 50%;
-      transform: translateX(-50%); width: 2px; height: 15px;
-      background: var(--color-primary);
-    }
-    .rotate-handle:active { cursor: grabbing; }
-    
-    .rotate-value {
-      position: absolute; top: -55px; left: 50%;
-      transform: translateX(-50%); background: var(--color-ink);
-      color: white; padding: 4px 8px; border-radius: 4px;
-      font-size: 11px; white-space: nowrap;
-    }
-    
-    /* Bottom Bar */
-    .bottom-bar {
-      height: 40px; background: var(--color-canvas);
-      border-top: 1px solid var(--color-border);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px; font-size: 12px; color: var(--color-muted);
-    }
-    .bottom-left { display: flex; gap: 16px; }
-    
-    /* Modals & Toast */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
-    .modal-overlay.show { display: flex; }
-    .modal { background: var(--color-canvas); border-radius: var(--radius-md); padding: 24px; max-width: 400px; width: 90%; }
-    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-    .modal-input { width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 14px; margin-bottom: 16px; }
-    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-    .toast { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-ink); color: white; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; z-index: 1000; opacity: 0; transition: all 0.3s; }
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-    
-    #fileInput { display: none; }
-    
-    @media (max-width: 1024px) { .sidebar { display: none; } }
-    @media (max-width: 768px) { .toolbar { padding: 8px; gap: 8px; } .tool-section { padding-right: 8px; } .font-control { display: none !important; } .canvas-area { padding: 20px; } }
-  </style>
-</head>
-<body>
-  <div class="app">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <span class="sidebar-title">📁 画板历史</span>
-        <button class="btn-small primary" onclick="newCanvas()">+ 新建</button>
-      </div>
-      <div class="history-list" id="historyList"></div>
-    </div>
-    
-    <!-- Main -->
-    <div class="main">
-      <!-- Top Bar -->
-      <div class="top-bar">
-        <a href="/" class="logo">小飞<span> AI 工具</span></a>
-        <div>
-          <button class="btn-small" onclick="saveCanvas()">💾 保存</button>
-          <button class="btn-small" onclick="exportCanvas()">📤 导出</button>
-        </div>
-      </div>
-      
-      <!-- Toolbar -->
-      <div class="toolbar">
-        <div class="tool-section">
-          <button class="tool-btn" id="tool-select" onclick="setTool('select')" title="选择/移动 (V)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
-            <span class="shortcut">V</span>
-          </button>
-          <button class="tool-btn active" id="tool-pen" onclick="setTool('pen')" title="画笔 (B)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-            <span class="shortcut">B</span>
-          </button>
-          <button class="tool-btn" id="tool-marker" onclick="setTool('marker')" title="荧光笔 (M)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19l-5 2 2-5L16 6l3 3-10 10z"/></svg>
-            <span class="shortcut">M</span>
-          </button>
-          <button class="tool-btn" id="tool-eraser" onclick="setTool('eraser')" title="橡皮擦 (E)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C2 15 2 13 3 12L13 2L22 11L20 20Z"/></svg>
-            <span class="shortcut">E</span>
-          </button>
-          <button class="tool-btn" id="tool-line" onclick="setTool('line')" title="直线 (L)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
-            <span class="shortcut">L</span>
-          </button>
-          <button class="tool-btn" id="tool-rect" onclick="setTool('rect')" title="矩形 (R)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-            <span class="shortcut">R</span>
-          </button>
-          <button class="tool-btn" id="tool-circle" onclick="setTool('circle')" title="圆形 (O)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
-            <span class="shortcut">O</span>
-          </button>
-          <button class="tool-btn" id="tool-text" onclick="setTool('text')" title="文字 (T)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
-            <span class="shortcut">T</span>
-          </button>
-          <button class="tool-btn" onclick="addImage()" title="插入图片 (I)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            <span class="shortcut">I</span>
-          </button>
-        </div>
-        
-        <div class="tool-section">
-          <div class="color-palette">
-            <div class="color-row">
-              <div class="color-btn active" style="background: #1a1a2e;" onclick="setColor('#1a1a2e')"></div>
-              <div class="color-btn" style="background: #ef4444;" onclick="setColor('#ef4444')"></div>
-              <div class="color-btn" style="background: #f59e0b;" onclick="setColor('#f59e0b')"></div>
-              <div class="color-btn" style="background: #10b981;" onclick="setColor('#10b981')"></div>
-              <div class="color-btn" style="background: #0abFA5;" onclick="setColor('#0abFA5')"></div>
-              <div class="color-btn" style="background: #3b82f6;" onclick="setColor('#3b82f6')"></div>
-              <div class="color-btn" style="background: #8b5cf6;" onclick="setColor('#8b5cf6')"></div>
-              <div class="color-picker-wrapper">
-                <div class="color-preview"></div>
-                <input type="color" class="color-picker" id="colorPicker" value="#1a1a2e" onchange="setColor(this.value)">
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="tool-section">
-          <div class="size-control">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-muted);"><circle cx="12" cy="12" r="3"/></svg>
-            <input type="range" class="size-slider" id="sizeSlider" min="1" max="50" value="3" oninput="setSize(this.value)">
-            <span class="size-value" id="sizeValue">3px</span>
-          </div>
-        </div>
-        
-        <div class="tool-section font-control" id="fontControl" style="display: none;">
-          <select class="font-select" id="fontFamily" onchange="setFont(this.value)">
-            <option value="'Noto Sans SC', sans-serif">思源黑体</option>
-            <option value="'Inter', sans-serif">Inter</option>
-            <option value="serif">宋体</option>
-            <option value="monospace">等宽</option>
-          </select>
-          <input type="number" class="font-input" id="fontSize" value="24" min="12" max="120" onchange="setFontSize(this.value)">
-        </div>
-        
-        <div class="tool-section">
-          <button class="tool-btn" id="btn-undo" onclick="undo()" disabled title="撤销">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
-          </button>
-          <button class="tool-btn" id="btn-redo" onclick="redo()" disabled title="重做">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3L21 13"/></svg>
-          </button>
-          <button class="tool-btn" id="btn-delete" onclick="deleteSelected()" disabled title="删除 (Del)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-          </button>
-          <button class="tool-btn" onclick="clearCanvas()" title="清空">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Canvas Area -->
-      <div class="canvas-area" id="canvasArea">
-        <div class="canvas-wrapper" id="canvasWrapper">
-          <canvas id="mainCanvas" width="1200" height="800"></canvas>
-          <canvas id="tempCanvas" width="1200" height="800"></canvas>
-          
-          <!-- Transform Box with handles -->
-          <div class="transform-box" id="transformBox">
-            <div class="move-area" id="moveArea"></div>
-            <div class="transform-handle nw" data-handle="nw"></div>
-            <div class="transform-handle ne" data-handle="ne"></div>
-            <div class="transform-handle sw" data-handle="sw"></div>
-            <div class="transform-handle se" data-handle="se"></div>
-            <div class="transform-handle n" data-handle="n"></div>
-            <div class="transform-handle s" data-handle="s"></div>
-            <div class="transform-handle w" data-handle="w"></div>
-            <div class="transform-handle e" data-handle="e"></div>
-            <div class="rotate-handle" id="rotateHandle">
-              <div class="rotate-value" id="rotateValue">0°</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Bottom Bar -->
-      <div class="bottom-bar">
-        <div class="bottom-left">
-          <span>📐 1200 x 800</span>
-          <span id="elementInfo">0 个元素</span>
-          <span id="toolInfo">画笔</span>
-        </div>
-        <span id="coords">0, 0</span>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Text Modal -->
-  <div class="modal-overlay" id="textModal">
-    <div class="modal">
-      <div class="modal-title">输入文字</div>
-      <textarea class="modal-input" id="textInput" rows="4" placeholder="输入文字内容..."></textarea>
-      <div class="modal-actions">
-        <button class="btn-small" onclick="closeTextModal()">取消</button>
-        <button class="btn-small primary" onclick="confirmText()">确定</button>
-      </div>
-    </div>
-  </div>
-  
-  <input type="file" id="fileInput" accept="image/*" onchange="handleImageFile(event)">
-  <div class="toast" id="toast"></div>
-  
-  <script>
-    // Canvases
-    const mainCanvas = document.getElementById('mainCanvas');
-    const tempCanvas = document.getElementById('tempCanvas');
-    const mainCtx = mainCanvas.getContext('2d');
-    const tempCtx = tempCanvas.getContext('2d');
-    const wrapper = document.getElementById('canvasWrapper');
-    const transformBox = document.getElementById('transformBox');
-    const moveArea = document.getElementById('moveArea');
-    const rotateHandle = document.getElementById('rotateHandle');
-    const rotateValue = document.getElementById('rotateValue');
-    
-    // State
-    let currentTool = 'pen';
-    let currentColor = '#1a1a2e';
-    let currentSize = 3;
-    let currentFont = "'Noto Sans SC', sans-serif";
-    let currentFontSize = 24;
-    
-    // Elements
-    let elements = [];
-    let selectedElement = null;
-    let isDrawing = false;
-    let tempElement = null;
-    
-    // Transform state
-    let transformMode = null; // 'move', 'resize', 'rotate'
-    let isDragging = false; // 是否在拖动中
-    let resizeHandle = null;
-    let transformStart = { x: 0, y: 0, elX: 0, elY: 0, elW: 0, elH: 0, elRot: 0, elPoints: null };
-    let initialAngle = 0;
-    let centerPoint = { x: 0, y: 0 };
-    
-    // History
-    let historyStack = [];
-    let redoStack = [];
-    const MAX_HISTORY = 50;
-    let canvases = [];
-    let currentCanvasIndex = -1;
-    
-    const toolNames = {
-      select: '选择/移动', pen: '画笔', marker: '荧光笔', eraser: '橡皮擦',
-      line: '直线', rect: '矩形', circle: '圆形', text: '文字'
-    };
-    
-    // Init
-    mainCtx.lineCap = 'round';
-    mainCtx.lineJoin = 'round';
-    tempCtx.lineCap = 'round';
-    tempCtx.lineJoin = 'round';
-    newCanvas();
-    setupTransformHandlers();
-    
-    // ==================== Tool Functions ====================
-    function setTool(tool) {
-      currentTool = tool;
-      document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById('tool-' + tool)?.classList.add('active');
-      document.getElementById('fontControl').style.display = (tool === 'text') ? 'flex' : 'none';
-      document.getElementById('toolInfo').textContent = toolNames[tool] || tool;
-      mainCanvas.style.cursor = tool === 'select' ? 'default' : (tool === 'text' ? 'text' : 'crosshair');
-      if (tool !== 'select') deselect();
-      tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-      render();
-    }
-    
-    function setColor(color) {
-      currentColor = color;
-      document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('colorPicker').value = color;
-      if (selectedElement) {
-        selectedElement.color = color;
-        saveHistory();
-        render();
-      }
-    }
-    
-    function setSize(size) {
-      currentSize = parseInt(size);
-      document.getElementById('sizeValue').textContent = size + 'px';
-      if (selectedElement) {
-        selectedElement.size = currentSize;
-        saveHistory();
-        render();
-      }
-    }
-    
-    function setFont(font) { currentFont = font; }
-    function setFontSize(size) { currentFontSize = parseInt(size); }
-    
-    // ==================== Element System ====================
-    function createElement(type, data) {
-      return {
-        id: Date.now() + Math.random(),
-        type: type,
-        x: data.x ?? 0, y: data.y ?? 0,
-        width: data.width ?? 0, height: data.height ?? 0,
-        color: data.color ?? currentColor,
-        size: data.size ?? currentSize,
-        font: data.font ?? currentFont,
-        fontSize: data.fontSize ?? currentFontSize,
-        points: data.points ? [...data.points] : [],
-        text: data.text ?? '',
-        image: data.image || null,
-        rotation: data.rotation ?? 0
-      };
-    }
-    
-    function render() {
-      mainCtx.fillStyle = 'white';
-      mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-      elements.forEach(el => renderElement(mainCtx, el));
-      document.getElementById('elementInfo').textContent = elements.length + ' 个元素';
-      updateTransformBox();
-    }
-    
-    function renderElement(ctx, el, isTemp = false) {
-      ctx.save();
-      if (el.rotation) {
-        const cx = el.x + (el.width || 0) / 2;
-        const cy = el.y + (el.height || 0) / 2;
-        if (el.type === 'path' || el.type === 'line' || el.type === 'circle') {
-          // For paths, use bounding box center
-          const bounds = getElementBounds(el);
-          ctx.translate(bounds.cx, bounds.cy);
-        } else {
-          ctx.translate(el.x + el.width / 2, el.y + el.height / 2);
-        }
-        ctx.rotate(el.rotation * Math.PI / 180);
-        if (el.type === 'path' || el.type === 'line' || el.type === 'circle') {
-          ctx.translate(-bounds.cx, -bounds.cy);
-        } else {
-          ctx.translate(-el.x - el.width / 2, -el.y - el.height / 2);
+
+    // ============================================
+    // 选择和变换
+    // ============================================
+    hitTest(x, y) {
+      // 从后往前检测（上层优先）
+      for (let i = this.elements.length - 1; i >= 0; i--) {
+        if (this.isPointInElement(x, y, this.elements[i])) {
+          return this.elements[i];
         }
       }
+      return null;
+    }
+    
+    isPointInElement(x, y, el) {
+      const bounds = this.getElementBounds(el);
+      const padding = Math.max(el.size || 3, 8);
       
-      switch(el.type) {
+      return x >= bounds.x - padding && 
+             x <= bounds.x + bounds.width + padding &&
+             y >= bounds.y - padding && 
+             y <= bounds.y + bounds.height + padding;
+    }
+    
+    getElementBounds(el) {
+      switch (el.type) {
         case 'path':
-          if (el.points.length > 1) {
-            ctx.beginPath();
-            ctx.moveTo(el.points[0].x, el.points[0].y);
-            for (let i = 1; i < el.points.length; i++) ctx.lineTo(el.points[i].x, el.points[i].y);
-            setupStroke(ctx, el);
-            ctx.stroke();
+          if (!el.points || el.points.length === 0) {
+            return { x: 0, y: 0, width: 0, height: 0, cx: 0, cy: 0 };
           }
-          break;
-        case 'line':
-          ctx.beginPath();
-          ctx.moveTo(el.x, el.y);
-          ctx.lineTo(el.x + el.width, el.y + el.height);
-          setupStroke(ctx, el);
-          ctx.stroke();
-          break;
-        case 'rect':
-          ctx.beginPath();
-          ctx.rect(el.x, el.y, el.width, el.height);
-          setupStroke(ctx, el);
-          ctx.stroke();
-          break;
-        case 'circle':
-          ctx.beginPath();
-          const radius = Math.sqrt(el.width * el.width + el.height * el.height);
-          ctx.arc(el.x, el.y, radius, 0, 2 * Math.PI);
-          setupStroke(ctx, el);
-          ctx.stroke();
-          break;
-        case 'text':
-          ctx.fillStyle = el.color;
-          ctx.font = `${el.fontSize}px ${el.font}`;
-          ctx.textBaseline = 'top';
-          const lines = el.text.split('\n');
-          lines.forEach((line, i) => ctx.fillText(line, el.x, el.y + i * (el.fontSize * 1.4)));
-          break;
-        case 'image':
-          if (el.image) ctx.drawImage(el.image, el.x, el.y, el.width, el.height);
-          break;
-      }
-      ctx.restore();
-    }
-    
-    function setupStroke(ctx, el) {
-      if (el.type === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = 'rgba(0,0,0,1)';
-        ctx.lineWidth = (el.size || 3) * 3;
-      } else if (el.type === 'marker') {
-        ctx.globalCompositeOperation = 'multiply';
-        ctx.strokeStyle = (el.color || '#000') + '66';
-        ctx.lineWidth = (el.size || 3) * 2;
-      } else {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = el.color || '#000';
-        ctx.lineWidth = el.size || 3;
-      }
-    }
-    
-    function getElementBounds(el) {
-      switch(el.type) {
-        case 'path':
-          if (!el.points.length) return { x: 0, y: 0, width: 0, height: 0, cx: 0, cy: 0 };
           let minX = el.points[0].x, maxX = el.points[0].x;
           let minY = el.points[0].y, maxY = el.points[0].y;
           el.points.forEach(p => {
-            minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
-            minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+            minX = Math.min(minX, p.x);
+            maxX = Math.max(maxX, p.x);
+            minY = Math.min(minY, p.y);
+            maxY = Math.max(maxY, p.y);
           });
-          return { x: minX, y: minY, width: maxX - minX, height: maxY - minY, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+          return {
+            x: minX, y: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+            cx: (minX + maxX) / 2,
+            cy: (minY + maxY) / 2
+          };
+        
         case 'line':
-          return { x: Math.min(el.x, el.x + el.width), y: Math.min(el.y, el.y + el.height), width: Math.abs(el.width), height: Math.abs(el.height), cx: el.x + el.width / 2, cy: el.y + el.height / 2 };
+          return {
+            x: Math.min(el.x, el.x + el.width),
+            y: Math.min(el.y, el.y + el.height),
+            width: Math.abs(el.width),
+            height: Math.abs(el.height),
+            cx: el.x + el.width / 2,
+            cy: el.y + el.height / 2
+          };
+        
         case 'circle':
           const r = Math.sqrt(el.width * el.width + el.height * el.height);
-          return { x: el.x - r, y: el.y - r, width: r * 2, height: r * 2, cx: el.x, cy: el.y };
-        default:
-          return { x: el.x, y: el.y, width: el.width, height: el.height, cx: el.x + el.width / 2, cy: el.y + el.height / 2 };
-      }
-    }
-    
-    // ==================== Canvas Events ====================
-    function getCoords(e) {
-      const rect = mainCanvas.getBoundingClientRect();
-      const scaleX = mainCanvas.width / rect.width;
-      const scaleY = mainCanvas.height / rect.height;
-      let clientX = e.touches?.[0]?.clientX ?? e.clientX;
-      let clientY = e.touches?.[0]?.clientY ?? e.clientY;
-      return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
-    }
-    
-    mainCanvas.addEventListener('mousedown', onPointerDown);
-    mainCanvas.addEventListener('mousemove', onPointerMove);
-    mainCanvas.addEventListener('mouseup', onPointerUp);
-    mainCanvas.addEventListener('touchstart', onPointerDown, { passive: false });
-    mainCanvas.addEventListener('touchmove', onPointerMove, { passive: false });
-    mainCanvas.addEventListener('touchend', onPointerUp);
-    
-    function onPointerDown(e) {
-      e.preventDefault();
-      const coords = getCoords(e);
-      
-      if (currentTool === 'select') {
-        const hit = hitTest(coords.x, coords.y);
-        if (hit) {
-          selectElement(hit);
-          // 只有点击在选中框内部才开始拖动
-          const bounds = getElementBounds(hit);
-          transformStart = { x: coords.x, y: coords.y, elX: hit.x, elY: hit.y, elW: hit.width, elH: hit.height, bounds };
-        } else {
-          deselect();
-        }
-        return;
-      }
-      
-      if (currentTool === 'text') {
-        openTextModal(coords.x, coords.y);
-        return;
-      }
-      
-      isDrawing = true;
-      if (currentTool === 'pen' || currentTool === 'eraser' || currentTool === 'marker') {
-        tempElement = createElement('path', { x: coords.x, y: coords.y, points: [{x: coords.x, y: coords.y}] });
-      } else {
-        tempElement = createElement(currentTool, { x: coords.x, y: coords.y, width: 0, height: 0 });
-      }
-    }
-    
-    function onPointerMove(e) {
-      e.preventDefault();
-      const coords = getCoords(e);
-      document.getElementById('coords').textContent = `${Math.round(coords.x)}, ${Math.round(coords.y)}`;
-      
-      // Transform mode - 只有在isDragging为true时才进行拖动
-      if (isDragging && selectedElement) {
-        if (transformMode === 'move') {
-          const dx = coords.x - transformStart.x;
-          const dy = coords.y - transformStart.y;
-          if (selectedElement.type === 'path') {
-            selectedElement.points = transformStart.elPoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
-          } else if (selectedElement.type === 'line' || selectedElement.type === 'circle') {
-            selectedElement.x = transformStart.elX + dx;
-            selectedElement.y = transformStart.elY + dy;
-          } else {
-            selectedElement.x = transformStart.elX + dx;
-            selectedElement.y = transformStart.elY + dy;
-          }
-          updateTransformBox();
-          render();
-        } else if (transformMode === 'resize') {
-          applyResize(coords);
-        } else if (transformMode === 'rotate') {
-          applyRotate(coords);
-        }
-        return;
-      }
-      
-      if (!isDrawing || !tempElement) return;
-      
-      if (tempElement.type === 'path') {
-        tempElement.points.push({x: coords.x, y: coords.y});
-        tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-        renderElement(tempCtx, tempElement, true);
-      } else {
-        tempElement.width = coords.x - tempElement.x;
-        tempElement.height = coords.y - tempElement.y;
-        tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-        renderElement(tempCtx, tempElement, true);
-      }
-    }
-    
-    function onPointerUp() {
-      // 松开鼠标时立即停止拖动
-      if (isDragging && transformMode) {
-        if (transformMode === 'move') {
-          // Check if actually moved
-          const el = selectedElement;
-          let moved = false;
-          if (el.type === 'path') {
-            moved = JSON.stringify(el.points) !== JSON.stringify(transformStart.elPoints);
-          } else {
-            moved = el.x !== transformStart.elX || el.y !== transformStart.elY;
-          }
-          if (moved) saveHistory();
-        } else {
-          saveHistory();
-        }
-      }
-      // 重置拖动状态 - 关键：松开即停止
-      isDragging = false;
-      transformMode = null;
-      resizeHandle = null;
-      
-      if (isDrawing) {
-        // 绘图模式结束
-      } else {
-        return;
-      }
-      
-      if (!isDrawing || !tempElement) return;
-      isDrawing = false;
-      
-      let shouldAdd = false;
-      if (tempElement.type === 'path' && tempElement.points.length > 1) {
-        shouldAdd = true;
-      } else if (tempElement.type !== 'path' && (Math.abs(tempElement.width) > 5 || Math.abs(tempElement.height) > 5)) {
-        shouldAdd = true;
-      }
-      
-      if (shouldAdd) {
-        elements.push(tempElement);
-        saveHistory();
-      }
-      tempElement = null;
-      tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-      render();
-      updateUndoRedoButtons();
-    }
-    
-    // ==================== Transform Handlers ====================
-    function setupTransformHandlers() {
-      // Move area - 只在按住时拖动
-      moveArea.addEventListener('mousedown', (e) => {
-        if (!selectedElement || currentTool !== 'select') return;
-        e.stopPropagation();
-        e.preventDefault();
-        // 开始拖动
-        isDragging = true;
-        transformMode = 'move';
-        const coords = getCoords({ clientX: e.clientX, clientY: e.clientY });
-        const bounds = getElementBounds(selectedElement);
-        transformStart = { 
-          x: coords.x, y: coords.y, 
-          elX: selectedElement.x, elY: selectedElement.y, 
-          elW: selectedElement.width, elH: selectedElement.height,
-          bounds,
-          elPoints: selectedElement.type === 'path' ? selectedElement.points.map(p => ({...p})) : null
-        };
-      });
-      
-      // 确保松开鼠标时停止拖动（全局监听，防止鼠标移出画布）
-      document.addEventListener('mouseup', () => {
-        if (isDragging) {
-          isDragging = false;
-          transformMode = null;
-          resizeHandle = null;
-        }
-      });
-      
-      // Resize handles
-      document.querySelectorAll('.transform-handle').forEach(handle => {
-        handle.addEventListener('mousedown', (e) => {
-          if (!selectedElement) return;
-          e.stopPropagation();
-          e.preventDefault();
-          isDragging = true;
-          transformMode = 'resize';
-          resizeHandle = e.target.dataset.handle;
-          const coords = getCoords({ clientX: e.clientX, clientY: e.clientY });
-          const bounds = getElementBounds(selectedElement);
-          transformStart = {
-            x: coords.x, y: coords.y,
-            elX: selectedElement.x, elY: selectedElement.y,
-            elW: selectedElement.width, elH: selectedElement.height,
-            elRot: selectedElement.rotation || 0,
-            bounds
+          return {
+            x: el.x - r,
+            y: el.y - r,
+            width: r * 2,
+            height: r * 2,
+            cx: el.x,
+            cy: el.y
           };
-        });
-      });
-      
-      // Rotate handle
-      rotateHandle.addEventListener('mousedown', (e) => {
-        if (!selectedElement) return;
-        e.stopPropagation();
-        e.preventDefault();
-        isDragging = true;
-        transformMode = 'rotate';
-        const coords = getCoords({ clientX: e.clientX, clientY: e.clientY });
-        const bounds = getElementBounds(selectedElement);
-        centerPoint = { x: bounds.cx, y: bounds.cy };
-        initialAngle = Math.atan2(coords.y - centerPoint.y, coords.x - centerPoint.x) * 180 / Math.PI;
-        transformStart = { elRot: selectedElement.rotation || 0 };
-      });
+        
+        default:
+          return {
+            x: el.x,
+            y: el.y,
+            width: el.width,
+            height: el.height,
+            cx: el.x + el.width / 2,
+            cy: el.y + el.height / 2
+          };
+      }
     }
     
-    function applyResize(coords) {
-      if (!selectedElement || !resizeHandle) return;
-      const el = selectedElement;
-      const start = transformStart;
-      let dx = coords.x - start.x;
-      let dy = coords.y - start.y;
+    selectElement(el) {
+      this.selectedElement = el;
+      this.updateTransformBox();
+      this.updateToolState();
+    }
+    
+    deselect() {
+      this.selectedElement = null;
+      this.transformBox.classList.remove('show');
+      this.updateToolState();
+    }
+    
+    updateTransformBox() {
+      if (!this.selectedElement) {
+        this.transformBox.classList.remove('show');
+        return;
+      }
       
-      // Simple resize logic
-      if (resizeHandle.includes('e')) el.width = Math.max(10, start.elW + dx);
-      if (resizeHandle.includes('w')) {
+      const bounds = this.getElementBounds(this.selectedElement);
+      this.transformBox.style.left = bounds.x + 'px';
+      this.transformBox.style.top = bounds.y + 'px';
+      this.transformBox.style.width = bounds.width + 'px';
+      this.transformBox.style.height = bounds.height + 'px';
+      document.getElementById('rotateValue').textContent = 
+        Math.round(this.selectedElement.rotation || 0) + '°';
+      this.transformBox.classList.add('show');
+    }
+    
+    startTransform(mode, e, handle) {
+      this.isDragging = true;
+      this.transformMode = mode;
+      this.resizeHandle = handle;
+      
+      const coords = this.getCoords(e);
+      const el = this.selectedElement;
+      
+      this.transformStart = {
+        x: coords.x,
+        y: coords.y,
+        elX: el.x,
+        elY: el.y,
+        elW: el.width,
+        elH: el.height,
+        elRot: el.rotation || 0,
+        points: el.type === 'path' ? el.points.map(p => ({ ...p })) : null,
+        bounds: this.getElementBounds(el)
+      };
+      
+      if (mode === 'rotate') {
+        this.transformStart.center = this.transformStart.bounds;
+      }
+    }
+    
+    applyTransform(coords) {
+      if (!this.selectedElement || !this.transformMode) return;
+      
+      const el = this.selectedElement;
+      const start = this.transformStart;
+      const dx = coords.x - start.x;
+      const dy = coords.y - start.y;
+      
+      switch (this.transformMode) {
+        case 'move':
+          this.applyMove(el, dx, dy, start);
+          break;
+        case 'resize':
+          this.applyResize(el, dx, dy, start);
+          break;
+        case 'rotate':
+          this.applyRotate(el, coords, start);
+          break;
+      }
+      
+      this.updateTransformBox();
+      this.render();
+    }
+    
+    applyMove(el, dx, dy, start) {
+      if (el.type === 'path' && start.points) {
+        el.points = start.points.map(p => ({
+          x: p.x + dx,
+          y: p.y + dy
+        }));
+      } else {
+        el.x = start.elX + dx;
+        el.y = start.elY + dy;
+      }
+    }
+    
+    applyResize(el, dx, dy, start) {
+      const handle = this.resizeHandle;
+      
+      if (handle.includes('e')) {
+        el.width = Math.max(10, start.elW + dx);
+      }
+      if (handle.includes('w')) {
         const newW = Math.max(10, start.elW - dx);
         el.x = start.elX + start.elW - newW;
         el.width = newW;
       }
-      if (resizeHandle.includes('s')) el.height = Math.max(10, start.elH + dy);
-      if (resizeHandle.includes('n')) {
+      if (handle.includes('s')) {
+        el.height = Math.max(10, start.elH + dy);
+      }
+      if (handle.includes('n')) {
         const newH = Math.max(10, start.elH - dy);
         el.y = start.elY + start.elH - newH;
         el.height = newH;
       }
       
-      // For images, maintain aspect ratio if shift is held (simplified)
-      if (el.type === 'image') {
-        // Keep aspect ratio
+      // 图片保持比例
+      if (el.type === 'image' && el.image) {
         const ratio = el.image.width / el.image.height;
-        if (resizeHandle.includes('e') || resizeHandle.includes('w')) {
+        if (handle.includes('e') || handle.includes('w')) {
           el.height = el.width / ratio;
-        } else {
+        } else if (handle.includes('n') || handle.includes('s')) {
           el.width = el.height * ratio;
         }
       }
-      
-      updateTransformBox();
-      render();
     }
     
-    function applyRotate(coords) {
-      if (!selectedElement) return;
-      const currentAngle = Math.atan2(coords.y - centerPoint.y, coords.x - centerPoint.x) * 180 / Math.PI;
-      const deltaAngle = currentAngle - initialAngle;
-      selectedElement.rotation = (transformStart.elRot + deltaAngle) % 360;
-      rotateValue.textContent = Math.round(selectedElement.rotation) + '°';
-      updateTransformBox();
-      render();
+    applyRotate(el, coords, start) {
+      const center = start.center;
+      const angle = Math.atan2(coords.y - center.cy, coords.x - center.cx);
+      const startAngle = Math.atan2(start.y - center.cy, start.x - center.cx);
+      const delta = (angle - startAngle) * 180 / Math.PI;
+      el.rotation = (start.elRot + delta) % 360;
     }
     
-    // ==================== Hit Testing ====================
-    function hitTest(x, y) {
-      for (let i = elements.length - 1; i >= 0; i--) {
-        if (isPointInElement(x, y, elements[i])) return elements[i];
+    // ============================================
+    // 图层控制
+    // ============================================
+    bringForward() {
+      if (!this.selectedElement) return;
+      const idx = this.elements.indexOf(this.selectedElement);
+      if (idx < this.elements.length - 1) {
+        [this.elements[idx], this.elements[idx + 1]] = 
+        [this.elements[idx + 1], this.elements[idx]];
+        this.render();
+        this.saveHistory();
+        this.showToast('已上移一层');
       }
-      return null;
     }
     
-    function isPointInElement(x, y, el) {
-      const bounds = getElementBounds(el);
-      // Simple bounding box test with padding
-      const padding = Math.max(el.size || 3, 5);
-      return x >= bounds.x - padding && x <= bounds.x + bounds.width + padding &&
-             y >= bounds.y - padding && y <= bounds.y + bounds.height + padding;
-    }
-    
-    // ==================== Selection ====================
-    function selectElement(el) {
-      selectedElement = el;
-      document.getElementById('btn-delete').disabled = false;
-      document.getElementById('sizeSlider').value = el.size || 3;
-      document.getElementById('sizeValue').textContent = (el.size || 3) + 'px';
-      updateTransformBox();
-    }
-    
-    function deselect() {
-      selectedElement = null;
-      transformBox.classList.remove('show');
-      document.getElementById('btn-delete').disabled = true;
-    }
-    
-    function updateTransformBox() {
-      if (!selectedElement) {
-        transformBox.classList.remove('show');
-        return;
+    sendBackward() {
+      if (!this.selectedElement) return;
+      const idx = this.elements.indexOf(this.selectedElement);
+      if (idx > 0) {
+        [this.elements[idx], this.elements[idx - 1]] = 
+        [this.elements[idx - 1], this.elements[idx]];
+        this.render();
+        this.saveHistory();
+        this.showToast('已下移一层');
       }
-      const bounds = getElementBounds(selectedElement);
-      transformBox.style.left = bounds.x + 'px';
-      transformBox.style.top = bounds.y + 'px';
-      transformBox.style.width = bounds.width + 'px';
-      transformBox.style.height = bounds.height + 'px';
-      rotateValue.textContent = Math.round(selectedElement.rotation || 0) + '°';
-      transformBox.classList.add('show');
     }
     
-    function deleteSelected() {
-      if (!selectedElement) return;
-      const idx = elements.indexOf(selectedElement);
+    bringToFront() {
+      if (!this.selectedElement) return;
+      const idx = this.elements.indexOf(this.selectedElement);
+      this.elements.splice(idx, 1);
+      this.elements.push(this.selectedElement);
+      this.render();
+      this.saveHistory();
+      this.showToast('已置顶');
+    }
+    
+    sendToBack() {
+      if (!this.selectedElement) return;
+      const idx = this.elements.indexOf(this.selectedElement);
+      this.elements.splice(idx, 1);
+      this.elements.unshift(this.selectedElement);
+      this.render();
+      this.saveHistory();
+      this.showToast('已置底');
+    }
+    
+    deleteSelected() {
+      if (!this.selectedElement) return;
+      const idx = this.elements.indexOf(this.selectedElement);
       if (idx > -1) {
-        elements.splice(idx, 1);
-        deselect();
-        saveHistory();
-        render();
-        updateUndoRedoButtons();
+        this.elements.splice(idx, 1);
+        this.deselect();
+        this.render();
+        this.saveHistory();
+        this.showToast('已删除');
       }
     }
     
-    // ==================== Text ====================
-    let textPos = null;
-    function openTextModal(x, y) {
-      textPos = {x, y};
+    // ============================================
+    // 文字工具
+    // ============================================
+    openTextModal(x, y) {
+      this.textPos = { x, y };
       document.getElementById('textModal').classList.add('show');
       document.getElementById('textInput').value = '';
       document.getElementById('textInput').focus();
     }
-    function closeTextModal() { document.getElementById('textModal').classList.remove('show'); textPos = null; isDrawing = false; }
-    function confirmText() {
-      const text = document.getElementById('textInput').value.trim();
-      if (text && textPos) {
-        const el = createElement('text', {
-          x: textPos.x, y: textPos.y, width: 200,
-          height: text.split('\n').length * currentFontSize * 1.4,
-          text: text, font: currentFont, fontSize: currentFontSize
-        });
-        elements.push(el);
-        saveHistory();
-        render();
-        updateUndoRedoButtons();
-      }
-      closeTextModal();
+    
+    closeTextModal() {
+      document.getElementById('textModal').classList.remove('show');
+      this.textPos = null;
     }
     
-    // ==================== Image ====================
-    function addImage() { document.getElementById('fileInput').click(); }
-    function handleImageFile(e) {
+    confirmText() {
+      const text = document.getElementById('textInput').value.trim();
+      if (text && this.textPos) {
+        this.elements.push({
+          type: 'text',
+          x: this.textPos.x,
+          y: this.textPos.y,
+          text: text,
+          color: this.currentColor,
+          size: this.currentSize,
+          id: Date.now()
+        });
+        this.render();
+        this.saveHistory();
+      }
+      this.closeTextModal();
+    }
+    
+    // ============================================
+    // 图片工具
+    // ============================================
+    addImage() {
+      document.getElementById('fileInput').click();
+    }
+    
+    handleImageFile(e) {
       const file = e.target.files[0];
-      if (!file) return;
+      if (!file || !file.type.startsWith('image/')) return;
+      
       const reader = new FileReader();
-      reader.onload = function(event) {
+      reader.onload = (event) => {
         const img = new Image();
-        img.onload = function() {
-          const scale = Math.min(400 / img.width, 300 / img.height, 1);
-          const el = createElement('image', {
-            x: (mainCanvas.width - img.width * scale) / 2,
-            y: (mainCanvas.height - img.height * scale) / 2,
-            width: img.width * scale, height: img.height * scale,
-            image: img
+        img.onload = () => {
+          // 限制图片大小
+          const maxSize = 400;
+          const scale = Math.min(1, maxSize / img.width, maxSize / img.height);
+          
+          this.elements.push({
+            type: 'image',
+            x: (800 - img.width * scale) / 2,
+            y: (600 - img.height * scale) / 2,
+            width: img.width * scale,
+            height: img.height * scale,
+            image: img,
+            id: Date.now()
           });
-          elements.push(el);
-          saveHistory();
-          render();
-          updateUndoRedoButtons();
-          showToast('图片已插入');
+          
+          this.render();
+          this.saveHistory();
+          this.showToast('图片已插入');
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
+      
+      // 清空 input 以便重复选择同一文件
+      e.target.value = '';
     }
     
-    // ==================== History ====================
-    function saveHistory() {
-      const state = JSON.stringify(elements.map(el => ({ ...el, image: el.image ? '[Image]' : null })));
-      historyStack.push({ elements: state });
-      if (historyStack.length > MAX_HISTORY) historyStack.shift();
-      redoStack = [];
+    // ============================================
+    // 历史记录系统
+    // ============================================
+    saveHistory() {
+      // 移除当前索引之后的历史
+      this.history = this.history.slice(0, this.historyIndex + 1);
+      
+      // 序列化元素（图片转为 dataURL）
+      const serialized = JSON.stringify(this.elements.map(el => {
+        const copy = { ...el };
+        delete copy.image; // 图片单独处理
+        return copy;
+      }));
+      
+      // 收集所有图片数据
+      const imageData = {};
+      this.elements.forEach(el => {
+        if (el.type === 'image' && el.image) {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = el.image.width;
+            canvas.height = el.image.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(el.image, 0, 0);
+            imageData[el.id] = canvas.toDataURL('image/png');
+          } catch (e) {
+            console.warn('无法序列化图片:', e);
+          }
+        }
+      });
+      
+      this.history.push({
+        elements: serialized,
+        imageData: imageData,
+        background: this.currentBg
+      });
+      
+      // 限制历史数量
+      if (this.history.length > this.maxHistory) {
+        this.history.shift();
+      } else {
+        this.historyIndex++;
+      }
+      
+      this.updateUndoRedoButtons();
     }
     
-    function undo() {
-      if (historyStack.length <= 1) return;
-      redoStack.push(historyStack.pop());
-      loadState(historyStack[historyStack.length - 1]);
-      showToast('已撤销');
+    undo() {
+      if (this.historyIndex <= 0) return;
+      this.historyIndex--;
+      this.loadHistoryState();
+      this.showToast('已撤销');
     }
     
-    function redo() {
-      if (redoStack.length === 0) return;
-      const next = redoStack.pop();
-      historyStack.push(next);
-      loadState(next);
-      showToast('已重做');
+    redo() {
+      if (this.historyIndex >= this.history.length - 1) return;
+      this.historyIndex++;
+      this.loadHistoryState();
+      this.showToast('已重做');
     }
     
-    function loadState(state) {
-      // Simplified - in production would need to restore images
-      deselect();
-      updateUndoRedoButtons();
-      render();
+    loadHistoryState() {
+      const state = this.history[this.historyIndex];
+      if (!state) return;
+      
+      // 解析元素
+      const parsed = JSON.parse(state.elements);
+      
+      // 恢复图片
+      this.elements = parsed.map(el => {
+        if (el.type === 'image' && state.imageData[el.id]) {
+          const img = new Image();
+          img.src = state.imageData[el.id];
+          el.image = img;
+        }
+        return el;
+      });
+      
+      // 恢复背景
+      if (state.background) {
+        this.setBackground(state.background);
+        document.querySelectorAll('.bg-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.bg === state.background);
+        });
+      }
+      
+      this.deselect();
+      this.render();
+      this.updateUndoRedoButtons();
     }
     
-    function updateUndoRedoButtons() {
-      document.getElementById('btn-undo').disabled = historyStack.length <= 1;
-      document.getElementById('btn-redo').disabled = redoStack.length === 0;
+    updateUndoRedoButtons() {
+      document.getElementById('btnUndo').disabled = this.historyIndex <= 0;
+      document.getElementById('btnRedo').disabled = this.historyIndex >= this.history.length - 1;
     }
     
-    // ==================== Canvas Management ====================
-    function newCanvas() {
-      if (currentCanvasIndex >= 0) canvases[currentCanvasIndex] = { elements: [...elements], thumbnail: mainCanvas.toDataURL() };
-      elements = []; historyStack = []; redoStack = [];
-      mainCtx.fillStyle = 'white'; mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-      canvases.push({ elements: [], thumbnail: null, name: `画板 ${canvases.length + 1}` });
-      currentCanvasIndex = canvases.length - 1;
-      deselect(); render(); updateHistoryList(); updateUndoRedoButtons(); showToast('新建画板');
+    // ============================================
+    // 多画布管理
+    // ============================================
+    newCanvas() {
+      // 保存当前画布
+      if (this.canvases[this.currentCanvasIndex]) {
+        this.canvases[this.currentCanvasIndex] = {
+          elements: [...this.elements],
+          history: [...this.history],
+          historyIndex: this.historyIndex,
+          background: this.currentBg,
+          thumbnail: this.mainCanvas.toDataURL('image/png')
+        };
+      }
+      
+      // 创建新画布
+      this.elements = [];
+      this.history = [];
+      this.historyIndex = -1;
+      this.currentBg = 'white';
+      
+      this.canvases.push({
+        elements: [],
+        history: [],
+        historyIndex: -1,
+        background: 'white',
+        thumbnail: null,
+        name: `画板 ${this.canvases.length + 1}`
+      });
+      
+      this.currentCanvasIndex = this.canvases.length - 1;
+      
+      this.deselect();
+      this.render();
+      this.saveHistory();
+      this.updateCanvasList();
+      this.saveToStorage();
+      this.showToast('新建画板');
     }
     
-    function switchCanvas(index) {
-      if (index === currentCanvasIndex) return;
-      canvases[currentCanvasIndex] = { elements: [...elements], thumbnail: mainCanvas.toDataURL() };
-      currentCanvasIndex = index;
-      const c = canvases[index];
-      elements = c.elements || [];
-      deselect(); render(); updateHistoryList(); updateUndoRedoButtons();
+    loadCanvas(index) {
+      const canvas = this.canvases[index];
+      if (!canvas) return;
+      
+      this.elements = canvas.elements ? [...canvas.elements] : [];
+      this.history = canvas.history ? [...canvas.history] : [];
+      this.historyIndex = canvas.historyIndex ?? -1;
+      this.currentBg = canvas.background || 'white';
+      this.currentCanvasIndex = index;
+      
+      // 恢复背景按钮状态
+      document.querySelectorAll('.bg-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.bg === this.currentBg);
+      });
+      
+      this.deselect();
+      this.render();
+      this.updateUndoRedoButtons();
+      this.updateCanvasList();
     }
     
-    function updateHistoryList() {
-      document.getElementById('historyList').innerHTML = canvases.map((c, i) => `
-        <div class="history-item ${i === currentCanvasIndex ? 'active' : ''}" onclick="switchCanvas(${i})">
-          <img class="history-thumb" src="${c.thumbnail || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}" alt="">
-          <div class="history-name">${c.name || `画板 ${i + 1}`}</div>
-          <div class="history-actions">
-            <button class="history-btn" onclick="event.stopPropagation(); renameCanvas(${i})">重命名</button>
-            <button class="history-btn" onclick="event.stopPropagation(); deleteCanvas(${i})">删除</button>
+    switchCanvas(index) {
+      if (index === this.currentCanvasIndex) return;
+      
+      // 保存当前画布
+      this.canvases[this.currentCanvasIndex] = {
+        elements: [...this.elements],
+        history: [...this.history],
+        historyIndex: this.historyIndex,
+        background: this.currentBg,
+        thumbnail: this.mainCanvas.toDataURL('image/png')
+      };
+      
+      this.loadCanvas(index);
+    }
+    
+    renameCanvas(index) {
+      const name = prompt('重命名画板:', this.canvases[index].name || `画板 ${index + 1}`);
+      if (name) {
+        this.canvases[index].name = name;
+        this.updateCanvasList();
+        this.saveToStorage();
+      }
+    }
+    
+    deleteCanvas(index) {
+      if (!confirm('确定删除这个画板吗？')) return;
+      
+      this.canvases.splice(index, 1);
+      
+      if (this.canvases.length === 0) {
+        this.newCanvas();
+      } else {
+        this.currentCanvasIndex = Math.min(this.currentCanvasIndex, this.canvases.length - 1);
+        this.loadCanvas(this.currentCanvasIndex);
+      }
+      
+      this.updateCanvasList();
+      this.saveToStorage();
+    }
+    
+    updateCanvasList() {
+      const list = document.getElementById('canvasList');
+      if (!list) return;
+      
+      list.innerHTML = this.canvases.map((canvas, i) => `
+        <div class="canvas-item ${i === this.currentCanvasIndex ? 'active' : ''}" onclick="app.switchCanvas(${i})">
+          <img class="canvas-thumb" src="${canvas.thumbnail || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 75%22><rect fill=%22%23f0f0f0%22 width=%22100%22 height=%2275%22/></svg>'}" alt="">
+          <div class="canvas-name">${canvas.name || `画板 ${i + 1}`}</div>
+          <div class="canvas-actions">
+            <button class="canvas-btn" onclick="event.stopPropagation(); app.renameCanvas(${i})">重命名</button>
+            <button class="canvas-btn" onclick="event.stopPropagation(); app.deleteCanvas(${i})">删除</button>
           </div>
         </div>
       `).join('');
     }
     
-    function renameCanvas(i) {
-      const name = prompt('重命名画板:', canvases[i].name || `画板 ${i + 1}`);
-      if (name) { canvases[i].name = name; updateHistoryList(); }
+    // ============================================
+    // 本地存储
+    // ============================================
+    saveToStorage() {
+      try {
+        const data = {
+          canvases: this.canvases.map(c => ({
+            ...c,
+            elements: JSON.stringify(c.elements.map(el => {
+              const copy = { ...el };
+              delete copy.image;
+              return copy;
+            }))
+          })),
+          currentIndex: this.currentCanvasIndex
+        };
+        localStorage.setItem('drawBoardData', JSON.stringify(data));
+      } catch (e) {
+        console.warn('保存失败:', e);
+      }
     }
     
-    function deleteCanvas(i) {
-      if (!confirm('确定删除这个画板吗？')) return;
-      canvases.splice(i, 1);
-      if (canvases.length === 0) newCanvas();
-      else { currentCanvasIndex = Math.min(currentCanvasIndex, canvases.length - 1); switchCanvas(currentCanvasIndex); }
-      updateHistoryList();
+    loadFromStorage() {
+      try {
+        const saved = localStorage.getItem('drawBoardData');
+        if (!saved) return;
+        
+        const data = JSON.parse(saved);
+        if (!data.canvases || !Array.isArray(data.canvases)) return;
+        
+        this.canvases = data.canvases.map(c => ({
+          ...c,
+          elements: JSON.parse(c.elements || '[]')
+        }));
+        this.currentCanvasIndex = Math.min(
+          data.currentIndex || 0,
+          this.canvases.length - 1
+        );
+      } catch (e) {
+        console.warn('加载失败:', e);
+      }
     }
     
-    function saveCanvas() { canvases[currentCanvasIndex] = { elements: [...elements], thumbnail: mainCanvas.toDataURL() }; showToast('已保存'); }
-    function exportCanvas() {
+    startAutoSave() {
+      // 每 30 秒自动保存
+      setInterval(() => {
+        if (this.canvases[this.currentCanvasIndex]) {
+          this.canvases[this.currentCanvasIndex].thumbnail = 
+            this.mainCanvas.toDataURL('image/png');
+          this.saveToStorage();
+          this.updateCanvasList();
+        }
+      }, 30000);
+    }
+    
+    // ============================================
+    // 导出和清空
+    // ============================================
+    exportCanvas() {
       const link = document.createElement('a');
-      link.download = `drawing-${Date.now()}.png`;
-      link.href = mainCanvas.toDataURL('image/png');
-      link.click(); showToast('已导出');
+      link.download = `小飞画板_${new Date().getTime()}.png`;
+      link.href = this.mainCanvas.toDataURL('image/png');
+      link.click();
+      this.showToast('已导出');
     }
-    function clearCanvas() {
-      if (!confirm('确定清空当前画板？')) return;
-      elements = []; deselect();
-      mainCtx.fillStyle = 'white'; mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-      saveHistory(); render(); updateUndoRedoButtons(); showToast('已清空');
+    
+    clearCanvas() {
+      if (!confirm('确定清空当前画板？此操作无法撤销。')) return;
+      this.elements = [];
+      this.deselect();
+      this.render();
+      this.saveHistory();
+      this.showToast('已清空');
     }
-    function showToast(msg) {
+    
+    // ============================================
+    // 键盘快捷键
+    // ============================================
+    onKeyDown(e) {
+      // 输入框中不响应
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+      
+      const key = e.key.toLowerCase();
+      
+      // Ctrl/Cmd 组合键
+      if (e.ctrlKey || e.metaKey) {
+        switch (key) {
+          case 'z':
+            e.preventDefault();
+            e.shiftKey ? this.redo() : this.undo();
+            break;
+          case 'y':
+            e.preventDefault();
+            this.redo();
+            break;
+          case 's':
+            e.preventDefault();
+            this.exportCanvas();
+            break;
+        }
+        return;
+      }
+      
+      // 工具切换
+      switch (key) {
+        case 'v': this.setTool('select'); break;
+        case 'b': this.setTool('pen'); break;
+        case 'm': this.setTool('marker'); break;
+        case 'e': this.setTool('eraser'); break;
+        case 'l': this.setTool('line'); break;
+        case 'r': this.setTool('rect'); break;
+        case 'o': this.setTool('circle'); break;
+        case 't': this.setTool('text'); break;
+        case 'delete':
+        case 'backspace':
+          if (this.selectedElement) {
+            this.deleteSelected();
+          }
+          break;
+        case 'escape':
+          this.deselect();
+          break;
+      }
+    }
+    
+    // ============================================
+    // 辅助方法
+    // ============================================
+    updateCursorPos(x, y) {
+      document.getElementById('cursorPos').textContent = 
+        `${Math.round(x)}, ${Math.round(y)}`;
+    }
+    
+    updateElementInfo() {
+      document.getElementById('elementInfo').textContent = 
+        `${this.elements.length} 个元素`;
+    }
+    
+    updateToolState() {
+      const hasSelection = !!this.selectedElement;
+      document.querySelectorAll('.layer-btn').forEach(btn => {
+        btn.disabled = !hasSelection;
+      });
+    }
+    
+    showToast(msg) {
       const toast = document.getElementById('toast');
-      toast.textContent = msg; toast.classList.add('show');
+      toast.textContent = msg;
+      toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2000);
     }
-    
-    // Keyboard
-    document.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
-      if (e.ctrlKey || e.metaKey) {
-        switch(e.key.toLowerCase()) {
-          case 'z': e.preventDefault(); undo(); break;
-          case 'y': e.preventDefault(); redo(); break;
-          case 's': e.preventDefault(); saveCanvas(); break;
-        }
-      } else {
-        switch(e.key.toLowerCase()) {
-          case 'v': setTool('select'); break;
-          case 'b': setTool('pen'); break;
-          case 'm': setTool('marker'); break;
-          case 'e': setTool('eraser'); break;
-          case 'l': setTool('line'); break;
-          case 'r': setTool('rect'); break;
-          case 'o': setTool('circle'); break;
-          case 't': setTool('text'); break;
-          case 'delete':
-          case 'backspace': if (selectedElement) deleteSelected(); break;
-        }
-      }
-    });
-    document.body.addEventListener('touchmove', (e) => { if (e.target === mainCanvas) e.preventDefault(); }, { passive: false });
+  }
+  
+  // ============================================
+  // 启动应用
+  // ============================================
+  const app = new DrawBoardApp();
   </script>
 </body>
 </html>
