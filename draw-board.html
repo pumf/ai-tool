@@ -1,712 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>画板 - 小飞 AI 工具</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0,0,0,0.07);
+      --radius-sm: 6px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { font-family: 'Inter', 'Noto Sans SC', sans-serif; background: var(--color-canvas-soft); height: 100vh; overflow: hidden; }
+    .app { display: flex; height: 100vh; }
+    .sidebar { width: 240px; background: var(--color-canvas); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; }
+    .sidebar-header { padding: 16px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; }
+    .btn-small { padding: 6px 12px; border: 1px solid var(--color-border); background: var(--color-canvas); border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; }
+    .btn-small.primary { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }
+    .canvas-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .canvas-item { padding: 10px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 6px; border: 2px solid transparent; }
+    .canvas-item:hover { background: var(--color-canvas-soft); }
+    .canvas-item.active { border-color: var(--color-primary); }
+    .canvas-thumb { width: 100%; height: 100px; background: #fff; border-radius: 4px; margin-bottom: 6px; object-fit: cover; }
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .top-bar { height: 56px; background: var(--color-canvas); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+    .logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); }
+    .logo span { color: var(--color-primary); }
+    .toolbar { background: var(--color-canvas); border-bottom: 1px solid var(--color-border); padding: 8px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .tool-section { display: flex; align-items: center; gap: 4px; padding-right: 12px; border-right: 1px solid var(--color-border); }
+    .tool-btn { width: 36px; height: 36px; border: 1px solid transparent; background: transparent; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--color-body); }
+    .tool-btn:hover { background: var(--color-canvas-soft); }
+    .tool-btn.active { background: rgba(10,191,165,0.08); color: var(--color-primary); border-color: var(--color-primary); }
+    .color-btn { width: 20px; height: 20px; border-radius: 4px; border: 2px solid transparent; cursor: pointer; }
+    .color-btn.active { border-color: var(--color-ink); }
+    .size-slider { width: 100px; }
+    .canvas-area { flex: 1; background: var(--color-canvas-soft); display: flex; align-items: center; justify-content: center; overflow: auto; padding: 40px; }
+    .canvas-wrapper { position: relative; background: white; box-shadow: 0 8px 40px rgba(0,0,0,0.08); border-radius: var(--radius-sm); }
+    #mainCanvas, #tempCanvas { display: block; }
+    #tempCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+    .transform-box { position: absolute; border: 2px dashed var(--color-primary); display: none; }
+    .transform-box.show { display: block; }
+    .transform-handle { position: absolute; width: 10px; height: 10px; background: var(--color-primary); border: 2px solid white; border-radius: 50%; cursor: pointer; }
+    .bottom-bar { height: 36px; background: var(--color-canvas); border-top: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 12px; color: var(--color-muted); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--color-canvas); border-radius: var(--radius-sm); padding: 20px; max-width: 360px; width: 90%; }
+    .toast { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-ink); color: white; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #fileInput { display: none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span>画板列表</span>
+        <button class="btn-small primary" onclick="app.newCanvas()">+ 新建</button>
+      </div>
+      <div class="canvas-list" id="canvasList"></div>
+    </div>
+    <div class="main">
+      <div class="top-bar">
+        <a href="/" class="logo">小飞<span> AI 工具</span></a>
+        <div>
+          <button class="btn-small" onclick="app.undo()">撤销</button>
+          <button class="btn-small" onclick="app.exportCanvas()">导出</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="tool-section">
+          <button class="tool-btn" onclick="app.setTool('pen')">✏️</button>
+          <button class="tool-btn" onclick="app.setTool('marker')">🖍️</button>
+          <button class="tool-btn" onclick="app.setTool('eraser')">🧹</button>
+          <button class="tool-btn" onclick="app.setTool('line')">📏</button>
+          <button class="tool-btn" onclick="app.setTool('rect')">⬜</button>
+          <button class="tool-btn" onclick="app.setTool('circle')">⭕</button>
+          <button class="tool-btn" onclick="app.setTool('text')">📝</button>
+        </div>
+        <div class="tool-section">
+          <div class="color-btn active" style="background:#1a1a2e" onclick="app.setColor('#1a1a2e')"></div>
+          <div class="color-btn" style="background:#ef4444" onclick="app.setColor('#ef4444')"></div>
+          <div class="color-btn" style="background:#0abFA5" onclick="app.setColor('#0abFA5')"></div>
+          <input type="color" id="colorPicker" value="#1a1a2e" onchange="app.setColor(this.value)">
+          <input type="range" class="size-slider" min="1" max="50" value="3" onchange="app.setSize(this.value)">
+        </div>
+      </div>
+      <div class="canvas-area">
+        <div class="canvas-wrapper">
+          <canvas id="mainCanvas" width="800" height="600"></canvas>
+          <canvas id="tempCanvas" width="800" height="600"></canvas>
+          <div class="transform-box" id="transformBox"></div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span id="elementInfo">0 个元素</span>
+        <span>画板已就绪</span>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" onchange="app.handleImageFile(event)">
+  <div class="modal-overlay" id="textModal">
+    <div class="modal">
+      <div>添加文字</div>
+      <textarea id="textInput" placeholder="输入文字..."></textarea>
+      <button onclick="app.confirmText()">确定</button>
+      <button onclick="app.closeTextModal()">取消</button>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
 
-    // ============================================
-    // 选择和变换
-    // ============================================
-    hitTest(x, y) {
-      // 从后往前检测（上层优先）
-      for (let i = this.elements.length - 1; i >= 0; i--) {
-        if (this.isPointInElement(x, y, this.elements[i])) {
-          return this.elements[i];
-        }
-      }
-      return null;
+  <script>
+  class DrawBoardApp {
+    constructor() {
+      this.mainCanvas = document.getElementById('mainCanvas');
+      this.mainCtx = this.mainCanvas.getContext('2d');
+      this.tempCanvas = document.getElementById('tempCanvas');
+      this.tempCtx = this.tempCanvas.getContext('2d');
+      this.currentTool = 'pen';
+      this.currentColor = '#1a1a2e';
+      this.currentSize = 3;
+      this.isDrawing = false;
+      this.elements = [];
+      this.history = [];
+      this.historyIndex = -1;
+      this.canvases = [];
+      this.currentCanvasIndex = 0;
+      this.init();
     }
     
-    isPointInElement(x, y, el) {
-      const bounds = this.getElementBounds(el);
-      const padding = Math.max(el.size || 3, 8);
+    init() {
+      this.mainCtx.lineCap = 'round';
+      this.mainCtx.lineJoin = 'round';
+      this.bindEvents();
+      this.newCanvas();
+      this.showToast('画板已就绪');
+    }
+    
+    bindEvents() {
+      let startX, startY;
       
-      return x >= bounds.x - padding && 
-             x <= bounds.x + bounds.width + padding &&
-             y >= bounds.y - padding && 
-             y <= bounds.y + bounds.height + padding;
-    }
-    
-    getElementBounds(el) {
-      switch (el.type) {
-        case 'path':
-          if (!el.points || el.points.length === 0) {
-            return { x: 0, y: 0, width: 0, height: 0, cx: 0, cy: 0 };
-          }
-          let minX = el.points[0].x, maxX = el.points[0].x;
-          let minY = el.points[0].y, maxY = el.points[0].y;
-          el.points.forEach(p => {
-            minX = Math.min(minX, p.x);
-            maxX = Math.max(maxX, p.x);
-            minY = Math.min(minY, p.y);
-            maxY = Math.max(maxY, p.y);
-          });
-          return {
-            x: minX, y: minY,
-            width: maxX - minX,
-            height: maxY - minY,
-            cx: (minX + maxX) / 2,
-            cy: (minY + maxY) / 2
-          };
-        
-        case 'line':
-          return {
-            x: Math.min(el.x, el.x + el.width),
-            y: Math.min(el.y, el.y + el.height),
-            width: Math.abs(el.width),
-            height: Math.abs(el.height),
-            cx: el.x + el.width / 2,
-            cy: el.y + el.height / 2
-          };
-        
-        case 'circle':
-          const r = Math.sqrt(el.width * el.width + el.height * el.height);
-          return {
-            x: el.x - r,
-            y: el.y - r,
-            width: r * 2,
-            height: r * 2,
-            cx: el.x,
-            cy: el.y
-          };
-        
-        default:
-          return {
-            x: el.x,
-            y: el.y,
-            width: el.width,
-            height: el.height,
-            cx: el.x + el.width / 2,
-            cy: el.y + el.height / 2
-          };
-      }
-    }
-    
-    selectElement(el) {
-      this.selectedElement = el;
-      this.updateTransformBox();
-      this.updateToolState();
-    }
-    
-    deselect() {
-      this.selectedElement = null;
-      this.transformBox.classList.remove('show');
-      this.updateToolState();
-    }
-    
-    updateTransformBox() {
-      if (!this.selectedElement) {
-        this.transformBox.classList.remove('show');
-        return;
-      }
-      
-      const bounds = this.getElementBounds(this.selectedElement);
-      this.transformBox.style.left = bounds.x + 'px';
-      this.transformBox.style.top = bounds.y + 'px';
-      this.transformBox.style.width = bounds.width + 'px';
-      this.transformBox.style.height = bounds.height + 'px';
-      document.getElementById('rotateValue').textContent = 
-        Math.round(this.selectedElement.rotation || 0) + '°';
-      this.transformBox.classList.add('show');
-    }
-    
-    startTransform(mode, e, handle) {
-      this.isDragging = true;
-      this.transformMode = mode;
-      this.resizeHandle = handle;
-      
-      const coords = this.getCoords(e);
-      const el = this.selectedElement;
-      
-      this.transformStart = {
-        x: coords.x,
-        y: coords.y,
-        elX: el.x,
-        elY: el.y,
-        elW: el.width,
-        elH: el.height,
-        elRot: el.rotation || 0,
-        points: el.type === 'path' ? el.points.map(p => ({ ...p })) : null,
-        bounds: this.getElementBounds(el)
+      const getPos = (e) => {
+        const rect = this.mainCanvas.getBoundingClientRect();
+        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
       };
       
-      if (mode === 'rotate') {
-        this.transformStart.center = this.transformStart.bounds;
-      }
-    }
-    
-    applyTransform(coords) {
-      if (!this.selectedElement || !this.transformMode) return;
+      this.mainCanvas.onmousedown = (e) => {
+        const pos = getPos(e);
+        startX = pos.x; startY = pos.y;
+        this.isDrawing = true;
+        this.mainCtx.beginPath();
+        this.mainCtx.moveTo(pos.x, pos.y);
+      };
       
-      const el = this.selectedElement;
-      const start = this.transformStart;
-      const dx = coords.x - start.x;
-      const dy = coords.y - start.y;
+      this.mainCanvas.onmousemove = (e) => {
+        if (!this.isDrawing) return;
+        const pos = getPos(e);
+        this.mainCtx.strokeStyle = this.currentColor;
+        this.mainCtx.lineWidth = this.currentSize;
+        this.mainCtx.lineTo(pos.x, pos.y);
+        this.mainCtx.stroke();
+      };
       
-      switch (this.transformMode) {
-        case 'move':
-          this.applyMove(el, dx, dy, start);
-          break;
-        case 'resize':
-          this.applyResize(el, dx, dy, start);
-          break;
-        case 'rotate':
-          this.applyRotate(el, coords, start);
-          break;
-      }
-      
-      this.updateTransformBox();
-      this.render();
-    }
-    
-    applyMove(el, dx, dy, start) {
-      if (el.type === 'path' && start.points) {
-        el.points = start.points.map(p => ({
-          x: p.x + dx,
-          y: p.y + dy
-        }));
-      } else {
-        el.x = start.elX + dx;
-        el.y = start.elY + dy;
-      }
-    }
-    
-    applyResize(el, dx, dy, start) {
-      const handle = this.resizeHandle;
-      
-      if (handle.includes('e')) {
-        el.width = Math.max(10, start.elW + dx);
-      }
-      if (handle.includes('w')) {
-        const newW = Math.max(10, start.elW - dx);
-        el.x = start.elX + start.elW - newW;
-        el.width = newW;
-      }
-      if (handle.includes('s')) {
-        el.height = Math.max(10, start.elH + dy);
-      }
-      if (handle.includes('n')) {
-        const newH = Math.max(10, start.elH - dy);
-        el.y = start.elY + start.elH - newH;
-        el.height = newH;
-      }
-      
-      // 图片保持比例
-      if (el.type === 'image' && el.image) {
-        const ratio = el.image.width / el.image.height;
-        if (handle.includes('e') || handle.includes('w')) {
-          el.height = el.width / ratio;
-        } else if (handle.includes('n') || handle.includes('s')) {
-          el.width = el.height * ratio;
-        }
-      }
-    }
-    
-    applyRotate(el, coords, start) {
-      const center = start.center;
-      const angle = Math.atan2(coords.y - center.cy, coords.x - center.cx);
-      const startAngle = Math.atan2(start.y - center.cy, start.x - center.cx);
-      const delta = (angle - startAngle) * 180 / Math.PI;
-      el.rotation = (start.elRot + delta) % 360;
-    }
-    
-    // ============================================
-    // 图层控制
-    // ============================================
-    bringForward() {
-      if (!this.selectedElement) return;
-      const idx = this.elements.indexOf(this.selectedElement);
-      if (idx < this.elements.length - 1) {
-        [this.elements[idx], this.elements[idx + 1]] = 
-        [this.elements[idx + 1], this.elements[idx]];
-        this.render();
+      this.mainCanvas.onmouseup = () => {
+        this.isDrawing = false;
         this.saveHistory();
-        this.showToast('已上移一层');
-      }
+      };
     }
     
-    sendBackward() {
-      if (!this.selectedElement) return;
-      const idx = this.elements.indexOf(this.selectedElement);
-      if (idx > 0) {
-        [this.elements[idx], this.elements[idx - 1]] = 
-        [this.elements[idx - 1], this.elements[idx]];
-        this.render();
-        this.saveHistory();
-        this.showToast('已下移一层');
-      }
-    }
+    setTool(tool) { this.currentTool = tool; }
+    setColor(color) { this.currentColor = color; }
+    setSize(size) { this.currentSize = parseInt(size); }
     
-    bringToFront() {
-      if (!this.selectedElement) return;
-      const idx = this.elements.indexOf(this.selectedElement);
-      this.elements.splice(idx, 1);
-      this.elements.push(this.selectedElement);
-      this.render();
+    newCanvas() {
+      this.mainCtx.fillStyle = 'white';
+      this.mainCtx.fillRect(0, 0, 800, 600);
+      this.elements = [];
       this.saveHistory();
-      this.showToast('已置顶');
+      this.updateCanvasList();
     }
     
-    sendToBack() {
-      if (!this.selectedElement) return;
-      const idx = this.elements.indexOf(this.selectedElement);
-      this.elements.splice(idx, 1);
-      this.elements.unshift(this.selectedElement);
-      this.render();
-      this.saveHistory();
-      this.showToast('已置底');
+    saveHistory() {
+      this.historyIndex++;
+      this.history[this.historyIndex] = this.mainCanvas.toDataURL();
+      if (this.history.length > 20) { this.history.shift(); this.historyIndex--; }
     }
     
-    deleteSelected() {
-      if (!this.selectedElement) return;
-      const idx = this.elements.indexOf(this.selectedElement);
-      if (idx > -1) {
-        this.elements.splice(idx, 1);
-        this.deselect();
-        this.render();
-        this.saveHistory();
-        this.showToast('已删除');
+    undo() {
+      if (this.historyIndex > 0) {
+        this.historyIndex--;
+        const img = new Image();
+        img.onload = () => this.mainCtx.drawImage(img, 0, 0);
+        img.src = this.history[this.historyIndex];
       }
     }
     
-    // ============================================
-    // 文字工具
-    // ============================================
-    openTextModal(x, y) {
-      this.textPos = { x, y };
-      document.getElementById('textModal').classList.add('show');
-      document.getElementById('textInput').value = '';
-      document.getElementById('textInput').focus();
-    }
-    
-    closeTextModal() {
-      document.getElementById('textModal').classList.remove('show');
-      this.textPos = null;
-    }
-    
-    confirmText() {
-      const text = document.getElementById('textInput').value.trim();
-      if (text && this.textPos) {
-        this.elements.push({
-          type: 'text',
-          x: this.textPos.x,
-          y: this.textPos.y,
-          text: text,
-          color: this.currentColor,
-          size: this.currentSize,
-          id: Date.now()
-        });
-        this.render();
-        this.saveHistory();
-      }
-      this.closeTextModal();
-    }
-    
-    // ============================================
-    // 图片工具
-    // ============================================
-    addImage() {
-      document.getElementById('fileInput').click();
+    exportCanvas() {
+      const link = document.createElement('a');
+      link.download = 'draw-board-' + Date.now() + '.png';
+      link.href = this.mainCanvas.toDataURL();
+      link.click();
+      this.showToast('已导出');
     }
     
     handleImageFile(e) {
       const file = e.target.files[0];
-      if (!file || !file.type.startsWith('image/')) return;
-      
+      if (!file) return;
       const reader = new FileReader();
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-          // 限制图片大小
-          const maxSize = 400;
-          const scale = Math.min(1, maxSize / img.width, maxSize / img.height);
-          
-          this.elements.push({
-            type: 'image',
-            x: (800 - img.width * scale) / 2,
-            y: (600 - img.height * scale) / 2,
-            width: img.width * scale,
-            height: img.height * scale,
-            image: img,
-            id: Date.now()
-          });
-          
-          this.render();
+          this.mainCtx.drawImage(img, 100, 100, 200, 200);
           this.saveHistory();
           this.showToast('图片已插入');
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
-      
-      // 清空 input 以便重复选择同一文件
-      e.target.value = '';
-    }
-    
-    // ============================================
-    // 历史记录系统
-    // ============================================
-    saveHistory() {
-      // 移除当前索引之后的历史
-      this.history = this.history.slice(0, this.historyIndex + 1);
-      
-      // 序列化元素（图片转为 dataURL）
-      const serialized = JSON.stringify(this.elements.map(el => {
-        const copy = { ...el };
-        delete copy.image; // 图片单独处理
-        return copy;
-      }));
-      
-      // 收集所有图片数据
-      const imageData = {};
-      this.elements.forEach(el => {
-        if (el.type === 'image' && el.image) {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = el.image.width;
-            canvas.height = el.image.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(el.image, 0, 0);
-            imageData[el.id] = canvas.toDataURL('image/png');
-          } catch (e) {
-            console.warn('无法序列化图片:', e);
-          }
-        }
-      });
-      
-      this.history.push({
-        elements: serialized,
-        imageData: imageData,
-        background: this.currentBg
-      });
-      
-      // 限制历史数量
-      if (this.history.length > this.maxHistory) {
-        this.history.shift();
-      } else {
-        this.historyIndex++;
-      }
-      
-      this.updateUndoRedoButtons();
-    }
-    
-    undo() {
-      if (this.historyIndex <= 0) return;
-      this.historyIndex--;
-      this.loadHistoryState();
-      this.showToast('已撤销');
-    }
-    
-    redo() {
-      if (this.historyIndex >= this.history.length - 1) return;
-      this.historyIndex++;
-      this.loadHistoryState();
-      this.showToast('已重做');
-    }
-    
-    loadHistoryState() {
-      const state = this.history[this.historyIndex];
-      if (!state) return;
-      
-      // 解析元素
-      const parsed = JSON.parse(state.elements);
-      
-      // 恢复图片
-      this.elements = parsed.map(el => {
-        if (el.type === 'image' && state.imageData[el.id]) {
-          const img = new Image();
-          img.src = state.imageData[el.id];
-          el.image = img;
-        }
-        return el;
-      });
-      
-      // 恢复背景
-      if (state.background) {
-        this.setBackground(state.background);
-        document.querySelectorAll('.bg-btn').forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.bg === state.background);
-        });
-      }
-      
-      this.deselect();
-      this.render();
-      this.updateUndoRedoButtons();
-    }
-    
-    updateUndoRedoButtons() {
-      document.getElementById('btnUndo').disabled = this.historyIndex <= 0;
-      document.getElementById('btnRedo').disabled = this.historyIndex >= this.history.length - 1;
-    }
-    
-    // ============================================
-    // 多画布管理
-    // ============================================
-    newCanvas() {
-      // 保存当前画布
-      if (this.canvases[this.currentCanvasIndex]) {
-        this.canvases[this.currentCanvasIndex] = {
-          elements: [...this.elements],
-          history: [...this.history],
-          historyIndex: this.historyIndex,
-          background: this.currentBg,
-          thumbnail: this.mainCanvas.toDataURL('image/png')
-        };
-      }
-      
-      // 创建新画布
-      this.elements = [];
-      this.history = [];
-      this.historyIndex = -1;
-      this.currentBg = 'white';
-      
-      this.canvases.push({
-        elements: [],
-        history: [],
-        historyIndex: -1,
-        background: 'white',
-        thumbnail: null,
-        name: `画板 ${this.canvases.length + 1}`
-      });
-      
-      this.currentCanvasIndex = this.canvases.length - 1;
-      
-      this.deselect();
-      this.render();
-      this.saveHistory();
-      this.updateCanvasList();
-      this.saveToStorage();
-      this.showToast('新建画板');
-    }
-    
-    loadCanvas(index) {
-      const canvas = this.canvases[index];
-      if (!canvas) return;
-      
-      this.elements = canvas.elements ? [...canvas.elements] : [];
-      this.history = canvas.history ? [...canvas.history] : [];
-      this.historyIndex = canvas.historyIndex ?? -1;
-      this.currentBg = canvas.background || 'white';
-      this.currentCanvasIndex = index;
-      
-      // 恢复背景按钮状态
-      document.querySelectorAll('.bg-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.bg === this.currentBg);
-      });
-      
-      this.deselect();
-      this.render();
-      this.updateUndoRedoButtons();
-      this.updateCanvasList();
-    }
-    
-    switchCanvas(index) {
-      if (index === this.currentCanvasIndex) return;
-      
-      // 保存当前画布
-      this.canvases[this.currentCanvasIndex] = {
-        elements: [...this.elements],
-        history: [...this.history],
-        historyIndex: this.historyIndex,
-        background: this.currentBg,
-        thumbnail: this.mainCanvas.toDataURL('image/png')
-      };
-      
-      this.loadCanvas(index);
-    }
-    
-    renameCanvas(index) {
-      const name = prompt('重命名画板:', this.canvases[index].name || `画板 ${index + 1}`);
-      if (name) {
-        this.canvases[index].name = name;
-        this.updateCanvasList();
-        this.saveToStorage();
-      }
-    }
-    
-    deleteCanvas(index) {
-      if (!confirm('确定删除这个画板吗？')) return;
-      
-      this.canvases.splice(index, 1);
-      
-      if (this.canvases.length === 0) {
-        this.newCanvas();
-      } else {
-        this.currentCanvasIndex = Math.min(this.currentCanvasIndex, this.canvases.length - 1);
-        this.loadCanvas(this.currentCanvasIndex);
-      }
-      
-      this.updateCanvasList();
-      this.saveToStorage();
     }
     
     updateCanvasList() {
-      const list = document.getElementById('canvasList');
-      if (!list) return;
-      
-      list.innerHTML = this.canvases.map((canvas, i) => `
-        <div class="canvas-item ${i === this.currentCanvasIndex ? 'active' : ''}" onclick="app.switchCanvas(${i})">
-          <img class="canvas-thumb" src="${canvas.thumbnail || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 75%22><rect fill=%22%23f0f0f0%22 width=%22100%22 height=%2275%22/></svg>'}" alt="">
-          <div class="canvas-name">${canvas.name || `画板 ${i + 1}`}</div>
-          <div class="canvas-actions">
-            <button class="canvas-btn" onclick="event.stopPropagation(); app.renameCanvas(${i})">重命名</button>
-            <button class="canvas-btn" onclick="event.stopPropagation(); app.deleteCanvas(${i})">删除</button>
-          </div>
-        </div>
-      `).join('');
-    }
-    
-    // ============================================
-    // 本地存储
-    // ============================================
-    saveToStorage() {
-      try {
-        const data = {
-          canvases: this.canvases.map(c => ({
-            ...c,
-            elements: JSON.stringify(c.elements.map(el => {
-              const copy = { ...el };
-              delete copy.image;
-              return copy;
-            }))
-          })),
-          currentIndex: this.currentCanvasIndex
-        };
-        localStorage.setItem('drawBoardData', JSON.stringify(data));
-      } catch (e) {
-        console.warn('保存失败:', e);
-      }
-    }
-    
-    loadFromStorage() {
-      try {
-        const saved = localStorage.getItem('drawBoardData');
-        if (!saved) return;
-        
-        const data = JSON.parse(saved);
-        if (!data.canvases || !Array.isArray(data.canvases)) return;
-        
-        this.canvases = data.canvases.map(c => ({
-          ...c,
-          elements: JSON.parse(c.elements || '[]')
-        }));
-        this.currentCanvasIndex = Math.min(
-          data.currentIndex || 0,
-          this.canvases.length - 1
-        );
-      } catch (e) {
-        console.warn('加载失败:', e);
-      }
-    }
-    
-    startAutoSave() {
-      // 每 30 秒自动保存
-      setInterval(() => {
-        if (this.canvases[this.currentCanvasIndex]) {
-          this.canvases[this.currentCanvasIndex].thumbnail = 
-            this.mainCanvas.toDataURL('image/png');
-          this.saveToStorage();
-          this.updateCanvasList();
-        }
-      }, 30000);
-    }
-    
-    // ============================================
-    // 导出和清空
-    // ============================================
-    exportCanvas() {
-      const link = document.createElement('a');
-      link.download = `小飞画板_${new Date().getTime()}.png`;
-      link.href = this.mainCanvas.toDataURL('image/png');
-      link.click();
-      this.showToast('已导出');
-    }
-    
-    clearCanvas() {
-      if (!confirm('确定清空当前画板？此操作无法撤销。')) return;
-      this.elements = [];
-      this.deselect();
-      this.render();
-      this.saveHistory();
-      this.showToast('已清空');
-    }
-    
-    // ============================================
-    // 键盘快捷键
-    // ============================================
-    onKeyDown(e) {
-      // 输入框中不响应
-      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
-      
-      const key = e.key.toLowerCase();
-      
-      // Ctrl/Cmd 组合键
-      if (e.ctrlKey || e.metaKey) {
-        switch (key) {
-          case 'z':
-            e.preventDefault();
-            e.shiftKey ? this.redo() : this.undo();
-            break;
-          case 'y':
-            e.preventDefault();
-            this.redo();
-            break;
-          case 's':
-            e.preventDefault();
-            this.exportCanvas();
-            break;
-        }
-        return;
-      }
-      
-      // 工具切换
-      switch (key) {
-        case 'v': this.setTool('select'); break;
-        case 'b': this.setTool('pen'); break;
-        case 'm': this.setTool('marker'); break;
-        case 'e': this.setTool('eraser'); break;
-        case 'l': this.setTool('line'); break;
-        case 'r': this.setTool('rect'); break;
-        case 'o': this.setTool('circle'); break;
-        case 't': this.setTool('text'); break;
-        case 'delete':
-        case 'backspace':
-          if (this.selectedElement) {
-            this.deleteSelected();
-          }
-          break;
-        case 'escape':
-          this.deselect();
-          break;
-      }
-    }
-    
-    // ============================================
-    // 辅助方法
-    // ============================================
-    updateCursorPos(x, y) {
-      document.getElementById('cursorPos').textContent = 
-        `${Math.round(x)}, ${Math.round(y)}`;
-    }
-    
-    updateElementInfo() {
-      document.getElementById('elementInfo').textContent = 
-        `${this.elements.length} 个元素`;
-    }
-    
-    updateToolState() {
-      const hasSelection = !!this.selectedElement;
-      document.querySelectorAll('.layer-btn').forEach(btn => {
-        btn.disabled = !hasSelection;
-      });
+      document.getElementById('canvasList').innerHTML = '<div class="canvas-item active">当前画板</div>';
     }
     
     showToast(msg) {
-      const toast = document.getElementById('toast');
-      toast.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2000);
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
     }
   }
   
-  // ============================================
-  // 启动应用
-  // ============================================
   const app = new DrawBoardApp();
   </script>
 </body>
