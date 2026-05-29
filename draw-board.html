@@ -26,7 +26,6 @@
     html, body { font-family: 'Inter', 'Noto Sans SC', sans-serif; background: var(--color-canvas-soft); height: 100vh; overflow: hidden; }
     .app { display: flex; height: 100vh; }
     
-    /* 左侧工具栏 */
     .toolbar-left {
       width: 56px;
       background: var(--color-canvas);
@@ -74,10 +73,8 @@
     }
     .tool-btn:hover .tooltip { opacity: 1; visibility: visible; }
     
-    /* 主区域 */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     
-    /* 顶部栏 */
     .top-bar {
       height: 56px;
       background: var(--color-canvas);
@@ -108,7 +105,6 @@
     .btn-primary { background: var(--color-primary); color: white; border-color: var(--color-primary); }
     .btn-primary:hover { background: #09aa92; border-color: #09aa92; color: white; }
     
-    /* 属性面板 */
     .properties-bar {
       height: 48px;
       background: var(--color-canvas);
@@ -162,7 +158,6 @@
     }
     .size-value { font-size: 12px; color: var(--color-body); min-width: 24px; }
     
-    /* 画布区域 */
     .canvas-area {
       flex: 1;
       background: var(--color-canvas-soft);
@@ -186,7 +181,6 @@
     #gridCanvas { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
     #gridCanvas.show { opacity: 1; }
     
-    /* 选区框 */
     .selection-box {
       position: absolute;
       border: 2px dashed var(--color-primary);
@@ -211,8 +205,19 @@
     .handle-s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
     .handle-w { left: -5px; top: 50%; transform: translateY(-50%); cursor: w-resize; }
     .handle-e { right: -5px; top: 50%; transform: translateY(-50%); cursor: e-resize; }
+    .handle-rotate {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: var(--color-primary);
+      border: 2px solid white;
+      border-radius: 50%;
+      cursor: grab;
+    }
     
-    /* 底部状态栏 */
     .bottom-bar {
       height: 36px;
       background: var(--color-canvas);
@@ -227,7 +232,6 @@
     .status-left, .status-right { display: flex; gap: 16px; align-items: center; }
     .status-item { display: flex; align-items: center; gap: 4px; }
     
-    /* 右侧面板 */
     .sidebar-right {
       width: 240px;
       background: var(--color-canvas);
@@ -273,7 +277,6 @@
     .layer-name { font-weight: 500; color: var(--color-ink); }
     .layer-meta { font-size: 11px; color: var(--color-muted); margin-top: 2px; }
     
-    /* 模态框 */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -301,11 +304,14 @@
       border-radius: var(--radius-sm);
       font-size: 14px;
       font-family: inherit;
+      margin-bottom: 12px;
     }
+    .modal-body label { display: block; font-size: 12px; color: var(--color-muted); margin-bottom: 4px; }
+    .modal-body .input-row { display: flex; gap: 12px; }
+    .modal-body .input-row input { flex: 1; }
     .modal-body textarea { resize: vertical; min-height: 80px; }
     .modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
     
-    /* Toast */
     .toast {
       position: fixed;
       bottom: 60px;
@@ -323,7 +329,6 @@
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     
-    /* 快捷键提示 */
     .kbd { 
       background: var(--color-canvas-soft); 
       padding: 2px 6px; 
@@ -333,7 +338,6 @@
       font-family: monospace;
     }
     
-    /* 文字编辑框 */
     .text-editor {
       position: absolute;
       background: white;
@@ -359,6 +363,26 @@
     }
     
     #fileInput { display: none; }
+    
+    .transform-panel {
+      position: absolute;
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      box-shadow: var(--shadow-md);
+      display: none;
+      z-index: 100;
+      min-width: 180px;
+    }
+    .transform-panel.show { display: block; }
+    .transform-panel-title { font-size: 12px; font-weight: 600; margin-bottom: 10px; color: var(--color-ink); }
+    .transform-control { margin-bottom: 10px; }
+    .transform-control label { display: block; font-size: 11px; color: var(--color-muted); margin-bottom: 4px; }
+    .transform-control input[type="range"] { width: 100%; }
+    .transform-control .value { font-size: 11px; color: var(--color-body); text-align: right; }
+    .transform-colors { display: flex; gap: 6px; flex-wrap: wrap; }
+    .transform-colors .color-btn { width: 20px; height: 20px; }
   </style>
 </head>
 <body>
@@ -421,39 +445,33 @@
           <span class="tooltip">三角形 T</span>
         </button>
         <button class="tool-btn" data-tool="star" title="星形 (*)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           <span class="tooltip">星形 *</span>
         </button>
       </div>
       
       <div class="tool-group">
         <button class="tool-btn" data-tool="text" title="文字 (F)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5h16v2"/><path d="M9 20h6"/><path d="M12 7v13"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M12 20V4"/></svg>
           <span class="tooltip">文字 F</span>
         </button>
         <button class="tool-btn" data-tool="fill" title="填充 (G)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 11l-8-8-8.6 8.6a2.2 2.2 0 0 0 0 3.2l5.5 5.5a2.2 2.2 0 0 0 3.2 0L19 11z"/><path d="M5 22h14"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 11l-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2a2 2 0 0 0 2.8 0L19 11z"/><path d="M5 22h14"/></svg>
           <span class="tooltip">填充 G</span>
         </button>
         <button class="tool-btn" data-tool="picker" title="吸管 (I)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l2-2"/><path d="M20 4l-6.5 6.5-3-3L17 1l3 3z"/><path d="M11.5 9.5l-8 8 3 3 8-8"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16.5 3.5l4 4L7 21l-4.5-4.5L16.5 3.5z"/><path d="M14 5l2 2"/><path d="M3 21l2.5-2.5"/></svg>
           <span class="tooltip">吸管 I</span>
         </button>
       </div>
-      
-      <div class="tool-group">
-        <button class="tool-btn" onclick="app.toggleGrid()" title="网格">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
-          <span class="tooltip">网格</span>
-        </button>
-      </div>
     </div>
-    
+
     <!-- 主区域 -->
     <div class="main">
+      <!-- 顶部栏 -->
       <div class="top-bar">
         <a href="/" class="logo">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="var(--color-primary)"/><path d="M8 12l3 3 5-6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" fill="none"/></svg>
           小飞<span>画板</span>
         </a>
         <div class="top-actions">
@@ -466,7 +484,7 @@
             重做
           </button>
           <button class="btn" onclick="app.clearCanvas()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             清空
           </button>
           <button class="btn" onclick="document.getElementById('fileInput').click()">
@@ -477,22 +495,27 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             导出
           </button>
+          <button class="btn" onclick="app.showCanvasSizeDialog()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            画布
+          </button>
         </div>
       </div>
-      
+
+      <!-- 属性栏 -->
       <div class="properties-bar">
         <div class="prop-section">
           <span class="prop-label">颜色</span>
           <div class="color-palette">
-            <div class="color-btn active" style="background:#1a1a2e" data-color="#1a1a2e"></div>
-            <div class="color-btn" style="background:#ef4444" data-color="#ef4444"></div>
-            <div class="color-btn" style="background:#f97316" data-color="#f97316"></div>
-            <div class="color-btn" style="background:#eab308" data-color="#eab308"></div>
-            <div class="color-btn" style="background:#22c55e" data-color="#22c55e"></div>
-            <div class="color-btn" style="background:#0abFA5" data-color="#0abFA5"></div>
-            <div class="color-btn" style="background:#3b82f6" data-color="#3b82f6"></div>
-            <div class="color-btn" style="background:#8b5cf6" data-color="#8b5cf6"></div>
-            <div class="color-btn" style="background:#ec4899" data-color="#ec4899"></div>
+            <div class="color-btn active" data-color="#1a1a2e" style="background:#1a1a2e"></div>
+            <div class="color-btn" data-color="#ef4444" style="background:#ef4444"></div>
+            <div class="color-btn" data-color="#f97316" style="background:#f97316"></div>
+            <div class="color-btn" data-color="#facc15" style="background:#facc15"></div>
+            <div class="color-btn" data-color="#22c55e" style="background:#22c55e"></div>
+            <div class="color-btn" data-color="#0abFA5" style="background:#0abFA5"></div>
+            <div class="color-btn" data-color="#3b82f6" style="background:#3b82f6"></div>
+            <div class="color-btn" data-color="#8b5cf6" style="background:#8b5cf6"></div>
+            <div class="color-btn" data-color="#ec4899" style="background:#ec4899"></div>
             <input type="color" id="colorPicker" value="#1a1a2e">
           </div>
         </div>
@@ -506,19 +529,21 @@
           <input type="range" id="opacitySlider" min="10" max="100" value="100">
           <span class="size-value" id="opacityValue">100%</span>
         </div>
+        <div class="prop-section">
+          <span class="prop-label">填充</span>
+          <input type="checkbox" id="fillCheckbox" style="width:18px;height:18px;cursor:pointer;">
+        </div>
       </div>
-      
-      <div class="canvas-area" id="canvasArea">
+
+      <!-- 画布区域 -->
+      <div class="canvas-area">
         <div class="canvas-wrapper" id="canvasWrapper">
           <div class="canvas-container" id="canvasContainer">
             <canvas id="bgCanvas" width="800" height="600"></canvas>
-            <canvas id="gridCanvas" width="800" height="600"></canvas>
             <canvas id="drawingCanvas" width="800" height="600"></canvas>
             <canvas id="tempCanvas" width="800" height="600"></canvas>
             <canvas id="selectCanvas" width="800" height="600"></canvas>
-            <div class="text-editor" id="textEditor">
-              <textarea id="textInput" placeholder="输入文字..."></textarea>
-            </div>
+            <canvas id="gridCanvas" width="800" height="600"></canvas>
             <div class="selection-box" id="selectionBox">
               <div class="selection-handle handle-nw"></div>
               <div class="selection-handle handle-ne"></div>
@@ -528,712 +553,1038 @@
               <div class="selection-handle handle-s"></div>
               <div class="selection-handle handle-w"></div>
               <div class="selection-handle handle-e"></div>
+              <div class="selection-handle handle-rotate"></div>
+            </div>
+            <div class="text-editor" id="textEditor">
+              <textarea id="textInput" placeholder="输入文字..."></textarea>
             </div>
           </div>
         </div>
       </div>
-      
+
+      <!-- 底部状态栏 -->
       <div class="bottom-bar">
         <div class="status-left">
           <span class="status-item">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
             <span id="canvasSize">800 × 600</span>
           </span>
           <span class="status-item">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/></svg>
             <span id="zoomLevel">100%</span>
-          </span>
-          <span class="status-item">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="6" cy="6" r="1"/><circle cx="18" cy="6" r="1"/><circle cx="6" cy="18" r="1"/><circle cx="18" cy="18" r="1"/></svg>
-            <span id="position">0, 0</span>
           </span>
         </div>
         <div class="status-right">
-          <span id="toolStatus">画笔工具</span>
+          <span class="status-item" id="position">0, 0</span>
+          <span class="status-item" id="toolStatus">选择工具</span>
         </div>
       </div>
     </div>
-    
+
     <!-- 右侧面板 -->
     <div class="sidebar-right">
       <div class="panel-header">
         <span>图层</span>
-        <button class="btn" onclick="app.addLayer()">
+        <button class="btn" style="padding:4px 8px;" onclick="app.addLayer()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
-      <div class="panel-content" id="layerList">
-        <!-- 图层列表 -->
+      <div class="panel-content" id="layerList"></div>
+    </div>
+  </div>
+
+  <!-- 变换控制面板 -->
+  <div class="transform-panel" id="transformPanel">
+    <div class="transform-panel-title">调整元素</div>
+    <div class="transform-control">
+      <label>大小 <span class="value" id="transformScaleVal">100%</span></label>
+      <input type="range" id="transformScale" min="10" max="300" value="100">
+    </div>
+    <div class="transform-control">
+      <label>旋转 <span class="value" id="transformRotateVal">0°</span></label>
+      <input type="range" id="transformRotate" min="-180" max="180" value="0">
+    </div>
+    <div class="transform-control">
+      <label>颜色</label>
+      <div class="transform-colors">
+        <div class="color-btn transform-color" data-color="#1a1a2e" style="background:#1a1a2e"></div>
+        <div class="color-btn transform-color" data-color="#ef4444" style="background:#ef4444"></div>
+        <div class="color-btn transform-color" data-color="#22c55e" style="background:#22c55e"></div>
+        <div class="color-btn transform-color" data-color="#3b82f6" style="background:#3b82f6"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="app.applyTransform()">应用</button>
+  </div>
+
+  <!-- 画布尺寸设置对话框 -->
+  <div class="modal-overlay" id="canvasSizeModal">
+    <div class="modal">
+      <div class="modal-title">设置画布尺寸</div>
+      <div class="modal-body">
+        <label>宽度</label>
+        <input type="number" id="canvasWidthInput" value="800" min="100" max="3000">
+        <label>高度</label>
+        <input type="number" id="canvasHeightInput" value="600" min="100" max="3000">
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="document.getElementById('canvasSizeModal').classList.remove('show')">取消</button>
+        <button class="btn btn-primary" onclick="app.setCanvasSize()">确定</button>
       </div>
     </div>
   </div>
-  
-  <input type="file" id="fileInput" accept="image/*" onchange="app.handleFile(event)">
-  <div class="toast" id="toast"></div>
 
-  <script>
-  class DrawBoard {
-    constructor() {
-      this.bgCanvas = document.getElementById('bgCanvas');
-      this.bgCtx = this.bgCanvas.getContext('2d');
-      this.drawingCanvas = document.getElementById('drawingCanvas');
-      this.ctx = this.drawingCanvas.getContext('2d');
-      this.tempCanvas = document.getElementById('tempCanvas');
-      this.tempCtx = this.tempCanvas.getContext('2d');
-      this.gridCanvas = document.getElementById('gridCanvas');
-      this.gridCtx = this.gridCanvas.getContext('2d');
-      this.selectCanvas = document.getElementById('selectCanvas');
-      this.selectCtx = this.selectCanvas.getContext('2d');
-      
-      this.canvasWidth = 800;
-      this.canvasHeight = 600;
-      this.zoom = 1;
-      this.panX = 0;
-      this.panY = 0;
-      
-      this.currentTool = 'pencil';
-      this.currentColor = '#1a1a2e';
-      this.currentSize = 3;
-      this.currentOpacity = 1;
-      this.fillShape = false;
-      
-      this.isDrawing = false;
-      this.startX = 0;
-      this.startY = 0;
-      this.lastX = 0;
-      this.lastY = 0;
-      
-      this.history = [];
-      this.historyStep = -1;
-      this.maxHistory = 50;
-      
-      this.layers = [{ id: 1, name: '图层 1', visible: true, opacity: 1 }];
-      this.currentLayer = 0;
-      this.layerCounter = 1;
-      
-      this.showGrid = false;
-      this.gridSize = 20;
-      
-      this.init();
-    }
-    
-    init() {
-      this.ctx.lineCap = 'round';
-      this.ctx.lineJoin = 'round';
-      this.tempCtx.lineCap = 'round';
-      this.tempCtx.lineJoin = 'round';
-      
-      this.setupEventListeners();
-      this.setupTools();
-      this.setupColors();
-      this.setupSliders();
-      this.setupKeyboard();
-      this.drawGrid();
-      this.saveState();
-      this.updateLayerList();
-      this.showToast('画板已就绪');
-    }
-    
-    setupEventListeners() {
-      const container = document.getElementById('canvasContainer');
-      
-      container.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-      container.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-      container.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-      container.addEventListener('mouseleave', () => this.handleMouseUp());
-      container.addEventListener('wheel', (e) => this.handleWheel(e));
-      
-      // 触摸支持
-      container.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-          clientX: touch.clientX,
-          clientY: touch.clientY
-        });
-        container.dispatchEvent(mouseEvent);
-      }, { passive: false });
-      
-      container.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
-          clientX: touch.clientX,
-          clientY: touch.clientY
-        });
-        container.dispatchEvent(mouseEvent);
-      }, { passive: false });
-      
-      container.addEventListener('touchend', () => {
-        const mouseEvent = new MouseEvent('mouseup', {});
-        container.dispatchEvent(mouseEvent);
-      });
-    }
-    
-    getMousePos(e) {
-      const rect = this.drawingCanvas.getBoundingClientRect();
-      return {
-        x: (e.clientX - rect.left) / this.zoom,
-        y: (e.clientY - rect.top) / this.zoom
-      };
-    }
-    
-    handleMouseDown(e) {
-      const pos = this.getMousePos(e);
-      this.isDrawing = true;
-      this.startX = pos.x;
-      this.startY = pos.y;
-      this.lastX = pos.x;
-      this.lastY = pos.y;
-      
-      this.tempCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-      this.tempCtx.strokeStyle = this.currentColor;
-      this.tempCtx.fillStyle = this.currentColor;
-      this.tempCtx.lineWidth = this.currentSize;
-      this.tempCtx.globalAlpha = this.currentOpacity;
-      
-      this.ctx.globalAlpha = this.currentOpacity;
-      
-      switch(this.currentTool) {
-        case 'pencil':
-        case 'brush':
-        case 'marker':
-          this.ctx.beginPath();
-          this.ctx.moveTo(pos.x, pos.y);
-          break;
-        case 'spray':
-          this.spray(pos.x, pos.y);
-          break;
-        case 'eraser':
-          this.ctx.globalCompositeOperation = 'destination-out';
-          this.ctx.beginPath();
-          this.ctx.moveTo(pos.x, pos.y);
-          break;
-        case 'picker':
-          this.pickColor(pos.x, pos.y);
-          this.isDrawing = false;
-          break;
-        case 'fill':
-          this.floodFill(Math.floor(pos.x), Math.floor(pos.y));
-          this.isDrawing = false;
-          break;
-        case 'text':
-          this.startText(pos.x, pos.y);
-          this.isDrawing = false;
-          break;
-      }
-    }
-    
-    handleMouseMove(e) {
-      const pos = this.getMousePos(e);
-      
-      // 更新坐标显示
-      document.getElementById('position').textContent = `${Math.round(pos.x)}, ${Math.round(pos.y)}`;
-      
-      if (!this.isDrawing) return;
-      
-      switch(this.currentTool) {
-        case 'pencil':
-          this.ctx.strokeStyle = this.currentColor;
-          this.ctx.lineWidth = this.currentSize;
-          this.ctx.lineTo(pos.x, pos.y);
-          this.ctx.stroke();
-          break;
-        case 'brush':
-          this.ctx.strokeStyle = this.currentColor;
-          this.ctx.lineWidth = this.currentSize * 2;
-          this.ctx.shadowBlur = this.currentSize;
-          this.ctx.shadowColor = this.currentColor;
-          this.ctx.lineTo(pos.x, pos.y);
-          this.ctx.stroke();
-          this.ctx.shadowBlur = 0;
-          break;
-        case 'marker':
-          this.ctx.strokeStyle = this.currentColor;
-          this.ctx.lineWidth = this.currentSize * 3;
-          this.ctx.globalAlpha = this.currentOpacity * 0.5;
-          this.ctx.lineTo(pos.x, pos.y);
-          this.ctx.stroke();
-          this.ctx.globalAlpha = this.currentOpacity;
-          break;
-        case 'spray':
-          this.spray(pos.x, pos.y);
-          break;
-        case 'eraser':
-          this.ctx.lineTo(pos.x, pos.y);
-          this.ctx.stroke();
-          break;
-        case 'line':
-          this.drawShapePreview('line', pos);
-          break;
-        case 'arrow':
-          this.drawShapePreview('arrow', pos);
-          break;
-        case 'rect':
-          this.drawShapePreview('rect', pos);
-          break;
-        case 'circle':
-          this.drawShapePreview('circle', pos);
-          break;
-        case 'triangle':
-          this.drawShapePreview('triangle', pos);
-          break;
-        case 'star':
-          this.drawShapePreview('star', pos);
-          break;
-      }
-      
-      this.lastX = pos.x;
-      this.lastY = pos.y;
-    }
-    
-    handleMouseUp(e) {
-      if (!this.isDrawing) return;
-      this.isDrawing = false;
-      
-      if (this.currentTool === 'eraser') {
-        this.ctx.globalCompositeOperation = 'source-over';
-      }
-      
-      if (['line', 'arrow', 'rect', 'circle', 'triangle', 'star'].includes(this.currentTool)) {
-        this.commitShape();
-      }
-      
-      this.saveState();
-    }
-    
-    handleWheel(e) {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? 0.9 : 1.1;
-        this.zoom = Math.max(0.1, Math.min(5, this.zoom * delta));
-        this.updateZoom();
-      }
-    }
-    
-    spray(x, y) {
-      const density = this.currentSize * 2;
-      const radius = this.currentSize * 5;
-      
-      for (let i = 0; i < density; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const r = Math.random() * radius;
-        const px = x + Math.cos(angle) * r;
-        const py = y + Math.sin(angle) * r;
-        
-        this.ctx.fillStyle = this.currentColor;
-        this.ctx.globalAlpha = this.currentOpacity * Math.random();
-        this.ctx.fillRect(px, py, 1, 1);
-      }
-      this.ctx.globalAlpha = this.currentOpacity;
-    }
-    
-    drawShapePreview(shape, pos) {
-      this.tempCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-      this.tempCtx.strokeStyle = this.currentColor;
-      this.tempCtx.fillStyle = this.currentColor;
-      this.tempCtx.lineWidth = this.currentSize;
-      this.tempCtx.globalAlpha = this.currentOpacity;
-      
-      const x = Math.min(this.startX, pos.x);
-      const y = Math.min(this.startY, pos.y);
-      const w = Math.abs(pos.x - this.startX);
-      const h = Math.abs(pos.y - this.startY);
-      
-      switch(shape) {
-        case 'line':
-          this.tempCtx.beginPath();
-          this.tempCtx.moveTo(this.startX, this.startY);
-          this.tempCtx.lineTo(pos.x, pos.y);
-          this.tempCtx.stroke();
-          break;
-        case 'arrow':
-          this.drawArrow(this.tempCtx, this.startX, this.startY, pos.x, pos.y);
-          break;
-        case 'rect':
-          if (this.fillShape) {
-            this.tempCtx.fillRect(x, y, w, h);
-          } else {
-            this.tempCtx.strokeRect(x, y, w, h);
-          }
-          break;
-        case 'circle':
-          this.tempCtx.beginPath();
-          const radius = Math.sqrt(w * w + h * h) / 2;
-          const centerX = (this.startX + pos.x) / 2;
-          const centerY = (this.startY + pos.y) / 2;
-          this.tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-          this.fillShape ? this.tempCtx.fill() : this.tempCtx.stroke();
-          break;
-        case 'triangle':
-          this.tempCtx.beginPath();
-          this.tempCtx.moveTo((this.startX + pos.x) / 2, this.startY);
-          this.tempCtx.lineTo(pos.x, pos.y);
-          this.tempCtx.lineTo(this.startX, pos.y);
-          this.tempCtx.closePath();
-          this.fillShape ? this.tempCtx.fill() : this.tempCtx.stroke();
-          break;
-        case 'star':
-          this.drawStar(this.tempCtx, (this.startX + pos.x) / 2, (this.startY + pos.y) / 2, 5, w / 2, h / 4);
-          break;
-      }
-    }
-    
-    drawArrow(ctx, fromX, fromY, toX, toY) {
-      const headLen = this.currentSize * 3;
-      const angle = Math.atan2(toY - fromY, toX - fromX);
-      
-      ctx.beginPath();
-      ctx.moveTo(fromX, fromY);
-      ctx.lineTo(toX, toY);
-      ctx.stroke();
-      
-      ctx.beginPath();
-      ctx.moveTo(toX, toY);
-      ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
-      ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
-      ctx.closePath();
-      ctx.fill();
-    }
-    
-    drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
-      let rot = Math.PI / 2 * 3;
-      let x = cx;
-      let y = cy;
-      let step = Math.PI / spikes;
-      
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - outerRadius);
-      for (let i = 0; i < spikes; i++) {
-        x = cx + Math.cos(rot) * outerRadius;
-        y = cy + Math.sin(rot) * outerRadius;
-        ctx.lineTo(x, y);
-        rot += step;
-        
-        x = cx + Math.cos(rot) * innerRadius;
-        y = cy + Math.sin(rot) * innerRadius;
-        ctx.lineTo(x, y);
-        rot += step;
-      }
-      ctx.lineTo(cx, cy - outerRadius);
-      ctx.closePath();
-      this.fillShape ? ctx.fill() : ctx.stroke();
-    }
-    
-    commitShape() {
-      this.ctx.drawImage(this.tempCanvas, 0, 0);
-      this.tempCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-    }
-    
-    pickColor(x, y) {
-      const pixel = this.ctx.getImageData(x, y, 1, 1).data;
-      const hex = '#' + [pixel[0], pixel[1], pixel[2]].map(v => v.toString(16).padStart(2, '0')).join('');
-      this.setColor(hex);
-      this.showToast(`已选取颜色: ${hex}`);
-    }
-    
-    floodFill(startX, startY) {
-      // 简化的填充算法
-      this.ctx.fillStyle = this.currentColor;
-      this.ctx.fillRect(startX - 10, startY - 10, 20, 20);
-    }
-    
-    startText(x, y) {
-      const editor = document.getElementById('textEditor');
-      const input = document.getElementById('textInput');
-      
-      editor.style.left = (x * this.zoom) + 'px';
-      editor.style.top = (y * this.zoom) + 'px';
-      editor.classList.add('active');
-      input.value = '';
-      input.focus();
-      
-      input.onkeydown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          this.commitText(x, y);
-        }
-        if (e.key === 'Escape') {
-          editor.classList.remove('active');
-        }
-      };
-      
-      input.onblur = () => {
-        if (input.value.trim()) {
-          this.commitText(x, y);
-        } else {
-          editor.classList.remove('active');
-        }
-      };
-    }
-    
-    commitText(x, y) {
-      const input = document.getElementById('textInput');
-      const text = input.value;
-      
-      if (text.trim()) {
-        this.ctx.fillStyle = this.currentColor;
-        this.ctx.font = `${this.currentSize * 5}px 'Noto Sans SC', sans-serif`;
-        this.ctx.fillText(text, x, y + this.currentSize * 4);
-        this.saveState();
-      }
-      
-      document.getElementById('textEditor').classList.remove('active');
-    }
-    
-    setupTools() {
-      document.querySelectorAll('[data-tool]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('[data-tool]').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          this.currentTool = btn.dataset.tool;
-          this.updateToolStatus();
-        });
-      });
-    }
-    
-    setupColors() {
-      document.querySelectorAll('.color-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          this.setColor(btn.dataset.color);
-        });
-      });
-      
-      document.getElementById('colorPicker').addEventListener('change', (e) => {
-        this.setColor(e.target.value);
-      });
-    }
-    
-    setupSliders() {
-      const sizeSlider = document.getElementById('sizeSlider');
-      const sizeValue = document.getElementById('sizeValue');
-      sizeSlider.addEventListener('input', (e) => {
-        this.currentSize = parseInt(e.target.value);
-        sizeValue.textContent = this.currentSize + 'px';
-      });
-      
-      const opacitySlider = document.getElementById('opacitySlider');
-      const opacityValue = document.getElementById('opacityValue');
-      opacitySlider.addEventListener('input', (e) => {
-        this.currentOpacity = parseInt(e.target.value) / 100;
-        opacityValue.textContent = e.target.value + '%';
-      });
-    }
-    
-    setupKeyboard() {
-      document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
-        
-        const keyMap = {
-          'v': 'select', 'h': 'hand', 'p': 'pencil', 'b': 'brush', 'm': 'marker',
-          's': 'spray', 'e': 'eraser', 'l': 'line', 'a': 'arrow', 'r': 'rect',
-          'c': 'circle', 't': 'triangle', '*': 'star', 'f': 'text', 'g': 'fill', 'i': 'picker'
-        };
-        
-        if (keyMap[e.key.toLowerCase()]) {
-          this.setTool(keyMap[e.key.toLowerCase()]);
-        }
-        
-        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-          e.preventDefault();
-          if (e.shiftKey) {
-            this.redo();
-          } else {
-            this.undo();
-          }
-        }
-        
-        if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-          e.preventDefault();
-          this.redo();
-        }
-        
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-          e.preventDefault();
-          this.exportCanvas();
-        }
-      });
-    }
-    
-    setColor(color) {
-      this.currentColor = color;
-      document.getElementById('colorPicker').value = color;
-    }
-    
-    setTool(tool) {
-      this.currentTool = tool;
-      document.querySelectorAll('[data-tool]').forEach(b => b.classList.remove('active'));
-      const btn = document.querySelector(`[data-tool="${tool}"]`);
-      if (btn) btn.classList.add('active');
-      this.updateToolStatus();
-    }
-    
-    updateToolStatus() {
-      const toolNames = {
-        select: '选择工具', hand: '抓手工具', pencil: '铅笔', brush: '画笔', marker: '马克笔',
-        spray: '喷雾', eraser: '橡皮擦', line: '直线', arrow: '箭头', rect: '矩形',
-        circle: '圆形', triangle: '三角形', star: '星形', text: '文字', fill: '填充', picker: '吸管'
-      };
-      document.getElementById('toolStatus').textContent = toolNames[this.currentTool] || this.currentTool;
-    }
-    
-    drawGrid() {
-      this.gridCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-      this.gridCtx.strokeStyle = 'rgba(0,0,0,0.05)';
-      this.gridCtx.lineWidth = 1;
-      
-      for (let x = 0; x <= this.canvasWidth; x += this.gridSize) {
-        this.gridCtx.beginPath();
-        this.gridCtx.moveTo(x, 0);
-        this.gridCtx.lineTo(x, this.canvasHeight);
-        this.gridCtx.stroke();
-      }
-      
-      for (let y = 0; y <= this.canvasHeight; y += this.gridSize) {
-        this.gridCtx.beginPath();
-        this.gridCtx.moveTo(0, y);
-        this.gridCtx.lineTo(this.canvasWidth, y);
-        this.gridCtx.stroke();
-      }
-    }
-    
-    toggleGrid() {
-      this.showGrid = !this.showGrid;
-      document.getElementById('gridCanvas').classList.toggle('show', this.showGrid);
-    }
-    
-    updateZoom() {
-      const wrapper = document.getElementById('canvasWrapper');
-      wrapper.style.transform = `scale(${this.zoom})`;
-      document.getElementById('zoomLevel').textContent = Math.round(this.zoom * 100) + '%';
-    }
-    
-    saveState() {
-      this.historyStep++;
-      if (this.historyStep < this.history.length) {
-        this.history.length = this.historyStep;
-      }
-      this.history.push(this.drawingCanvas.toDataURL());
-      if (this.history.length > this.maxHistory) {
-        this.history.shift();
-        this.historyStep--;
-      }
-    }
-    
-    undo() {
-      if (this.historyStep > 0) {
-        this.historyStep--;
-        this.restoreState();
-        this.showToast('已撤销');
-      }
-    }
-    
-    redo() {
-      if (this.historyStep < this.history.length - 1) {
-        this.historyStep++;
-        this.restoreState();
-        this.showToast('已重做');
-      }
-    }
-    
-    restoreState() {
-      const img = new Image();
-      img.onload = () => {
-        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-        this.ctx.drawImage(img, 0, 0);
-      };
-      img.src = this.history[this.historyStep];
-    }
-    
-    clearCanvas() {
-      if (confirm('确定要清空画布吗？')) {
-        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-        this.saveState();
-        this.showToast('画布已清空');
-      }
-    }
-    
-    handleFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const scale = Math.min(1, this.canvasWidth / img.width, this.canvasHeight / img.height);
-          const w = img.width * scale * 0.8;
-          const h = img.height * scale * 0.8;
-          const x = (this.canvasWidth - w) / 2;
-          const y = (this.canvasHeight - h) / 2;
-          this.ctx.drawImage(img, x, y, w, h);
-          this.saveState();
-          this.showToast('图片已导入');
-        };
-        img.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-    
-    exportCanvas() {
-      const canvas = document.createElement('canvas');
-      canvas.width = this.canvasWidth;
-      canvas.height = this.canvasHeight;
-      const ctx = canvas.getContext('2d');
-      
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
-      ctx.drawImage(this.drawingCanvas, 0, 0);
-      
-      const link = document.createElement('a');
-      link.download = `画板-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      this.showToast('图片已导出');
-    }
-    
-    addLayer() {
-      this.layerCounter++;
-      const layer = { id: this.layerCounter, name: `图层 ${this.layerCounter}`, visible: true, opacity: 1 };
-      this.layers.unshift(layer);
-      this.currentLayer = 0;
-      this.updateLayerList();
-      this.showToast('新图层已创建');
-    }
-    
-    updateLayerList() {
-      const list = document.getElementById('layerList');
-      list.innerHTML = this.layers.map((layer, index) => `
-        <div class="layer-item ${index === this.currentLayer ? 'active' : ''}" onclick="app.selectLayer(${index})">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            ${layer.visible 
-              ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
-              : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
-            }
-          </svg>
-          <div class="layer-info">
-            <div class="layer-name">${layer.name}</div>
-            <div class="layer-meta">${this.canvasWidth} × ${this.canvasHeight}</div>
+  <!-- 文字编辑对话框 -->
+  <div class="modal-overlay" id="textModal">
+    <div class="modal">
+      <div class="modal-title">添加文字</div>
+      <div class="modal-body">
+        <textarea id="textModalInput" placeholder="输入文字内容..."></textarea>
+        <div class="input-row">
+          <div>
+            <label>字体大小</label>
+            <input type="number" id="textSizeInput" value="24" min="8" max="200">
+          </div>
+          <div>
+            <label>颜色</label>
+            <input type="color" id="textColorInput" value="#1a1a2e">
           </div>
         </div>
-      `).join('');
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="document.getElementById('textModal').classList.remove('show')">取消</button>
+        <button class="btn btn-primary" onclick="app.commitTextModal()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 隐藏的文件输入 -->
+  <input type="file" id="fileInput" accept="image/*" onchange="app.handleFileSelect(event)">
+
+  <script>
+    class DrawBoard {
+      constructor() {
+        this.canvasWidth = 800;
+        this.canvasHeight = 600;
+        this.zoom = 1;
+        this.currentTool = 'select';
+        this.currentColor = '#1a1a2e';
+        this.currentSize = 3;
+        this.currentOpacity = 1;
+        this.fillShape = false;
+        
+        this.drawingCanvas = document.getElementById('drawingCanvas');
+        this.tempCanvas = document.getElementById('tempCanvas');
+        this.selectCanvas = document.getElementById('selectCanvas');
+        this.gridCanvas = document.getElementById('gridCanvas');
+        this.bgCanvas = document.getElementById('bgCanvas');
+        
+        this.ctx = this.drawingCanvas.getContext('2d');
+        this.tempCtx = this.tempCanvas.getContext('2d');
+        this.selectCtx = this.selectCanvas.getContext('2d');
+        this.gridCtx = this.gridCanvas.getContext('2d');
+        this.bgCtx = this.bgCanvas.getContext('2d');
+        
+        this.isDrawing = false;
+        this.startX = 0;
+        this.startY = 0;
+        this.lastX = 0;
+        this.lastY = 0;
+        
+        this.history = [];
+        this.historyStep = -1;
+        this.maxHistory = 50;
+        
+        this.layers = [{ id: 1, name: '图层 1', visible: true, opacity: 1 }];
+        this.currentLayer = 0;
+        this.layerCounter = 1;
+        
+        this.showGrid = false;
+        this.gridSize = 20;
+        
+        // 选区和变换
+        this.selection = null;
+        this.isTransforming = false;
+        this.textPosition = null;
+        
+        this.init();
+      }
+      
+      init() {
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.tempCtx.lineCap = 'round';
+        this.tempCtx.lineJoin = 'round';
+        
+        this.setupEventListeners();
+        this.setupTools();
+        this.setupColors();
+        this.setupSliders();
+        this.setupKeyboard();
+        this.setupTransformControls();
+        this.drawGrid();
+        this.saveState();
+        this.updateLayerList();
+        this.showToast('画板已就绪');
+      }
+      
+      setupEventListeners() {
+        const container = document.getElementById('canvasContainer');
+        
+        container.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        container.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        container.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+        container.addEventListener('mouseleave', () => this.handleMouseUp());
+        container.addEventListener('wheel', (e) => this.handleWheel(e));
+        
+        // 变换手柄事件
+        document.querySelectorAll('.selection-handle').forEach(handle => {
+          handle.addEventListener('mousedown', (e) => this.handleTransformStart(e));
+        });
+        
+        // 触摸支持
+        container.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+          });
+          container.dispatchEvent(mouseEvent);
+        }, { passive: false });
+        
+        container.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+          });
+          container.dispatchEvent(mouseEvent);
+        }, { passive: false });
+        
+        container.addEventListener('touchend', () => {
+          const mouseEvent = new MouseEvent('mouseup', {});
+          container.dispatchEvent(mouseEvent);
+        });
+      }
+      
+      getMousePos(e) {
+        const rect = this.drawingCanvas.getBoundingClientRect();
+        return {
+          x: (e.clientX - rect.left) / this.zoom,
+          y: (e.clientY - rect.top) / this.zoom
+        };
+      }
+      
+      handleMouseDown(e) {
+        if (e.target.classList.contains('selection-handle')) return;
+        
+        const pos = this.getMousePos(e);
+        this.isDrawing = true;
+        this.startX = pos.x;
+        this.startY = pos.y;
+        this.lastX = pos.x;
+        this.lastY = pos.y;
+        
+        this.tempCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.tempCtx.strokeStyle = this.currentColor;
+        this.tempCtx.fillStyle = this.currentColor;
+        this.tempCtx.lineWidth = this.currentSize;
+        this.tempCtx.globalAlpha = this.currentOpacity;
+        
+        this.ctx.globalAlpha = this.currentOpacity;
+        
+        switch(this.currentTool) {
+          case 'pencil':
+          case 'brush':
+          case 'marker':
+            this.ctx.beginPath();
+            this.ctx.moveTo(pos.x, pos.y);
+            break;
+          case 'spray':
+            this.spray(pos.x, pos.y);
+            break;
+          case 'eraser':
+            this.ctx.globalCompositeOperation = 'destination-out';
+            this.ctx.beginPath();
+            this.ctx.moveTo(pos.x, pos.y);
+            break;
+          case 'picker':
+            this.pickColor(pos.x, pos.y);
+            this.isDrawing = false;
+            break;
+          case 'fill':
+            this.floodFill(Math.floor(pos.x), Math.floor(pos.y));
+            this.isDrawing = false;
+            break;
+          case 'text':
+            this.textPosition = { x: pos.x, y: pos.y };
+            this.showTextModal();
+            this.isDrawing = false;
+            break;
+          case 'select':
+            this.startSelection(pos.x, pos.y);
+            break;
+        }
+      }
+      
+      handleMouseMove(e) {
+        const pos = this.getMousePos(e);
+        document.getElementById('position').textContent = `${Math.round(pos.x)}, ${Math.round(pos.y)}`;
+        
+        if (!this.isDrawing) return;
+        
+        switch(this.currentTool) {
+          case 'pencil':
+            this.ctx.strokeStyle = this.currentColor;
+            this.ctx.lineWidth = this.currentSize;
+            this.ctx.lineTo(pos.x, pos.y);
+            this.ctx.stroke();
+            break;
+          case 'brush':
+            this.ctx.strokeStyle = this.currentColor;
+            this.ctx.lineWidth = this.currentSize * 2;
+            this.ctx.shadowBlur = this.currentSize;
+            this.ctx.shadowColor = this.currentColor;
+            this.ctx.lineTo(pos.x, pos.y);
+            this.ctx.stroke();
+            this.ctx.shadowBlur = 0;
+            break;
+          case 'marker':
+            this.ctx.strokeStyle = this.currentColor;
+            this.ctx.lineWidth = this.currentSize * 3;
+            this.ctx.globalAlpha = this.currentOpacity * 0.5;
+            this.ctx.lineTo(pos.x, pos.y);
+            this.ctx.stroke();
+            this.ctx.globalAlpha = this.currentOpacity;
+            break;
+          case 'spray':
+            this.spray(pos.x, pos.y);
+            break;
+          case 'eraser':
+            this.ctx.lineTo(pos.x, pos.y);
+            this.ctx.stroke();
+            break;
+          case 'line':
+            this.drawShapePreview('line', pos);
+            break;
+          case 'arrow':
+            this.drawShapePreview('arrow', pos);
+            break;
+          case 'rect':
+            this.drawShapePreview('rect', pos);
+            break;
+          case 'circle':
+            this.drawShapePreview('circle', pos);
+            break;
+          case 'triangle':
+            this.drawShapePreview('triangle', pos);
+            break;
+          case 'star':
+            this.drawShapePreview('star', pos);
+            break;
+          case 'select':
+            this.updateSelection(pos.x, pos.y);
+            break;
+        }
+        
+        this.lastX = pos.x;
+        this.lastY = pos.y;
+      }
+      
+      handleMouseUp(e) {
+        if (!this.isDrawing) return;
+        this.isDrawing = false;
+        
+        if (this.currentTool === 'eraser') {
+          this.ctx.globalCompositeOperation = 'source-over';
+        }
+        
+        if (['line', 'arrow', 'rect', 'circle', 'triangle', 'star'].includes(this.currentTool)) {
+          this.commitShape();
+        }
+        
+        if (this.currentTool === 'select') {
+          this.finishSelection();
+        }
+        
+        this.saveState();
+      }
+      
+      handleWheel(e) {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? 0.9 : 1.1;
+          this.zoom = Math.max(0.1, Math.min(5, this.zoom * delta));
+          this.updateZoom();
+        }
+      }
+      
+      spray(x, y) {
+        const density = this.currentSize * 2;
+        const radius = this.currentSize * 5;
+        
+        for (let i = 0; i < density; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const r = Math.random() * radius;
+          const px = x + Math.cos(angle) * r;
+          const py = y + Math.sin(angle) * r;
+          
+          this.ctx.fillStyle = this.currentColor;
+          this.ctx.globalAlpha = this.currentOpacity * Math.random();
+          this.ctx.fillRect(px, py, 1, 1);
+        }
+        this.ctx.globalAlpha = this.currentOpacity;
+      }
+      
+      drawShapePreview(shape, pos) {
+        this.tempCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.tempCtx.strokeStyle = this.currentColor;
+        this.tempCtx.fillStyle = this.currentColor;
+        this.tempCtx.lineWidth = this.currentSize;
+        this.tempCtx.globalAlpha = this.currentOpacity;
+        
+        const x = Math.min(this.startX, pos.x);
+        const y = Math.min(this.startY, pos.y);
+        const w = Math.abs(pos.x - this.startX);
+        const h = Math.abs(pos.y - this.startY);
+        
+        switch(shape) {
+          case 'line':
+            this.tempCtx.beginPath();
+            this.tempCtx.moveTo(this.startX, this.startY);
+            this.tempCtx.lineTo(pos.x, pos.y);
+            this.tempCtx.stroke();
+            break;
+          case 'arrow':
+            this.drawArrow(this.tempCtx, this.startX, this.startY, pos.x, pos.y);
+            break;
+          case 'rect':
+            if (this.fillShape) {
+              this.tempCtx.fillRect(x, y, w, h);
+            } else {
+              this.tempCtx.strokeRect(x, y, w, h);
+            }
+            break;
+          case 'circle':
+            this.tempCtx.beginPath();
+            const radius = Math.sqrt(w * w + h * h) / 2;
+            const centerX = (this.startX + pos.x) / 2;
+            const centerY = (this.startY + pos.y) / 2;
+            this.tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            this.fillShape ? this.tempCtx.fill() : this.tempCtx.stroke();
+            break;
+          case 'triangle':
+            this.tempCtx.beginPath();
+            this.tempCtx.moveTo((this.startX + pos.x) / 2, this.startY);
+            this.tempCtx.lineTo(pos.x, pos.y);
+            this.tempCtx.lineTo(this.startX, pos.y);
+            this.tempCtx.closePath();
+            this.fillShape ? this.tempCtx.fill() : this.tempCtx.stroke();
+            break;
+          case 'star':
+            this.drawStar(this.tempCtx, (this.startX + pos.x) / 2, (this.startY + pos.y) / 2, 5, w / 2, h / 4);
+            break;
+        }
+      }
+      
+      drawArrow(ctx, fromX, fromY, toX, toY) {
+        const headLen = this.currentSize * 3;
+        const angle = Math.atan2(toY - fromY, toX - fromX);
+        
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+      }
+      
+      drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+        let rot = Math.PI / 2 * 3;
+        let x = cx;
+        let y = cy;
+        let step = Math.PI / spikes;
+        
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - outerRadius);
+        for (let i = 0; i < spikes; i++) {
+          x = cx + Math.cos(rot) * outerRadius;
+          y = cy + Math.sin(rot) * outerRadius;
+          ctx.lineTo(x, y);
+          rot += step;
+          
+          x = cx + Math.cos(rot) * innerRadius;
+          y = cy + Math.sin(rot) * innerRadius;
+          ctx.lineTo(x, y);
+          rot += step;
+        }
+        ctx.lineTo(cx, cy - outerRadius);
+        ctx.closePath();
+        this.fillShape ? ctx.fill() : ctx.stroke();
+      }
+      
+      commitShape() {
+        this.ctx.drawImage(this.tempCanvas, 0, 0);
+        this.tempCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      }
+      
+      pickColor(x, y) {
+        const pixel = this.ctx.getImageData(x, y, 1, 1).data;
+        const hex = '#' + [pixel[0], pixel[1], pixel[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+        this.setColor(hex);
+        this.showToast(`已选取颜色: ${hex}`);
+      }
+      
+      // 完整的 Flood Fill 填充算法
+      floodFill(startX, startY) {
+        if (startX < 0 || startX >= this.canvasWidth || startY < 0 || startY >= this.canvasHeight) return;
+        
+        const imageData = this.ctx.getImageData(0, 0, this.canvasWidth, this.canvasHeight);
+        const data = imageData.data;
+        const width = this.canvasWidth;
+        const height = this.canvasHeight;
+        
+        // 获取目标颜色
+        const targetIdx = (startY * width + startX) * 4;
+        const targetR = data[targetIdx];
+        const targetG = data[targetIdx + 1];
+        const targetB = data[targetIdx + 2];
+        const targetA = data[targetIdx + 3];
+        
+        // 获取填充颜色
+        const fillColor = this.hexToRgb(this.currentColor);
+        if (!fillColor) return;
+        
+        // 如果颜色相同则不填充
+        if (targetR === fillColor.r && targetG === fillColor.g && targetB === fillColor.b) return;
+        
+        const stack = [[startX, startY]];
+        const visited = new Set();
+        const tolerance = 32; // 颜色容差
+        
+        const colorMatch = (idx) => {
+          return Math.abs(data[idx] - targetR) <= tolerance &&
+                 Math.abs(data[idx + 1] - targetG) <= tolerance &&
+                 Math.abs(data[idx + 2] - targetB) <= tolerance &&
+                 Math.abs(data[idx + 3] - targetA) <= tolerance;
+        };
+        
+        while (stack.length > 0) {
+          const [x, y] = stack.pop();
+          const key = `${x},${y}`;
+          
+          if (visited.has(key)) continue;
+          visited.add(key);
+          
+          if (x < 0 || x >= width || y < 0 || y >= height) continue;
+          
+          const idx = (y * width + x) * 4;
+          if (!colorMatch(idx)) continue;
+          
+          data[idx] = fillColor.r;
+          data[idx + 1] = fillColor.g;
+          data[idx + 2] = fillColor.b;
+          data[idx + 3] = 255;
+          
+          stack.push([x + 1, y]);
+          stack.push([x - 1, y]);
+          stack.push([x, y + 1]);
+          stack.push([x, y - 1]);
+        }
+        
+        this.ctx.putImageData(imageData, 0, 0);
+        this.saveState();
+        this.showToast('已填充');
+      }
+      
+      hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : null;
+      }
+      
+      // 文字功能
+      showTextModal() {
+        document.getElementById('textModal').classList.add('show');
+        document.getElementById('textModalInput').focus();
+        document.getElementById('textColorInput').value = this.currentColor;
+      }
+      
+      commitTextModal() {
+        const text = document.getElementById('textModalInput').value;
+        const size = parseInt(document.getElementById('textSizeInput').value) || 24;
+        const color = document.getElementById('textColorInput').value;
+        
+        if (text.trim() && this.textPosition) {
+          this.ctx.fillStyle = color;
+          this.ctx.font = `${size}px 'Noto Sans SC', sans-serif`;
+          this.ctx.textBaseline = 'top';
+          
+          const lines = text.split('\n');
+          lines.forEach((line, i) => {
+            this.ctx.fillText(line, this.textPosition.x, this.textPosition.y + (i * size * 1.2));
+          });
+          
+          this.saveState();
+          this.showToast('已添加文字');
+        }
+        
+        document.getElementById('textModal').classList.remove('show');
+        document.getElementById('textModalInput').value = '';
+      }
+      
+      // 选区和变换功能
+      startSelection(x, y) {
+        this.selectCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.selection = { x, y, w: 0, h: 0 };
+        this.hideTransformPanel();
+      }
+      
+      updateSelection(x, y) {
+        if (!this.selection) return;
+        this.selection.w = x - this.startX;
+        this.selection.h = y - this.startY;
+        
+        this.selectCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.selectCtx.strokeStyle = '#0abFA5';
+        this.selectCtx.setLineDash([5, 5]);
+        this.selectCtx.strokeRect(this.selection.x, this.selection.y, this.selection.w, this.selection.h);
+        this.selectCtx.setLineDash([]);
+      }
+      
+      finishSelection() {
+        if (!this.selection || Math.abs(this.selection.w) < 10 || Math.abs(this.selection.h) < 10) {
+          this.selectCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+          this.selection = null;
+          return;
+        }
+        
+        // 标准化选区
+        if (this.selection.w < 0) {
+          this.selection.x += this.selection.w;
+          this.selection.w = Math.abs(this.selection.w);
+        }
+        if (this.selection.h < 0) {
+          this.selection.y += this.selection.h;
+          this.selection.h = Math.abs(this.selection.h);
+        }
+        
+        // 显示选区框和变换面板
+        this.showSelectionBox();
+        this.showTransformPanel();
+        
+        // 捕获选区内容
+        this.selection.imageData = this.ctx.getImageData(this.selection.x, this.selection.y, this.selection.w, this.selection.h);
+        
+        // 清空原位置
+        this.ctx.clearRect(this.selection.x, this.selection.y, this.selection.w, this.selection.h);
+        this.saveState();
+      }
+      
+      showSelectionBox() {
+        const box = document.getElementById('selectionBox');
+        box.style.left = (this.selection.x * this.zoom) + 'px';
+        box.style.top = (this.selection.y * this.zoom) + 'px';
+        box.style.width = (this.selection.w * this.zoom) + 'px';
+        box.style.height = (this.selection.h * this.zoom) + 'px';
+        box.classList.add('show');
+      }
+      
+      hideSelectionBox() {
+        document.getElementById('selectionBox').classList.remove('show');
+      }
+      
+      showTransformPanel() {
+        const panel = document.getElementById('transformPanel');
+        const box = document.getElementById('selectionBox');
+        const rect = box.getBoundingClientRect();
+        panel.style.left = (rect.right + 10) + 'px';
+        panel.style.top = rect.top + 'px';
+        panel.classList.add('show');
+      }
+      
+      hideTransformPanel() {
+        document.getElementById('transformPanel').classList.remove('show');
+      }
+      
+      setupTransformControls() {
+        // 缩放
+        document.getElementById('transformScale').addEventListener('input', (e) => {
+          document.getElementById('transformScaleVal').textContent = e.target.value + '%';
+          this.previewTransform();
+        });
+        
+        // 旋转
+        document.getElementById('transformRotate').addEventListener('input', (e) => {
+          document.getElementById('transformRotateVal').textContent = e.target.value + '°';
+          this.previewTransform();
+        });
+        
+        // 变换颜色
+        document.querySelectorAll('.transform-color').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (this.selection) {
+              this.currentColor = btn.dataset.color;
+              this.previewTransform();
+            }
+          });
+        });
+      }
+      
+      previewTransform() {
+        if (!this.selection || !this.selection.imageData) return;
+        
+        const scale = parseInt(document.getElementById('transformScale').value) / 100;
+        const rotation = parseInt(document.getElementById('transformRotate').value) * Math.PI / 180;
+        
+        this.selectCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.selectCtx.save();
+        this.selectCtx.translate(this.selection.x + this.selection.w/2, this.selection.y + this.selection.h/2);
+        this.selectCtx.rotate(rotation);
+        this.selectCtx.scale(scale, scale);
+        this.selectCtx.putImageData(this.selection.imageData, -this.selection.w/2, -this.selection.h/2);
+        this.selectCtx.restore();
+      }
+      
+      applyTransform() {
+        if (!this.selection || !this.selection.imageData) return;
+        
+        const scale = parseInt(document.getElementById('transformScale').value) / 100;
+        const rotation = parseInt(document.getElementById('transformRotate').value) * Math.PI / 180;
+        
+        // 创建临时canvas进行变换
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.selection.w;
+        tempCanvas.height = this.selection.h;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.putImageData(this.selection.imageData, 0, 0);
+        
+        // 应用变换
+        this.ctx.save();
+        this.ctx.translate(this.selection.x + this.selection.w/2, this.selection.y + this.selection.h/2);
+        this.ctx.rotate(rotation);
+        this.ctx.scale(scale, scale);
+        this.ctx.drawImage(tempCanvas, -this.selection.w/2, -this.selection.h/2);
+        this.ctx.restore();
+        
+        // 清除选区
+        this.selectCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.hideSelectionBox();
+        this.hideTransformPanel();
+        this.selection = null;
+        
+        this.saveState();
+        this.showToast('变换已应用');
+      }
+      
+      handleTransformStart(e) {
+        e.stopPropagation();
+        this.isTransforming = true;
+        // 这里可以实现拖拽变换手柄的功能
+      }
+      
+      // 画布尺寸设置
+      showCanvasSizeDialog() {
+        document.getElementById('canvasWidthInput').value = this.canvasWidth;
+        document.getElementById('canvasHeightInput').value = this.canvasHeight;
+        document.getElementById('canvasSizeModal').classList.add('show');
+      }
+      
+      setCanvasSize() {
+        const w = parseInt(document.getElementById('canvasWidthInput').value) || 800;
+        const h = parseInt(document.getElementById('canvasHeightInput').value) || 600;
+        
+        // 保存当前内容
+        const currentData = this.ctx.getImageData(0, 0, this.canvasWidth, this.canvasHeight);
+        
+        // 更新画布尺寸
+        this.canvasWidth = Math.min(Math.max(w, 100), 3000);
+        this.canvasHeight = Math.min(Math.max(h, 100), 3000);
+        
+        // 更新所有canvas
+        ['drawingCanvas', 'tempCanvas', 'selectCanvas', 'gridCanvas', 'bgCanvas'].forEach(id => {
+          const canvas = document.getElementById(id);
+          canvas.width = this.canvasWidth;
+          canvas.height = this.canvasHeight;
+        });
+        
+        // 恢复内容
+        this.ctx.putImageData(currentData, 0, 0);
+        
+        // 更新显示
+        document.getElementById('canvasSize').textContent = `${this.canvasWidth} × ${this.canvasHeight}`;
+        this.drawGrid();
+        this.saveState();
+        
+        document.getElementById('canvasSizeModal').classList.remove('show');
+        this.showToast(`画布尺寸已设为 ${this.canvasWidth} × ${this.canvasHeight}`);
+      }
+      
+      setupTools() {
+        document.querySelectorAll('[data-tool]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-tool]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.currentTool = btn.dataset.tool;
+            this.updateToolStatus();
+            this.hideSelectionBox();
+            this.hideTransformPanel();
+          });
+        });
+        
+        document.getElementById('fillCheckbox').addEventListener('change', (e) => {
+          this.fillShape = e.target.checked;
+        });
+      }
+      
+      setupColors() {
+        document.querySelectorAll('.color-btn[data-color]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.color-btn[data-color]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.setColor(btn.dataset.color);
+          });
+        });
+        
+        document.getElementById('colorPicker').addEventListener('change', (e) => {
+          this.setColor(e.target.value);
+        });
+      }
+      
+      setupSliders() {
+        const sizeSlider = document.getElementById('sizeSlider');
+        const sizeValue = document.getElementById('sizeValue');
+        sizeSlider.addEventListener('input', (e) => {
+          this.currentSize = parseInt(e.target.value);
+          sizeValue.textContent = this.currentSize + 'px';
+        });
+        
+        const opacitySlider = document.getElementById('opacitySlider');
+        const opacityValue = document.getElementById('opacityValue');
+        opacitySlider.addEventListener('input', (e) => {
+          this.currentOpacity = parseInt(e.target.value) / 100;
+          opacityValue.textContent = e.target.value + '%';
+        });
+      }
+      
+      setupKeyboard() {
+        document.addEventListener('keydown', (e) => {
+          if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+          
+          const keyMap = {
+            'v': 'select', 'h': 'hand', 'p': 'pencil', 'b': 'brush', 'm': 'marker',
+            's': 'spray', 'e': 'eraser', 'l': 'line', 'a': 'arrow', 'r': 'rect',
+            'c': 'circle', 't': 'triangle', '*': 'star', 'f': 'text', 'g': 'fill', 'i': 'picker'
+          };
+          
+          if (keyMap[e.key.toLowerCase()]) {
+            this.setTool(keyMap[e.key.toLowerCase()]);
+          }
+          
+          if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            e.preventDefault();
+            if (e.shiftKey) {
+              this.redo();
+            } else {
+              this.undo();
+            }
+          }
+          
+          if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+            e.preventDefault();
+            this.redo();
+          }
+          
+          if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            this.exportCanvas();
+          }
+        });
+      }
+      
+      setColor(color) {
+        this.currentColor = color;
+        document.getElementById('colorPicker').value = color;
+      }
+      
+      setTool(tool) {
+        this.currentTool = tool;
+        document.querySelectorAll('[data-tool]').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector(`[data-tool="${tool}"]`);
+        if (btn) btn.classList.add('active');
+        this.updateToolStatus();
+        this.hideSelectionBox();
+        this.hideTransformPanel();
+      }
+      
+      updateToolStatus() {
+        const toolNames = {
+          select: '选择工具', hand: '抓手工具', pencil: '铅笔', brush: '画笔', marker: '马克笔',
+          spray: '喷雾', eraser: '橡皮擦', line: '直线', arrow: '箭头', rect: '矩形',
+          circle: '圆形', triangle: '三角形', star: '星形', text: '文字', fill: '填充', picker: '吸管'
+        };
+        document.getElementById('toolStatus').textContent = toolNames[this.currentTool] || this.currentTool;
+      }
+      
+      drawGrid() {
+        this.gridCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.gridCtx.strokeStyle = 'rgba(0,0,0,0.05)';
+        this.gridCtx.lineWidth = 1;
+        
+        for (let x = 0; x <= this.canvasWidth; x += this.gridSize) {
+          this.gridCtx.beginPath();
+          this.gridCtx.moveTo(x, 0);
+          this.gridCtx.lineTo(x, this.canvasHeight);
+          this.gridCtx.stroke();
+        }
+        
+        for (let y = 0; y <= this.canvasHeight; y += this.gridSize) {
+          this.gridCtx.beginPath();
+          this.gridCtx.moveTo(0, y);
+          this.gridCtx.lineTo(this.canvasWidth, y);
+          this.gridCtx.stroke();
+        }
+      }
+      
+      updateZoom() {
+        const wrapper = document.getElementById('canvasWrapper');
+        wrapper.style.transform = `scale(${this.zoom})`;
+        document.getElementById('zoomLevel').textContent = Math.round(this.zoom * 100) + '%';
+      }
+      
+      saveState() {
+        if (this.historyStep < this.maxHistory - 1) {
+          this.historyStep++;
+          this.history = this.history.slice(0, this.historyStep);
+        } else {
+          this.history.shift();
+        }
+        this.history.push(this.ctx.getImageData(0, 0, this.canvasWidth, this.canvasHeight));
+      }
+      
+      undo() {
+        if (this.historyStep > 0) {
+          this.historyStep--;
+          this.ctx.putImageData(this.history[this.historyStep], 0, 0);
+          this.showToast('已撤销');
+        }
+      }
+      
+      redo() {
+        if (this.historyStep < this.history.length - 1) {
+          this.historyStep++;
+          this.ctx.putImageData(this.history[this.historyStep], 0, 0);
+          this.showToast('已重做');
+        }
+      }
+      
+      clearCanvas() {
+        if (confirm('确定要清空画布吗？')) {
+          this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+          this.saveState();
+          this.showToast('画布已清空');
+        }
+      }
+      
+      exportCanvas() {
+        const link = document.createElement('a');
+        link.download = `draw-board-${Date.now()}.png`;
+        
+        // 合并所有图层
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = this.canvasWidth;
+        exportCanvas.height = this.canvasHeight;
+        const exportCtx = exportCanvas.getContext('2d');
+        exportCtx.fillStyle = 'white';
+        exportCtx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+        exportCtx.drawImage(this.drawingCanvas, 0, 0);
+        
+        link.href = exportCanvas.toDataURL('image/png');
+        link.click();
+        this.showToast('已导出图片');
+      }
+      
+      handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const aspectRatio = img.width / img.height;
+            let drawWidth = Math.min(img.width, this.canvasWidth * 0.8);
+            let drawHeight = drawWidth / aspectRatio;
+            
+            if (drawHeight > this.canvasHeight * 0.8) {
+              drawHeight = this.canvasHeight * 0.8;
+              drawWidth = drawHeight * aspectRatio;
+            }
+            
+            const x = (this.canvasWidth - drawWidth) / 2;
+            const y = (this.canvasHeight - drawHeight) / 2;
+            
+            this.ctx.drawImage(img, x, y, drawWidth, drawHeight);
+            this.saveState();
+            this.showToast('图片已导入');
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      }
+      
+      addLayer() {
+        this.layerCounter++;
+        this.layers.unshift({ 
+          id: this.layerCounter, 
+          name: `图层 ${this.layerCounter}`, 
+          visible: true, 
+          opacity: 1 
+        });
+        this.updateLayerList();
+        this.showToast(`已添加图层 ${this.layerCounter}`);
+      }
+      
+      updateLayerList() {
+        const list = document.getElementById('layerList');
+        list.innerHTML = this.layers.map((layer, index) => `
+          <div class="layer-item ${index === this.currentLayer ? 'active' : ''}" onclick="app.selectLayer(${index})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+            </svg>
+            <div class="layer-info">
+              <div class="layer-name">${layer.name}</div>
+              <div class="layer-meta">${layer.visible ? '可见' : '隐藏'}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+      
+      selectLayer(index) {
+        this.currentLayer = index;
+        this.updateLayerList();
+      }
+      
+      showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      }
     }
     
-    selectLayer(index) {
-      this.currentLayer = index;
-      this.updateLayerList();
-    }
-    
-    showToast(message) {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2000);
-    }
-  }
-  
-  const app = new DrawBoard();
+    const app = new DrawBoard();
   </script>
 </body>
 </html>
