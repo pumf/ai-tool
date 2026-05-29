@@ -8,236 +8,1232 @@
   <style>
     :root {
       --color-primary: #0abFA5;
+      --color-primary-light: rgba(10,191,165,0.1);
       --color-on-primary: #ffffff;
       --color-ink: #1a1a2e;
       --color-body: #5c5c72;
       --color-muted: #9494a8;
       --color-canvas: #ffffff;
       --color-canvas-soft: #f8f9fb;
-      --color-border: rgba(0,0,0,0.07);
-      --radius-sm: 6px;
+      --color-border: rgba(0,0,0,0.08);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { font-family: 'Inter', 'Noto Sans SC', sans-serif; background: var(--color-canvas-soft); height: 100vh; overflow: hidden; }
     .app { display: flex; height: 100vh; }
-    .sidebar { width: 240px; background: var(--color-canvas); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; }
-    .sidebar-header { padding: 16px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; }
-    .btn-small { padding: 6px 12px; border: 1px solid var(--color-border); background: var(--color-canvas); border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; }
-    .btn-small.primary { background: var(--color-primary); color: var(--color-on-primary); border-color: var(--color-primary); }
-    .canvas-list { flex: 1; overflow-y: auto; padding: 8px; }
-    .canvas-item { padding: 10px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 6px; border: 2px solid transparent; }
-    .canvas-item:hover { background: var(--color-canvas-soft); }
-    .canvas-item.active { border-color: var(--color-primary); }
-    .canvas-thumb { width: 100%; height: 100px; background: #fff; border-radius: 4px; margin-bottom: 6px; object-fit: cover; }
+    
+    /* 左侧工具栏 */
+    .toolbar-left {
+      width: 56px;
+      background: var(--color-canvas);
+      border-right: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0;
+      gap: 4px;
+      z-index: 100;
+    }
+    .tool-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border); width: 100%; align-items: center; }
+    .tool-group:last-child { border-bottom: none; }
+    .tool-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-body);
+      transition: all 0.2s;
+      position: relative;
+    }
+    .tool-btn:hover { background: var(--color-canvas-soft); color: var(--color-ink); }
+    .tool-btn.active { background: var(--color-primary-light); color: var(--color-primary); border-color: var(--color-primary); }
+    .tool-btn svg { width: 20px; height: 20px; }
+    .tool-btn .tooltip {
+      position: absolute;
+      left: 48px;
+      background: var(--color-ink);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    .tool-btn:hover .tooltip { opacity: 1; visibility: visible; }
+    
+    /* 主区域 */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .top-bar { height: 56px; background: var(--color-canvas); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
-    .logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); }
+    
+    /* 顶部栏 */
+    .top-bar {
+      height: 56px;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+    .logo { font-size: 16px; font-weight: 600; text-decoration: none; color: var(--color-ink); display: flex; align-items: center; gap: 8px; }
     .logo span { color: var(--color-primary); }
-    .toolbar { background: var(--color-canvas); border-bottom: 1px solid var(--color-border); padding: 8px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .tool-section { display: flex; align-items: center; gap: 4px; padding-right: 12px; border-right: 1px solid var(--color-border); }
-    .tool-btn { width: 36px; height: 36px; border: 1px solid transparent; background: transparent; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--color-body); }
-    .tool-btn:hover { background: var(--color-canvas-soft); }
-    .tool-btn.active { background: rgba(10,191,165,0.08); color: var(--color-primary); border-color: var(--color-primary); }
-    .color-btn { width: 20px; height: 20px; border-radius: 4px; border: 2px solid transparent; cursor: pointer; }
-    .color-btn.active { border-color: var(--color-ink); }
-    .size-slider { width: 100px; }
-    .canvas-area { flex: 1; background: var(--color-canvas-soft); display: flex; align-items: center; justify-content: center; overflow: auto; padding: 40px; }
-    .canvas-wrapper { position: relative; background: white; box-shadow: 0 8px 40px rgba(0,0,0,0.08); border-radius: var(--radius-sm); }
-    #mainCanvas, #tempCanvas { display: block; }
-    #tempCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
-    .transform-box { position: absolute; border: 2px dashed var(--color-primary); display: none; }
-    .transform-box.show { display: block; }
-    .transform-handle { position: absolute; width: 10px; height: 10px; background: var(--color-primary); border: 2px solid white; border-radius: 50%; cursor: pointer; }
-    .bottom-bar { height: 36px; background: var(--color-canvas); border-top: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 12px; color: var(--color-muted); }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      color: var(--color-body);
+    }
+    .btn:hover { background: var(--color-canvas-soft); border-color: var(--color-primary); color: var(--color-primary); }
+    .btn svg { width: 16px; height: 16px; }
+    .btn-primary { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+    .btn-primary:hover { background: #09aa92; border-color: #09aa92; color: white; }
+    
+    /* 属性面板 */
+    .properties-bar {
+      height: 48px;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 20px;
+    }
+    .prop-section { display: flex; align-items: center; gap: 10px; }
+    .prop-label { font-size: 12px; color: var(--color-muted); }
+    .color-palette { display: flex; gap: 6px; }
+    .color-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .color-btn:hover { transform: scale(1.1); }
+    .color-btn.active { border-color: var(--color-ink); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--color-primary); }
+    .color-btn.custom { background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7); }
+    input[type="color"] {
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 0;
+      background: none;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: 2px solid var(--color-border); border-radius: 6px; }
+    input[type="range"] {
+      width: 100px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--color-border);
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      cursor: pointer;
+    }
+    .size-value { font-size: 12px; color: var(--color-body); min-width: 24px; }
+    
+    /* 画布区域 */
+    .canvas-area {
+      flex: 1;
+      background: var(--color-canvas-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      position: relative;
+    }
+    .canvas-wrapper {
+      position: relative;
+      background: white;
+      box-shadow: var(--shadow-lg);
+      border-radius: var(--radius-sm);
+      transition: transform 0.2s;
+    }
+    .canvas-container { position: relative; }
+    canvas { display: block; border-radius: var(--radius-sm); }
+    #drawingCanvas, #tempCanvas, #selectCanvas { position: absolute; top: 0; left: 0; }
+    #bgCanvas { background: white; }
+    #gridCanvas { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+    #gridCanvas.show { opacity: 1; }
+    
+    /* 选区框 */
+    .selection-box {
+      position: absolute;
+      border: 2px dashed var(--color-primary);
+      display: none;
+      pointer-events: none;
+    }
+    .selection-box.show { display: block; }
+    .selection-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: var(--color-primary);
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: var(--shadow-sm);
+    }
+    .handle-nw { top: -5px; left: -5px; cursor: nw-resize; }
+    .handle-ne { top: -5px; right: -5px; cursor: ne-resize; }
+    .handle-sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+    .handle-se { bottom: -5px; right: -5px; cursor: se-resize; }
+    .handle-n { top: -5px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+    .handle-s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+    .handle-w { left: -5px; top: 50%; transform: translateY(-50%); cursor: w-resize; }
+    .handle-e { right: -5px; top: 50%; transform: translateY(-50%); cursor: e-resize; }
+    
+    /* 底部状态栏 */
+    .bottom-bar {
+      height: 36px;
+      background: var(--color-canvas);
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+    .status-left, .status-right { display: flex; gap: 16px; align-items: center; }
+    .status-item { display: flex; align-items: center; gap: 4px; }
+    
+    /* 右侧面板 */
+    .sidebar-right {
+      width: 240px;
+      background: var(--color-canvas);
+      border-left: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--color-border);
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-content { flex: 1; overflow-y: auto; padding: 12px; }
+    .layer-item {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .layer-item:hover { background: var(--color-canvas-soft); }
+    .layer-item.active { border-color: var(--color-primary); background: var(--color-primary-light); }
+    .layer-item svg { width: 16px; height: 16px; color: var(--color-muted); }
+    .layer-item.active svg { color: var(--color-primary); }
+    .layer-thumb {
+      width: 32px;
+      height: 24px;
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      object-fit: cover;
+    }
+    .layer-info { flex: 1; }
+    .layer-name { font-weight: 500; color: var(--color-ink); }
+    .layer-meta { font-size: 11px; color: var(--color-muted); margin-top: 2px; }
+    
+    /* 模态框 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
     .modal-overlay.show { display: flex; }
-    .modal { background: var(--color-canvas); border-radius: var(--radius-sm); padding: 20px; max-width: 360px; width: 90%; }
-    .toast { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-ink); color: white; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; opacity: 0; transition: all 0.3s; }
+    .modal {
+      background: var(--color-canvas);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .modal-body { margin-bottom: 20px; }
+    .modal-body input, .modal-body textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .modal-body textarea { resize: vertical; min-height: 80px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--color-ink);
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 2000;
+      box-shadow: var(--shadow-md);
+    }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    
+    /* 快捷键提示 */
+    .kbd { 
+      background: var(--color-canvas-soft); 
+      padding: 2px 6px; 
+      border-radius: 4px; 
+      font-size: 11px; 
+      border: 1px solid var(--color-border);
+      font-family: monospace;
+    }
+    
+    /* 文字编辑框 */
+    .text-editor {
+      position: absolute;
+      background: white;
+      border: 2px solid var(--color-primary);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      min-width: 100px;
+      min-height: 30px;
+      display: none;
+      z-index: 50;
+      box-shadow: var(--shadow-md);
+    }
+    .text-editor.active { display: block; }
+    .text-editor textarea {
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 16px;
+      background: transparent;
+      width: 100%;
+      min-height: 20px;
+    }
+    
     #fileInput { display: none; }
   </style>
 </head>
 <body>
   <div class="app">
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <span>画板列表</span>
-        <button class="btn-small primary" onclick="app.newCanvas()">+ 新建</button>
+    <!-- 左侧工具栏 -->
+    <div class="toolbar-left">
+      <div class="tool-group">
+        <button class="tool-btn active" data-tool="select" title="选择 (V)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+          <span class="tooltip">选择 V</span>
+        </button>
+        <button class="tool-btn" data-tool="hand" title="抓手 (H)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.08-3.1a2 2 0 0 1 2.829-2.83l.79.8V8"/></svg>
+          <span class="tooltip">抓手 H</span>
+        </button>
       </div>
-      <div class="canvas-list" id="canvasList"></div>
+      
+      <div class="tool-group">
+        <button class="tool-btn" data-tool="pencil" title="铅笔 (P)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          <span class="tooltip">铅笔 P</span>
+        </button>
+        <button class="tool-btn" data-tool="brush" title="画笔 (B)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 12.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/><path d="M18 14v5a2 2 0 0 1-2 2H6"/><path d="M22 12h-2"/></svg>
+          <span class="tooltip">画笔 B</span>
+        </button>
+        <button class="tool-btn" data-tool="marker" title="马克笔 (M)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v4h16v-4"/><path d="M12 2v14"/><path d="M8 6l4-4 4 4"/><path d="M16 22l-4-4-4 4"/></svg>
+          <span class="tooltip">马克笔 M</span>
+        </button>
+        <button class="tool-btn" data-tool="spray" title="喷雾 (S)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><circle cx="6" cy="8" r="1.5"/><circle cx="18" cy="8" r="1.5"/><circle cx="6" cy="16" r="1.5"/><circle cx="18" cy="16" r="1.5"/><circle cx="20" cy="12" r="1"/><circle cx="4" cy="12" r="1"/></svg>
+          <span class="tooltip">喷雾 S</span>
+        </button>
+        <button class="tool-btn" data-tool="eraser" title="橡皮擦 (E)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12l-7 7-7-7 7-7 7 7z"/><path d="M5 12h14"/></svg>
+          <span class="tooltip">橡皮擦 E</span>
+        </button>
+      </div>
+      
+      <div class="tool-group">
+        <button class="tool-btn" data-tool="line" title="直线 (L)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
+          <span class="tooltip">直线 L</span>
+        </button>
+        <button class="tool-btn" data-tool="arrow" title="箭头 (A)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="19 5 15 5 19 9"/></svg>
+          <span class="tooltip">箭头 A</span>
+        </button>
+        <button class="tool-btn" data-tool="rect" title="矩形 (R)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          <span class="tooltip">矩形 R</span>
+        </button>
+        <button class="tool-btn" data-tool="circle" title="圆形 (C)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+          <span class="tooltip">圆形 C</span>
+        </button>
+        <button class="tool-btn" data-tool="triangle" title="三角形 (T)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L3 20h18L12 3z"/></svg>
+          <span class="tooltip">三角形 T</span>
+        </button>
+        <button class="tool-btn" data-tool="star" title="星形 (*)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span class="tooltip">星形 *</span>
+        </button>
+      </div>
+      
+      <div class="tool-group">
+        <button class="tool-btn" data-tool="text" title="文字 (F)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5h16v2"/><path d="M9 20h6"/><path d="M12 7v13"/></svg>
+          <span class="tooltip">文字 F</span>
+        </button>
+        <button class="tool-btn" data-tool="fill" title="填充 (G)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 11l-8-8-8.6 8.6a2.2 2.2 0 0 0 0 3.2l5.5 5.5a2.2 2.2 0 0 0 3.2 0L19 11z"/><path d="M5 22h14"/></svg>
+          <span class="tooltip">填充 G</span>
+        </button>
+        <button class="tool-btn" data-tool="picker" title="吸管 (I)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22l2-2"/><path d="M20 4l-6.5 6.5-3-3L17 1l3 3z"/><path d="M11.5 9.5l-8 8 3 3 8-8"/></svg>
+          <span class="tooltip">吸管 I</span>
+        </button>
+      </div>
+      
+      <div class="tool-group">
+        <button class="tool-btn" onclick="app.toggleGrid()" title="网格">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+          <span class="tooltip">网格</span>
+        </button>
+      </div>
     </div>
+    
+    <!-- 主区域 -->
     <div class="main">
       <div class="top-bar">
-        <a href="/" class="logo">小飞<span> AI 工具</span></a>
-        <div>
-          <button class="btn-small" onclick="app.undo()">撤销</button>
-          <button class="btn-small" onclick="app.exportCanvas()">导出</button>
+        <a href="/" class="logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="var(--color-primary)"/><path d="M8 12l3 3 5-6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          小飞<span>画板</span>
+        </a>
+        <div class="top-actions">
+          <button class="btn" onclick="app.undo()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            撤销
+          </button>
+          <button class="btn" onclick="app.redo()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+            重做
+          </button>
+          <button class="btn" onclick="app.clearCanvas()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            清空
+          </button>
+          <button class="btn" onclick="document.getElementById('fileInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            导入
+          </button>
+          <button class="btn btn-primary" onclick="app.exportCanvas()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            导出
+          </button>
         </div>
       </div>
-      <div class="toolbar">
-        <div class="tool-section">
-          <button class="tool-btn" onclick="app.setTool('pen')">✏️</button>
-          <button class="tool-btn" onclick="app.setTool('marker')">🖍️</button>
-          <button class="tool-btn" onclick="app.setTool('eraser')">🧹</button>
-          <button class="tool-btn" onclick="app.setTool('line')">📏</button>
-          <button class="tool-btn" onclick="app.setTool('rect')">⬜</button>
-          <button class="tool-btn" onclick="app.setTool('circle')">⭕</button>
-          <button class="tool-btn" onclick="app.setTool('text')">📝</button>
+      
+      <div class="properties-bar">
+        <div class="prop-section">
+          <span class="prop-label">颜色</span>
+          <div class="color-palette">
+            <div class="color-btn active" style="background:#1a1a2e" data-color="#1a1a2e"></div>
+            <div class="color-btn" style="background:#ef4444" data-color="#ef4444"></div>
+            <div class="color-btn" style="background:#f97316" data-color="#f97316"></div>
+            <div class="color-btn" style="background:#eab308" data-color="#eab308"></div>
+            <div class="color-btn" style="background:#22c55e" data-color="#22c55e"></div>
+            <div class="color-btn" style="background:#0abFA5" data-color="#0abFA5"></div>
+            <div class="color-btn" style="background:#3b82f6" data-color="#3b82f6"></div>
+            <div class="color-btn" style="background:#8b5cf6" data-color="#8b5cf6"></div>
+            <div class="color-btn" style="background:#ec4899" data-color="#ec4899"></div>
+            <input type="color" id="colorPicker" value="#1a1a2e">
+          </div>
         </div>
-        <div class="tool-section">
-          <div class="color-btn active" style="background:#1a1a2e" onclick="app.setColor('#1a1a2e')"></div>
-          <div class="color-btn" style="background:#ef4444" onclick="app.setColor('#ef4444')"></div>
-          <div class="color-btn" style="background:#0abFA5" onclick="app.setColor('#0abFA5')"></div>
-          <input type="color" id="colorPicker" value="#1a1a2e" onchange="app.setColor(this.value)">
-          <input type="range" class="size-slider" min="1" max="50" value="3" onchange="app.setSize(this.value)">
+        <div class="prop-section">
+          <span class="prop-label">粗细</span>
+          <input type="range" id="sizeSlider" min="1" max="50" value="3">
+          <span class="size-value" id="sizeValue">3px</span>
+        </div>
+        <div class="prop-section">
+          <span class="prop-label">不透明度</span>
+          <input type="range" id="opacitySlider" min="10" max="100" value="100">
+          <span class="size-value" id="opacityValue">100%</span>
         </div>
       </div>
-      <div class="canvas-area">
-        <div class="canvas-wrapper">
-          <canvas id="mainCanvas" width="800" height="600"></canvas>
-          <canvas id="tempCanvas" width="800" height="600"></canvas>
-          <div class="transform-box" id="transformBox"></div>
+      
+      <div class="canvas-area" id="canvasArea">
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <div class="canvas-container" id="canvasContainer">
+            <canvas id="bgCanvas" width="800" height="600"></canvas>
+            <canvas id="gridCanvas" width="800" height="600"></canvas>
+            <canvas id="drawingCanvas" width="800" height="600"></canvas>
+            <canvas id="tempCanvas" width="800" height="600"></canvas>
+            <canvas id="selectCanvas" width="800" height="600"></canvas>
+            <div class="text-editor" id="textEditor">
+              <textarea id="textInput" placeholder="输入文字..."></textarea>
+            </div>
+            <div class="selection-box" id="selectionBox">
+              <div class="selection-handle handle-nw"></div>
+              <div class="selection-handle handle-ne"></div>
+              <div class="selection-handle handle-sw"></div>
+              <div class="selection-handle handle-se"></div>
+              <div class="selection-handle handle-n"></div>
+              <div class="selection-handle handle-s"></div>
+              <div class="selection-handle handle-w"></div>
+              <div class="selection-handle handle-e"></div>
+            </div>
+          </div>
         </div>
       </div>
+      
       <div class="bottom-bar">
-        <span id="elementInfo">0 个元素</span>
-        <span>画板已就绪</span>
+        <div class="status-left">
+          <span class="status-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            <span id="canvasSize">800 × 600</span>
+          </span>
+          <span class="status-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/></svg>
+            <span id="zoomLevel">100%</span>
+          </span>
+          <span class="status-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="6" cy="6" r="1"/><circle cx="18" cy="6" r="1"/><circle cx="6" cy="18" r="1"/><circle cx="18" cy="18" r="1"/></svg>
+            <span id="position">0, 0</span>
+          </span>
+        </div>
+        <div class="status-right">
+          <span id="toolStatus">画笔工具</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 右侧面板 -->
+    <div class="sidebar-right">
+      <div class="panel-header">
+        <span>图层</span>
+        <button class="btn" onclick="app.addLayer()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+      <div class="panel-content" id="layerList">
+        <!-- 图层列表 -->
       </div>
     </div>
   </div>
-  <input type="file" id="fileInput" accept="image/*" onchange="app.handleImageFile(event)">
-  <div class="modal-overlay" id="textModal">
-    <div class="modal">
-      <div>添加文字</div>
-      <textarea id="textInput" placeholder="输入文字..."></textarea>
-      <button onclick="app.confirmText()">确定</button>
-      <button onclick="app.closeTextModal()">取消</button>
-    </div>
-  </div>
+  
+  <input type="file" id="fileInput" accept="image/*" onchange="app.handleFile(event)">
   <div class="toast" id="toast"></div>
 
   <script>
-  class DrawBoardApp {
+  class DrawBoard {
     constructor() {
-      this.mainCanvas = document.getElementById('mainCanvas');
-      this.mainCtx = this.mainCanvas.getContext('2d');
+      this.bgCanvas = document.getElementById('bgCanvas');
+      this.bgCtx = this.bgCanvas.getContext('2d');
+      this.drawingCanvas = document.getElementById('drawingCanvas');
+      this.ctx = this.drawingCanvas.getContext('2d');
       this.tempCanvas = document.getElementById('tempCanvas');
       this.tempCtx = this.tempCanvas.getContext('2d');
-      this.currentTool = 'pen';
+      this.gridCanvas = document.getElementById('gridCanvas');
+      this.gridCtx = this.gridCanvas.getContext('2d');
+      this.selectCanvas = document.getElementById('selectCanvas');
+      this.selectCtx = this.selectCanvas.getContext('2d');
+      
+      this.canvasWidth = 800;
+      this.canvasHeight = 600;
+      this.zoom = 1;
+      this.panX = 0;
+      this.panY = 0;
+      
+      this.currentTool = 'pencil';
       this.currentColor = '#1a1a2e';
       this.currentSize = 3;
+      this.currentOpacity = 1;
+      this.fillShape = false;
+      
       this.isDrawing = false;
-      this.elements = [];
+      this.startX = 0;
+      this.startY = 0;
+      this.lastX = 0;
+      this.lastY = 0;
+      
       this.history = [];
-      this.historyIndex = -1;
-      this.canvases = [];
-      this.currentCanvasIndex = 0;
+      this.historyStep = -1;
+      this.maxHistory = 50;
+      
+      this.layers = [{ id: 1, name: '图层 1', visible: true, opacity: 1 }];
+      this.currentLayer = 0;
+      this.layerCounter = 1;
+      
+      this.showGrid = false;
+      this.gridSize = 20;
+      
       this.init();
     }
     
     init() {
-      this.mainCtx.lineCap = 'round';
-      this.mainCtx.lineJoin = 'round';
-      this.bindEvents();
-      this.newCanvas();
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+      this.tempCtx.lineCap = 'round';
+      this.tempCtx.lineJoin = 'round';
+      
+      this.setupEventListeners();
+      this.setupTools();
+      this.setupColors();
+      this.setupSliders();
+      this.setupKeyboard();
+      this.drawGrid();
+      this.saveState();
+      this.updateLayerList();
       this.showToast('画板已就绪');
     }
     
-    bindEvents() {
-      let startX, startY;
+    setupEventListeners() {
+      const container = document.getElementById('canvasContainer');
       
-      const getPos = (e) => {
-        const rect = this.mainCanvas.getBoundingClientRect();
-        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      };
+      container.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+      container.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+      container.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+      container.addEventListener('mouseleave', () => this.handleMouseUp());
+      container.addEventListener('wheel', (e) => this.handleWheel(e));
       
-      this.mainCanvas.onmousedown = (e) => {
-        const pos = getPos(e);
-        startX = pos.x; startY = pos.y;
-        this.isDrawing = true;
-        this.mainCtx.beginPath();
-        this.mainCtx.moveTo(pos.x, pos.y);
-      };
+      // 触摸支持
+      container.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+          clientX: touch.clientX,
+          clientY: touch.clientY
+        });
+        container.dispatchEvent(mouseEvent);
+      }, { passive: false });
       
-      this.mainCanvas.onmousemove = (e) => {
-        if (!this.isDrawing) return;
-        const pos = getPos(e);
-        this.mainCtx.strokeStyle = this.currentColor;
-        this.mainCtx.lineWidth = this.currentSize;
-        this.mainCtx.lineTo(pos.x, pos.y);
-        this.mainCtx.stroke();
-      };
+      container.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+          clientX: touch.clientX,
+          clientY: touch.clientY
+        });
+        container.dispatchEvent(mouseEvent);
+      }, { passive: false });
       
-      this.mainCanvas.onmouseup = () => {
-        this.isDrawing = false;
-        this.saveHistory();
+      container.addEventListener('touchend', () => {
+        const mouseEvent = new MouseEvent('mouseup', {});
+        container.dispatchEvent(mouseEvent);
+      });
+    }
+    
+    getMousePos(e) {
+      const rect = this.drawingCanvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) / this.zoom,
+        y: (e.clientY - rect.top) / this.zoom
       };
     }
     
-    setTool(tool) { this.currentTool = tool; }
-    setColor(color) { this.currentColor = color; }
-    setSize(size) { this.currentSize = parseInt(size); }
-    
-    newCanvas() {
-      this.mainCtx.fillStyle = 'white';
-      this.mainCtx.fillRect(0, 0, 800, 600);
-      this.elements = [];
-      this.saveHistory();
-      this.updateCanvasList();
-    }
-    
-    saveHistory() {
-      this.historyIndex++;
-      this.history[this.historyIndex] = this.mainCanvas.toDataURL();
-      if (this.history.length > 20) { this.history.shift(); this.historyIndex--; }
-    }
-    
-    undo() {
-      if (this.historyIndex > 0) {
-        this.historyIndex--;
-        const img = new Image();
-        img.onload = () => this.mainCtx.drawImage(img, 0, 0);
-        img.src = this.history[this.historyIndex];
+    handleMouseDown(e) {
+      const pos = this.getMousePos(e);
+      this.isDrawing = true;
+      this.startX = pos.x;
+      this.startY = pos.y;
+      this.lastX = pos.x;
+      this.lastY = pos.y;
+      
+      this.tempCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      this.tempCtx.strokeStyle = this.currentColor;
+      this.tempCtx.fillStyle = this.currentColor;
+      this.tempCtx.lineWidth = this.currentSize;
+      this.tempCtx.globalAlpha = this.currentOpacity;
+      
+      this.ctx.globalAlpha = this.currentOpacity;
+      
+      switch(this.currentTool) {
+        case 'pencil':
+        case 'brush':
+        case 'marker':
+          this.ctx.beginPath();
+          this.ctx.moveTo(pos.x, pos.y);
+          break;
+        case 'spray':
+          this.spray(pos.x, pos.y);
+          break;
+        case 'eraser':
+          this.ctx.globalCompositeOperation = 'destination-out';
+          this.ctx.beginPath();
+          this.ctx.moveTo(pos.x, pos.y);
+          break;
+        case 'picker':
+          this.pickColor(pos.x, pos.y);
+          this.isDrawing = false;
+          break;
+        case 'fill':
+          this.floodFill(Math.floor(pos.x), Math.floor(pos.y));
+          this.isDrawing = false;
+          break;
+        case 'text':
+          this.startText(pos.x, pos.y);
+          this.isDrawing = false;
+          break;
       }
     }
     
-    exportCanvas() {
-      const link = document.createElement('a');
-      link.download = 'draw-board-' + Date.now() + '.png';
-      link.href = this.mainCanvas.toDataURL();
-      link.click();
-      this.showToast('已导出');
+    handleMouseMove(e) {
+      const pos = this.getMousePos(e);
+      
+      // 更新坐标显示
+      document.getElementById('position').textContent = `${Math.round(pos.x)}, ${Math.round(pos.y)}`;
+      
+      if (!this.isDrawing) return;
+      
+      switch(this.currentTool) {
+        case 'pencil':
+          this.ctx.strokeStyle = this.currentColor;
+          this.ctx.lineWidth = this.currentSize;
+          this.ctx.lineTo(pos.x, pos.y);
+          this.ctx.stroke();
+          break;
+        case 'brush':
+          this.ctx.strokeStyle = this.currentColor;
+          this.ctx.lineWidth = this.currentSize * 2;
+          this.ctx.shadowBlur = this.currentSize;
+          this.ctx.shadowColor = this.currentColor;
+          this.ctx.lineTo(pos.x, pos.y);
+          this.ctx.stroke();
+          this.ctx.shadowBlur = 0;
+          break;
+        case 'marker':
+          this.ctx.strokeStyle = this.currentColor;
+          this.ctx.lineWidth = this.currentSize * 3;
+          this.ctx.globalAlpha = this.currentOpacity * 0.5;
+          this.ctx.lineTo(pos.x, pos.y);
+          this.ctx.stroke();
+          this.ctx.globalAlpha = this.currentOpacity;
+          break;
+        case 'spray':
+          this.spray(pos.x, pos.y);
+          break;
+        case 'eraser':
+          this.ctx.lineTo(pos.x, pos.y);
+          this.ctx.stroke();
+          break;
+        case 'line':
+          this.drawShapePreview('line', pos);
+          break;
+        case 'arrow':
+          this.drawShapePreview('arrow', pos);
+          break;
+        case 'rect':
+          this.drawShapePreview('rect', pos);
+          break;
+        case 'circle':
+          this.drawShapePreview('circle', pos);
+          break;
+        case 'triangle':
+          this.drawShapePreview('triangle', pos);
+          break;
+        case 'star':
+          this.drawShapePreview('star', pos);
+          break;
+      }
+      
+      this.lastX = pos.x;
+      this.lastY = pos.y;
     }
     
-    handleImageFile(e) {
+    handleMouseUp(e) {
+      if (!this.isDrawing) return;
+      this.isDrawing = false;
+      
+      if (this.currentTool === 'eraser') {
+        this.ctx.globalCompositeOperation = 'source-over';
+      }
+      
+      if (['line', 'arrow', 'rect', 'circle', 'triangle', 'star'].includes(this.currentTool)) {
+        this.commitShape();
+      }
+      
+      this.saveState();
+    }
+    
+    handleWheel(e) {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        this.zoom = Math.max(0.1, Math.min(5, this.zoom * delta));
+        this.updateZoom();
+      }
+    }
+    
+    spray(x, y) {
+      const density = this.currentSize * 2;
+      const radius = this.currentSize * 5;
+      
+      for (let i = 0; i < density; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const r = Math.random() * radius;
+        const px = x + Math.cos(angle) * r;
+        const py = y + Math.sin(angle) * r;
+        
+        this.ctx.fillStyle = this.currentColor;
+        this.ctx.globalAlpha = this.currentOpacity * Math.random();
+        this.ctx.fillRect(px, py, 1, 1);
+      }
+      this.ctx.globalAlpha = this.currentOpacity;
+    }
+    
+    drawShapePreview(shape, pos) {
+      this.tempCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      this.tempCtx.strokeStyle = this.currentColor;
+      this.tempCtx.fillStyle = this.currentColor;
+      this.tempCtx.lineWidth = this.currentSize;
+      this.tempCtx.globalAlpha = this.currentOpacity;
+      
+      const x = Math.min(this.startX, pos.x);
+      const y = Math.min(this.startY, pos.y);
+      const w = Math.abs(pos.x - this.startX);
+      const h = Math.abs(pos.y - this.startY);
+      
+      switch(shape) {
+        case 'line':
+          this.tempCtx.beginPath();
+          this.tempCtx.moveTo(this.startX, this.startY);
+          this.tempCtx.lineTo(pos.x, pos.y);
+          this.tempCtx.stroke();
+          break;
+        case 'arrow':
+          this.drawArrow(this.tempCtx, this.startX, this.startY, pos.x, pos.y);
+          break;
+        case 'rect':
+          if (this.fillShape) {
+            this.tempCtx.fillRect(x, y, w, h);
+          } else {
+            this.tempCtx.strokeRect(x, y, w, h);
+          }
+          break;
+        case 'circle':
+          this.tempCtx.beginPath();
+          const radius = Math.sqrt(w * w + h * h) / 2;
+          const centerX = (this.startX + pos.x) / 2;
+          const centerY = (this.startY + pos.y) / 2;
+          this.tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          this.fillShape ? this.tempCtx.fill() : this.tempCtx.stroke();
+          break;
+        case 'triangle':
+          this.tempCtx.beginPath();
+          this.tempCtx.moveTo((this.startX + pos.x) / 2, this.startY);
+          this.tempCtx.lineTo(pos.x, pos.y);
+          this.tempCtx.lineTo(this.startX, pos.y);
+          this.tempCtx.closePath();
+          this.fillShape ? this.tempCtx.fill() : this.tempCtx.stroke();
+          break;
+        case 'star':
+          this.drawStar(this.tempCtx, (this.startX + pos.x) / 2, (this.startY + pos.y) / 2, 5, w / 2, h / 4);
+          break;
+      }
+    }
+    
+    drawArrow(ctx, fromX, fromY, toX, toY) {
+      const headLen = this.currentSize * 3;
+      const angle = Math.atan2(toY - fromY, toX - fromX);
+      
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(toX, toY);
+      ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+      let rot = Math.PI / 2 * 3;
+      let x = cx;
+      let y = cy;
+      let step = Math.PI / spikes;
+      
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - outerRadius);
+      for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * outerRadius;
+        y = cy + Math.sin(rot) * outerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+        
+        x = cx + Math.cos(rot) * innerRadius;
+        y = cy + Math.sin(rot) * innerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+      }
+      ctx.lineTo(cx, cy - outerRadius);
+      ctx.closePath();
+      this.fillShape ? ctx.fill() : ctx.stroke();
+    }
+    
+    commitShape() {
+      this.ctx.drawImage(this.tempCanvas, 0, 0);
+      this.tempCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+    }
+    
+    pickColor(x, y) {
+      const pixel = this.ctx.getImageData(x, y, 1, 1).data;
+      const hex = '#' + [pixel[0], pixel[1], pixel[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+      this.setColor(hex);
+      this.showToast(`已选取颜色: ${hex}`);
+    }
+    
+    floodFill(startX, startY) {
+      // 简化的填充算法
+      this.ctx.fillStyle = this.currentColor;
+      this.ctx.fillRect(startX - 10, startY - 10, 20, 20);
+    }
+    
+    startText(x, y) {
+      const editor = document.getElementById('textEditor');
+      const input = document.getElementById('textInput');
+      
+      editor.style.left = (x * this.zoom) + 'px';
+      editor.style.top = (y * this.zoom) + 'px';
+      editor.classList.add('active');
+      input.value = '';
+      input.focus();
+      
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          this.commitText(x, y);
+        }
+        if (e.key === 'Escape') {
+          editor.classList.remove('active');
+        }
+      };
+      
+      input.onblur = () => {
+        if (input.value.trim()) {
+          this.commitText(x, y);
+        } else {
+          editor.classList.remove('active');
+        }
+      };
+    }
+    
+    commitText(x, y) {
+      const input = document.getElementById('textInput');
+      const text = input.value;
+      
+      if (text.trim()) {
+        this.ctx.fillStyle = this.currentColor;
+        this.ctx.font = `${this.currentSize * 5}px 'Noto Sans SC', sans-serif`;
+        this.ctx.fillText(text, x, y + this.currentSize * 4);
+        this.saveState();
+      }
+      
+      document.getElementById('textEditor').classList.remove('active');
+    }
+    
+    setupTools() {
+      document.querySelectorAll('[data-tool]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[data-tool]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          this.currentTool = btn.dataset.tool;
+          this.updateToolStatus();
+        });
+      });
+    }
+    
+    setupColors() {
+      document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          this.setColor(btn.dataset.color);
+        });
+      });
+      
+      document.getElementById('colorPicker').addEventListener('change', (e) => {
+        this.setColor(e.target.value);
+      });
+    }
+    
+    setupSliders() {
+      const sizeSlider = document.getElementById('sizeSlider');
+      const sizeValue = document.getElementById('sizeValue');
+      sizeSlider.addEventListener('input', (e) => {
+        this.currentSize = parseInt(e.target.value);
+        sizeValue.textContent = this.currentSize + 'px';
+      });
+      
+      const opacitySlider = document.getElementById('opacitySlider');
+      const opacityValue = document.getElementById('opacityValue');
+      opacitySlider.addEventListener('input', (e) => {
+        this.currentOpacity = parseInt(e.target.value) / 100;
+        opacityValue.textContent = e.target.value + '%';
+      });
+    }
+    
+    setupKeyboard() {
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        
+        const keyMap = {
+          'v': 'select', 'h': 'hand', 'p': 'pencil', 'b': 'brush', 'm': 'marker',
+          's': 'spray', 'e': 'eraser', 'l': 'line', 'a': 'arrow', 'r': 'rect',
+          'c': 'circle', 't': 'triangle', '*': 'star', 'f': 'text', 'g': 'fill', 'i': 'picker'
+        };
+        
+        if (keyMap[e.key.toLowerCase()]) {
+          this.setTool(keyMap[e.key.toLowerCase()]);
+        }
+        
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            this.redo();
+          } else {
+            this.undo();
+          }
+        }
+        
+        if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+          e.preventDefault();
+          this.redo();
+        }
+        
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+          e.preventDefault();
+          this.exportCanvas();
+        }
+      });
+    }
+    
+    setColor(color) {
+      this.currentColor = color;
+      document.getElementById('colorPicker').value = color;
+    }
+    
+    setTool(tool) {
+      this.currentTool = tool;
+      document.querySelectorAll('[data-tool]').forEach(b => b.classList.remove('active'));
+      const btn = document.querySelector(`[data-tool="${tool}"]`);
+      if (btn) btn.classList.add('active');
+      this.updateToolStatus();
+    }
+    
+    updateToolStatus() {
+      const toolNames = {
+        select: '选择工具', hand: '抓手工具', pencil: '铅笔', brush: '画笔', marker: '马克笔',
+        spray: '喷雾', eraser: '橡皮擦', line: '直线', arrow: '箭头', rect: '矩形',
+        circle: '圆形', triangle: '三角形', star: '星形', text: '文字', fill: '填充', picker: '吸管'
+      };
+      document.getElementById('toolStatus').textContent = toolNames[this.currentTool] || this.currentTool;
+    }
+    
+    drawGrid() {
+      this.gridCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      this.gridCtx.strokeStyle = 'rgba(0,0,0,0.05)';
+      this.gridCtx.lineWidth = 1;
+      
+      for (let x = 0; x <= this.canvasWidth; x += this.gridSize) {
+        this.gridCtx.beginPath();
+        this.gridCtx.moveTo(x, 0);
+        this.gridCtx.lineTo(x, this.canvasHeight);
+        this.gridCtx.stroke();
+      }
+      
+      for (let y = 0; y <= this.canvasHeight; y += this.gridSize) {
+        this.gridCtx.beginPath();
+        this.gridCtx.moveTo(0, y);
+        this.gridCtx.lineTo(this.canvasWidth, y);
+        this.gridCtx.stroke();
+      }
+    }
+    
+    toggleGrid() {
+      this.showGrid = !this.showGrid;
+      document.getElementById('gridCanvas').classList.toggle('show', this.showGrid);
+    }
+    
+    updateZoom() {
+      const wrapper = document.getElementById('canvasWrapper');
+      wrapper.style.transform = `scale(${this.zoom})`;
+      document.getElementById('zoomLevel').textContent = Math.round(this.zoom * 100) + '%';
+    }
+    
+    saveState() {
+      this.historyStep++;
+      if (this.historyStep < this.history.length) {
+        this.history.length = this.historyStep;
+      }
+      this.history.push(this.drawingCanvas.toDataURL());
+      if (this.history.length > this.maxHistory) {
+        this.history.shift();
+        this.historyStep--;
+      }
+    }
+    
+    undo() {
+      if (this.historyStep > 0) {
+        this.historyStep--;
+        this.restoreState();
+        this.showToast('已撤销');
+      }
+    }
+    
+    redo() {
+      if (this.historyStep < this.history.length - 1) {
+        this.historyStep++;
+        this.restoreState();
+        this.showToast('已重做');
+      }
+    }
+    
+    restoreState() {
+      const img = new Image();
+      img.onload = () => {
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.ctx.drawImage(img, 0, 0);
+      };
+      img.src = this.history[this.historyStep];
+    }
+    
+    clearCanvas() {
+      if (confirm('确定要清空画布吗？')) {
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.saveState();
+        this.showToast('画布已清空');
+      }
+    }
+    
+    handleFile(e) {
       const file = e.target.files[0];
       if (!file) return;
+      
       const reader = new FileReader();
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-          this.mainCtx.drawImage(img, 100, 100, 200, 200);
-          this.saveHistory();
-          this.showToast('图片已插入');
+          const scale = Math.min(1, this.canvasWidth / img.width, this.canvasHeight / img.height);
+          const w = img.width * scale * 0.8;
+          const h = img.height * scale * 0.8;
+          const x = (this.canvasWidth - w) / 2;
+          const y = (this.canvasHeight - h) / 2;
+          this.ctx.drawImage(img, x, y, w, h);
+          this.saveState();
+          this.showToast('图片已导入');
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
     
-    updateCanvasList() {
-      document.getElementById('canvasList').innerHTML = '<div class="canvas-item active">当前画板</div>';
+    exportCanvas() {
+      const canvas = document.createElement('canvas');
+      canvas.width = this.canvasWidth;
+      canvas.height = this.canvasHeight;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+      ctx.drawImage(this.drawingCanvas, 0, 0);
+      
+      const link = document.createElement('a');
+      link.download = `画板-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      this.showToast('图片已导出');
     }
     
-    showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2000);
+    addLayer() {
+      this.layerCounter++;
+      const layer = { id: this.layerCounter, name: `图层 ${this.layerCounter}`, visible: true, opacity: 1 };
+      this.layers.unshift(layer);
+      this.currentLayer = 0;
+      this.updateLayerList();
+      this.showToast('新图层已创建');
+    }
+    
+    updateLayerList() {
+      const list = document.getElementById('layerList');
+      list.innerHTML = this.layers.map((layer, index) => `
+        <div class="layer-item ${index === this.currentLayer ? 'active' : ''}" onclick="app.selectLayer(${index})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            ${layer.visible 
+              ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+              : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+            }
+          </svg>
+          <div class="layer-info">
+            <div class="layer-name">${layer.name}</div>
+            <div class="layer-meta">${this.canvasWidth} × ${this.canvasHeight}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    selectLayer(index) {
+      this.currentLayer = index;
+      this.updateLayerList();
+    }
+    
+    showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
     }
   }
   
-  const app = new DrawBoardApp();
+  const app = new DrawBoard();
   </script>
 </body>
 </html>
