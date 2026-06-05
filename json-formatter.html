@@ -158,7 +158,18 @@
       .editor-container { grid-template-columns: 1fr; height: auto; }
       .panel { min-height: 300px; }
     }
-  </style>
+  
+    .icon {
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+      display: inline-block;
+    }
+    .icon-lg {
+      width: 1.5em;
+      height: 1.5em;
+    }
+</style>
 </head>
 <body>
   <nav class="nav">
@@ -223,7 +234,7 @@
     const statusBar = document.getElementById('statusBar');
     
     function showStatus(msg, type = 'error') {
-      statusBar.innerHTML = `<div class="status ${type}">${type === 'success' ? '✓' : '✗'} ${msg}</div>`;
+      statusBar.innerHTML = `<div class="status ${type}">${type === 'success' ? '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'} ${msg}</div>`;
       statusBar.style.display = 'flex';
     }
     

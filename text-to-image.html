@@ -159,7 +159,18 @@
       text-align: center; font-size: 12px;
       color: var(--color-muted); margin-top: 8px;
     }
-  </style>
+  
+    .icon {
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+      display: inline-block;
+    }
+    .icon-lg {
+      width: 1.5em;
+      height: 1.5em;
+    }
+</style>
 </head>
 <body>
   <nav class="nav">
@@ -180,14 +191,14 @@
         <div class="panel">
           <div class="panel-title">选择模板</div>
           <div class="template-grid">
-            <div class="template-item template-clean active" onclick="setTemplate('clean')" title="简洁白">🤍</div>
-            <div class="template-item template-paper" onclick="setTemplate('paper')" title="纸张">📜</div>
-            <div class="template-item template-dark" onclick="setTemplate('dark')" title="深色">🖤</div>
-            <div class="template-item template-gradient" onclick="setTemplate('gradient')" title="渐变紫">💜</div>
-            <div class="template-item template-warm" onclick="setTemplate('warm')" title="温暖粉">💖</div>
-            <div class="template-item template-nature" onclick="setTemplate('nature')" title="清新蓝">💙</div>
+            <div class="template-item template-clean active" onclick="setTemplate('clean')" title="简洁白"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+            <div class="template-item template-paper" onclick="setTemplate('paper')" title="纸张"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h2"/><path d="M10 17V5h10v10a2 2 0 0 1-2 2"/><path d="M14 9h6"/><path d="M14 13h6"/></svg></div>
+            <div class="template-item template-dark" onclick="setTemplate('dark')" title="深色"><svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+            <div class="template-item template-gradient" onclick="setTemplate('gradient')" title="渐变紫"><svg class="icon" viewBox="0 0 24 24" fill="#9333ea"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+            <div class="template-item template-warm" onclick="setTemplate('warm')" title="温暖粉"><svg class="icon" viewBox="0 0 24 24" fill="#ec4899"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+            <div class="template-item template-nature" onclick="setTemplate('nature')" title="清新蓝"><svg class="icon" viewBox="0 0 24 24" fill="#2563eb"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
             <div class="template-item template-sunset" onclick="setTemplate('sunset')" title="日落">🧡</div>
-            <div class="template-item template-forest" onclick="setTemplate('forest')" title="森林">💚</div>
+            <div class="template-item template-forest" onclick="setTemplate('forest')" title="森林"><svg class="icon" viewBox="0 0 24 24" fill="#16a34a"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
           </div>
           
           <div class="panel-title">尺寸</div>
@@ -239,9 +250,9 @@
           <canvas id="canvasPreview"></canvas>
           <div class="hint">实时预览 · 点击下载保存</div>
           <div class="action-bar">
-            <button class="btn btn-primary" onclick="downloadImage()">💾 下载图片</button>
-            <button class="btn" onclick="copyImage()">📋 复制图片</button>
-            <button class="btn" onclick="randomize()">🎲 随机样式</button>
+            <button class="btn btn-primary" onclick="downloadImage()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 下载图片</button>
+            <button class="btn" onclick="copyImage()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> 复制图片</button>
+            <button class="btn" onclick="randomize()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="1.5"/><circle cx="16" cy="16" r="1.5"/><circle cx="12" cy="12" r="1.5"/></svg> 随机样式</button>
           </div>
         </div>
       </div>

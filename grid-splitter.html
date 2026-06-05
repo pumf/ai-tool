@@ -157,7 +157,18 @@
     }
     
     #fileInput { display: none; }
-  </style>
+  
+    .icon {
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+      display: inline-block;
+    }
+    .icon-lg {
+      width: 1.5em;
+      height: 1.5em;
+    }
+</style>
 </head>
 <body>
   <nav class="nav">
@@ -175,7 +186,7 @@
     
     <div class="panel">
       <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-        <div class="drop-zone-icon">🖼️</div>
+        <div class="drop-zone-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
         <div class="drop-zone-text">点击或拖拽上传图片</div>
         <div class="drop-zone-hint">支持 JPG、PNG、WebP</div>
       </div>
@@ -202,13 +213,13 @@
         <div class="preview-title">预览效果</div>
         <div class="grid-preview" id="gridPreview"></div>
         <div class="action-bar">
-          <button class="btn btn-primary" onclick="downloadAll()">📦 打包下载</button>
+          <button class="btn btn-primary" onclick="downloadAll()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> 打包下载</button>
           <button class="btn" onclick="clearAll()">清空</button>
         </div>
       </div>
       
       <div class="tip">
-        💡 提示：九宫格发朋友圈时，按顺序选择图片即可呈现完整大图效果
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.9.27-1.48-.5-2.19-.73-.66-1.5-1.11-1.5-2.21 0-1.18 1.06-2.14 2.34-2.14S17.77 8.42 17.77 9.6c0 1.1-.77 1.55-1.5 2.21-.77.71-.68 1.29-.5 2.19"/><path d="M12 2v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M19.78 4.22l-1.42 1.42"/><path d="M2 12h2"/><path d="M20 12h2"/></svg> 提示：九宫格发朋友圈时，按顺序选择图片即可呈现完整大图效果
       </div>
     </div>
   </div>

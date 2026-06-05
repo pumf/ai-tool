@@ -101,21 +101,32 @@
     .type-badge.link { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
     .type-badge.code { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
     @media (max-width: 600px) { .container { padding: 0 var(--space-md); } .item-actions { opacity: 1; } }
-  </style>
+  
+    .icon {
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+      display: inline-block;
+    }
+    .icon-lg {
+      width: 1.5em;
+      height: 1.5em;
+    }
+</style>
 </head>
 <body>
   <nav class="nav"><div class="container nav-inner"><a href="/" class="nav-logo">小飞<span> AI 工具</span></a><a href="/" class="nav-back">← 返回首页</a></div></nav>
-  <header class="header"><div class="header-icon">📋</div><h1>剪贴板管理器</h1><p>跨设备同步剪贴板 · 文本存储 · 快速复制</p></header>
+  <header class="header"><div class="header-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></div><h1>剪贴板管理器</h1><p>跨设备同步剪贴板 · 文本存储 · 快速复制</p></header>
   <main class="main">
     <div class="container">
       <div class="input-area">
-        <div class="input-header"><span class="input-title">新建剪贴项</span><div class="input-actions"><button class="btn btn-secondary" id="pasteBtn"><span class="btn-icon">📋</span> 粘贴</button></div></div>
+        <div class="input-header"><span class="input-title">新建剪贴项</span><div class="input-actions"><button class="btn btn-secondary" id="pasteBtn"><span class="btn-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span> 粘贴</button></div></div>
         <textarea class="input-field" id="inputField" placeholder="在此输入或粘贴内容..."></textarea>
-        <div class="btn-group" style="margin-top: var(--space-md); display: flex; gap: var(--space-xs);"><button class="btn btn-primary" id="saveBtn"><span class="btn-icon">💾</span> 保存到剪贴板</button><button class="btn btn-secondary" id="clearBtn">清空</button></div>
+        <div class="btn-group" style="margin-top: var(--space-md); display: flex; gap: var(--space-xs);"><button class="btn btn-primary" id="saveBtn"><span class="btn-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span> 保存到剪贴板</button><button class="btn btn-secondary" id="clearBtn">清空</button></div>
       </div>
       <div class="history-section">
         <div class="section-header"><span class="section-title">剪贴板历史</span><span class="section-count" id="itemCount">0 项</span></div>
-        <div class="clipboard-list" id="clipboardList"><div class="empty-state"><div class="empty-icon">📋</div><p class="empty-text">暂无剪贴内容<br>在上方输入内容并保存</p></div></div>
+        <div class="clipboard-list" id="clipboardList"><div class="empty-state"><div class="empty-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></div><p class="empty-text">暂无剪贴内容<br>在上方输入内容并保存</p></div></div>
       </div>
     </div>
   </main>
@@ -133,7 +144,7 @@
     function getType(text) { if (/^https?:\/\//.test(text)) return 'link'; if (/[{};<>]|function|class|const|let|var/.test(text)) return 'code'; return 'text'; }
     function updateUI() {
       itemCount.textContent = items.length + ' 项';
-      if (items.length === 0) { clipboardList.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p class="empty-text">暂无剪贴内容<br>在上方输入内容并保存</p></div>'; return; }
+      if (items.length === 0) { clipboardList.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></div><p class="empty-text">暂无剪贴内容<br>在上方输入内容并保存</p></div>'; return; }
       clipboardList.innerHTML = items.map((item, i) => {
         const type = getType(item.text);
         const typeClass = 'type-badge ' + type;
