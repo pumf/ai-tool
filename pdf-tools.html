@@ -9,6 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/downloadjs@1.4.7/download.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  </script>
   <style>
     :root {
       --color-primary: #0abFA5;
@@ -213,17 +217,21 @@
           <div class="control-group">
             <label class="control-label">压缩质量</label>
             <div class="compression-options">
-              <div class="compression-option selected" data-quality="low">
+              <div class="compression-option selected" data-quality="0.8">
                 <div class="compression-option-name">轻度压缩</div>
-                <div class="compression-option-desc">优化结构，保持原貌</div>
+                <div class="compression-option-desc">画质优先，适合打印</div>
               </div>
-              <div class="compression-option" data-quality="medium">
+              <div class="compression-option" data-quality="0.5">
                 <div class="compression-option-name">平衡模式</div>
-                <div class="compression-option-desc">推荐选择，结构优化</div>
+                <div class="compression-option-desc">推荐选择，画质与体积兼顾</div>
               </div>
-              <div class="compression-option" data-quality="high">
+              <div class="compression-option" data-quality="0.3">
                 <div class="compression-option-name">强力压缩</div>
-                <div class="compression-option-desc">双重优化，最大压缩</div>
+                <div class="compression-option-desc">体积优先，适合分享</div>
+              </div>
+              <div class="compression-option" data-quality="0.15">
+                <div class="compression-option-name">极致压缩</div>
+                <div class="compression-option-desc">极限压缩，目标几百KB</div>
               </div>
             </div>
           </div>
@@ -361,7 +369,7 @@
     // ============ 全局状态 ============
     const state = {
       currentTool: 'compress',
-      compress: { file: null, pdfDoc: null, quality: 'low' },
+      compress: { file: null, pdfDoc: null, imageQuality: 0.8 },
       merge: { files: [], pdfDocs: [] },
       split: { file: null, pdfDoc: null, totalPages: 0, selectedPages: new Set() },
       stats: { processed: 0, saved: 0 }
@@ -435,29 +443,31 @@
       }
 
       state.compress.file = file;
-      const arrayBuffer = await file.arrayBuffer();
       
-      // 使用更激进的加载选项
-      state.compress.pdfDoc = await PDFDocument.load(arrayBuffer, {
-        updateMetadata: false,
-        ignoreEncryption: true
-      });
-
-      // 显示文件信息
-      document.getElementById('compressFileList').innerHTML = `
-        <div class="file-item">
-          <span class="file-item-icon">📄</span>
-          <div class="file-item-info">
-            <div class="file-item-name">${file.name}</div>
-            <div class="file-item-size">${formatBytes(file.size)} · ${state.compress.pdfDoc.getPageCount()} 页</div>
+      // 使用 PDF.js 获取页数
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+        const pageCount = pdf.numPages;
+        
+        // 显示文件信息
+        document.getElementById('compressFileList').innerHTML = `
+          <div class="file-item">
+            <span class="file-item-icon">📄</span>
+            <div class="file-item-info">
+              <div class="file-item-name">${file.name}</div>
+              <div class="file-item-size">${formatBytes(file.size)} · ${pageCount} 页</div>
+            </div>
+            <button class="file-item-remove" onclick="clearCompress()">✕</button>
           </div>
-          <button class="file-item-remove" onclick="clearCompress()">✕</button>
-        </div>
-      `;
-      document.getElementById('compressFileList').classList.remove('hidden');
-      document.getElementById('compressUpload').classList.add('hidden');
-      document.getElementById('compressControls').classList.remove('hidden');
-      document.getElementById('compressActions').classList.remove('hidden');
+        `;
+        document.getElementById('compressFileList').classList.remove('hidden');
+        document.getElementById('compressUpload').classList.add('hidden');
+        document.getElementById('compressControls').classList.remove('hidden');
+        document.getElementById('compressActions').classList.remove('hidden');
+      } catch (err) {
+        alert('无法读取 PDF 文件: ' + err.message);
+      }
     });
 
     // 压缩质量选择
@@ -465,14 +475,15 @@
       opt.addEventListener('click', () => {
         document.querySelectorAll('.compression-option').forEach(o => o.classList.remove('selected'));
         opt.classList.add('selected');
-        state.compress.quality = opt.dataset.quality;
+        state.compress.imageQuality = parseFloat(opt.dataset.quality);
       });
     });
 
     document.getElementById('compressStartBtn').addEventListener('click', async () => {
-      const { pdfDoc, quality, file } = state.compress;
-      if (!pdfDoc) return;
+      const { file, imageQuality } = state.compress;
+      if (!file) return;
 
+      const quality = imageQuality || 0.8;
       const progressContainer = document.getElementById('compressProgress');
       const progressBar = document.getElementById('compressProgressBar');
       const progressText = document.getElementById('compressProgressText');
@@ -482,81 +493,81 @@
       document.getElementById('compressControls').classList.add('hidden');
 
       try {
+        progressBar.style.width = '5%';
+        progressText.textContent = '正在加载 PDF...';
+
+        // 使用 PDF.js 加载文档
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const totalPages = pdf.numPages;
+        
         progressBar.style.width = '10%';
-        progressText.textContent = '正在分析 PDF 结构...';
+        progressText.textContent = `共 ${totalPages} 页，开始渲染...`;
 
-        // 创建新文档，使用更激进的选项
-        const newPdf = await PDFDocument.create({
-          updateMetadata: false
+        // 创建新 PDF
+        const newPdf = await PDFDocument.create();
+        
+        // 根据质量设置缩放比例
+        const scale = quality < 0.3 ? 1.5 : (quality < 0.5 ? 2 : 2.5);
+        
+        for (let i = 1; i <= totalPages; i++) {
+          const pageProgress = 10 + ((i - 1) / totalPages) * 80;
+          progressBar.style.width = pageProgress + '%';
+          progressText.textContent = `正在处理第 ${i}/${totalPages} 页...`;
+
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale });
+          
+          // 创建 canvas
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          
+          // 白色背景
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // 渲染页面
+          await page.render({
+            canvasContext: ctx,
+            viewport: viewport
+          }).promise;
+          
+          // 压缩为 JPEG
+          const imageData = canvas.toDataURL('image/jpeg', quality);
+          
+          // 转换为 Uint8Array
+          const base64Data = imageData.split(',')[1];
+          const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+          
+          // 嵌入图片到 PDF
+          const jpgImage = await newPdf.embedJpg(imageBytes);
+          
+          // 创建页面，保持原始尺寸
+          const { width, height } = page.getViewport({ scale: 1 });
+          const newPage = newPdf.addPage([width, height]);
+          
+          // 绘制图片填充整个页面
+          newPage.drawImage(jpgImage, {
+            x: 0,
+            y: 0,
+            width: width,
+            height: height
+          });
+          
+          // 释放内存
+          page.cleanup();
+        }
+
+        progressBar.style.width = '95%';
+        progressText.textContent = '正在生成压缩后的 PDF...';
+
+        // 保存
+        const pdfBytes = await newPdf.save({
+          useObjectStreams: true,
+          addDefaultPage: false
         });
-        
-        const pages = pdfDoc.getPages();
-        const totalPages = pages.length;
-
-        progressBar.style.width = '20%';
-        progressText.textContent = '正在复制页面内容...';
-
-        // 复制页面 - 使用批量复制更高效
-        const pageIndices = pages.map((_, i) => i);
-        const copiedPages = await newPdf.copyPages(pdfDoc, pageIndices);
-        copiedPages.forEach(page => newPdf.addPage(page));
-
-        progressBar.style.width = '50%';
-        progressText.textContent = '正在优化对象结构...';
-
-        // 根据质量级别设置不同的压缩参数
-        let compressionOptions = {};
-        
-        if (quality === 'high') {
-          // 强力压缩 - 最激进的选项
-          compressionOptions = {
-            useObjectStreams: true,
-            addDefaultPage: false,
-            preserveExistingEncryption: false,
-            objectsPerTick: 50
-          };
-        } else if (quality === 'medium') {
-          // 平衡模式
-          compressionOptions = {
-            useObjectStreams: true,
-            addDefaultPage: false,
-            preserveExistingEncryption: false,
-            objectsPerTick: 100
-          };
-        } else {
-          // 轻度压缩 - 保持更多原始结构
-          compressionOptions = {
-            useObjectStreams: true,
-            addDefaultPage: false,
-            preserveExistingEncryption: true,
-            objectsPerTick: 200
-          };
-        }
-
-        progressBar.style.width = '70%';
-        progressText.textContent = '正在压缩数据流...';
-
-        // 尝试通过序列化和重新解析来进一步压缩
-        let pdfBytes;
-        
-        if (quality === 'high') {
-          // 强力压缩：序列化后再加载保存，去除冗余
-          const tempBytes = await newPdf.save(compressionOptions);
-          const tempDoc = await PDFDocument.load(tempBytes, {
-            updateMetadata: false,
-            ignoreEncryption: true
-          });
-          
-          progressBar.style.width = '85%';
-          progressText.textContent = '正在进行深度优化...';
-          
-          pdfBytes = await tempDoc.save({
-            ...compressionOptions,
-            useObjectStreams: true
-          });
-        } else {
-          pdfBytes = await newPdf.save(compressionOptions);
-        }
 
         progressBar.style.width = '100%';
         progressText.textContent = '处理完成！';
@@ -570,12 +581,12 @@
         state.compress.resultName = 'compressed_' + file.name;
 
         // 显示详细结果
-        let qualityText = quality === 'high' ? '强力压缩' : (quality === 'medium' ? '平衡模式' : '轻度压缩');
+        let qualityText = quality <= 0.15 ? '极致压缩' : (quality <= 0.3 ? '强力压缩' : (quality <= 0.5 ? '平衡模式' : '轻度压缩'));
         document.getElementById('compressResultInfo').innerHTML = `
-          <strong>${qualityText}</strong><br>
+          <strong>${qualityText}</strong> (图像质量: ${Math.round(quality * 100)}%)<br>
           原文件: ${formatBytes(originalSize)} → 压缩后: ${formatBytes(newSize)}<br>
           节省空间: ${formatBytes(saved)} (${savedPercent}%)<br>
-          <small style="color: var(--color-muted);">注：PDF 压缩效果取决于原文件的图像和字体嵌入情况</small>
+          <small style="color: var(--color-muted);">注：极致压缩模式下画质会有明显损失，适合仅用于预览</small>
         `;
         
         document.getElementById('compressResult').classList.add('visible');
@@ -597,7 +608,7 @@
     document.getElementById('compressClearBtn').addEventListener('click', clearCompress);
 
     function clearCompress() {
-      state.compress = { file: null, pdfDoc: null, quality: 'low' };
+      state.compress = { file: null, pdfDoc: null, imageQuality: 0.8 };
       resetCompressUI();
     }
 
