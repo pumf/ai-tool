@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/downloadjs@1.4.7/download.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
@@ -68,8 +69,9 @@
     .header h1{font-size:24px;font-weight:700;letter-spacing:-0.6px;margin-bottom:var(--space-xxs)}
     .header p{font-size:14px;color:var(--color-body)}
     .main{padding:var(--space-3xl) 0}
-    .tool-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-md);margin-bottom:var(--space-xl);max-width:600px;margin-left:auto;margin-right:auto}
-    @media(max-width:600px){.tool-selector{grid-template-columns:1fr}}
+    .tool-selector{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--space-sm);margin-bottom:var(--space-xl);max-width:900px;margin-left:auto;margin-right:auto}
+    @media(max-width:900px){.tool-selector{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:600px){.tool-selector{grid-template-columns:repeat(2,1fr)}}
     .tool-card{background:var(--color-canvas);border:2px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-xl);cursor:pointer;text-align:center;transition:all 0.25s}
     .tool-card:hover{border-color:var(--color-border-hover);box-shadow:0 8px 32px var(--color-primary-glow);transform:translateY(-2px)}
     .tool-card.active{border-color:var(--color-primary);background:var(--color-primary-soft)}
@@ -194,6 +196,16 @@
           <div class="tool-card-icon">✂️</div>
           <h3>拆分 PDF</h3>
           <p>提取指定页面或范围</p>
+        </div>
+        <div class="tool-card" data-tool="topng">
+          <div class="tool-card-icon">🖼️</div>
+          <h3>PDF 转图片</h3>
+          <p>将 PDF 页面转为 PNG/JPG</p>
+        </div>
+        <div class="tool-card" data-tool="watermark">
+          <div class="tool-card-icon">💧</div>
+          <h3>添加水印</h3>
+          <p>文字或图片水印</p>
         </div>
       </div>
 
@@ -345,6 +357,147 @@
         </div>
       </div>
 
+      <!-- PDF 转图片 -->
+      <div class="workspace" id="topngWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">🖼️</span>
+            PDF 转图片
+          </div>
+        </div>
+        <div class="upload-zone" id="topngUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 50MB</p>
+          <input type="file" id="topngFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="topngFileList"></div>
+        <div class="controls hidden" id="topngControls">
+          <div class="control-group">
+            <label class="control-label">输出格式</label>
+            <select class="control-select" id="topngFormat">
+              <option value="png">PNG (无损)</option>
+              <option value="jpeg">JPEG (压缩)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">图片质量 (仅 JPEG 有效)</label>
+            <input type="range" class="control-input" id="topngQuality" min="0.1" max="1" step="0.1" value="0.8">
+            <span class="control-hint" id="topngQualityValue">80%</span>
+          </div>
+          <div class="control-group">
+            <label class="control-label">缩放比例</label>
+            <select class="control-select" id="topngScale">
+              <option value="1">1x (原始尺寸)</option>
+              <option value="1.5">1.5x</option>
+              <option value="2" selected>2x (推荐)</option>
+              <option value="3">3x (高清)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">页面范围 (留空表示全部)</label>
+            <input type="text" class="control-input" id="topngPages" placeholder="如: 1-5, 8, 10-12">
+            <span class="control-hint">使用逗号分隔，如: 1-5, 8, 10-12</span>
+          </div>
+        </div>
+        <div class="progress-container" id="topngProgress">
+          <div class="progress-bar"><div class="progress-fill" id="topngProgressBar"></div></div>
+          <div class="progress-text" id="topngProgressText">正在转换...</div>
+        </div>
+        <div class="result-container" id="topngResult">
+          <div class="result-title">✅ 转换完成</div>
+          <div class="result-info" id="topngResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="topngDownloadBtn">📥 下载图片</button>
+            <button class="btn btn-secondary" id="topngResetBtn">↺ 转换其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="topngActions">
+          <button class="btn btn-primary" id="topngStartBtn">🖼️ 开始转换</button>
+          <button class="btn btn-secondary" id="topngClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- 添加水印 -->
+      <div class="workspace" id="watermarkWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">💧</span>
+            添加水印
+          </div>
+        </div>
+        <div class="upload-zone" id="watermarkUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 50MB</p>
+          <input type="file" id="watermarkFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="watermarkFileList"></div>
+        <div class="controls hidden" id="watermarkControls">
+          <div class="control-group">
+            <label class="control-label">水印类型</label>
+            <select class="control-select" id="watermarkType">
+              <option value="text">文字水印</option>
+              <option value="image">图片水印</option>
+            </select>
+          </div>
+          <div class="control-group" id="watermarkTextGroup">
+            <label class="control-label">水印文字</label>
+            <input type="text" class="control-input" id="watermarkText" value="CONFIDENTIAL" placeholder="输入水印文字">
+          </div>
+          <div class="control-group hidden" id="watermarkImageGroup">
+            <label class="control-label">水印图片</label>
+            <input type="file" class="control-input" id="watermarkImageInput" accept="image/*">
+            <span class="control-hint">建议选择 PNG 格式带透明背景的图片</span>
+          </div>
+          <div class="control-group">
+            <label class="control-label">位置</label>
+            <select class="control-select" id="watermarkPosition">
+              <option value="center">居中</option>
+              <option value="topLeft">左上</option>
+              <option value="topRight">右上</option>
+              <option value="bottomLeft">左下</option>
+              <option value="bottomRight">右下</option>
+              <option value="tiled">平铺</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">透明度 (0-1)</label>
+            <input type="range" class="control-input" id="watermarkOpacity" min="0.1" max="1" step="0.1" value="0.3">
+            <span class="control-hint" id="watermarkOpacityValue">30%</span>
+          </div>
+          <div class="control-group" id="watermarkSizeGroup">
+            <label class="control-label">字体大小</label>
+            <input type="number" class="control-input" id="watermarkFontSize" value="48" min="12" max="200">
+          </div>
+          <div class="control-group" id="watermarkColorGroup">
+            <label class="control-label">文字颜色</label>
+            <input type="color" class="control-input" id="watermarkColor" value="#999999" style="height: 40px; padding: 4px;">
+          </div>
+          <div class="control-group">
+            <label class="control-label">旋转角度</label>
+            <input type="range" class="control-input" id="watermarkRotation" min="-90" max="90" step="15" value="-45">
+            <span class="control-hint" id="watermarkRotationValue">-45°</span>
+          </div>
+        </div>
+        <div class="progress-container" id="watermarkProgress">
+          <div class="progress-bar"><div class="progress-fill" id="watermarkProgressBar"></div></div>
+          <div class="progress-text" id="watermarkProgressText">正在添加水印...</div>
+        </div>
+        <div class="result-container" id="watermarkResult">
+          <div class="result-title">✅ 添加完成</div>
+          <div class="result-info" id="watermarkResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="watermarkDownloadBtn">📥 下载带水印的 PDF</button>
+            <button class="btn btn-secondary" id="watermarkResetBtn">↺ 处理其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="watermarkActions">
+          <button class="btn btn-primary" id="watermarkStartBtn">💧 添加水印</button>
+          <button class="btn btn-secondary" id="watermarkClearBtn">清除文件</button>
+        </div>
+      </div>
+
       <!-- 统计 -->
       <div class="stats">
         <div class="stat">
@@ -372,10 +525,12 @@
       compress: { file: null, pdfDoc: null, imageQuality: 0.8 },
       merge: { files: [], pdfDocs: [] },
       split: { file: null, pdfDoc: null, totalPages: 0, selectedPages: new Set() },
+      topng: { file: null, pdfDoc: null, totalPages: 0 },
+      watermark: { file: null, pdfDoc: null, watermarkImage: null, totalPages: 0 },
       stats: { processed: 0, saved: 0 }
     };
 
-    const { PDFDocument } = PDFLib;
+    const { PDFDocument, rgb, degrees } = PDFLib;
 
     // ============ 工具函数 ============
     function formatBytes(bytes) {
@@ -999,6 +1154,458 @@
       document.getElementById('splitPagePreview').innerHTML = '';
       document.getElementById('splitFileInput').value = '';
       document.getElementById('splitDownloadBtn').textContent = '📥 下载拆分后的文件';
+    }
+
+    // ============ PDF 转图片功能 ============
+    setupUploadZone('topngUpload', 'topngFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      if (file.size > 50 * 1024 * 1024) {
+        alert('文件过大，请选择小于 50MB 的文件');
+        return;
+      }
+
+      state.topng.file = file;
+      
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+        state.topng.totalPages = pdf.numPages;
+        
+        document.getElementById('topngFileList').innerHTML = `
+          <div class="file-item">
+            <span class="file-item-icon">📄</span>
+            <div class="file-item-info">
+              <div class="file-item-name">${file.name}</div>
+              <div class="file-item-size">${formatBytes(file.size)} · ${state.topng.totalPages} 页</div>
+            </div>
+            <button class="file-item-remove" onclick="clearTopng()">✕</button>
+          </div>
+        `;
+        document.getElementById('topngFileList').classList.remove('hidden');
+        document.getElementById('topngUpload').classList.add('hidden');
+        document.getElementById('topngControls').classList.remove('hidden');
+        document.getElementById('topngActions').classList.remove('hidden');
+      } catch (err) {
+        alert('无法读取 PDF 文件: ' + err.message);
+      }
+    });
+
+    // 质量滑块显示
+    document.getElementById('topngQuality').addEventListener('input', (e) => {
+      document.getElementById('topngQualityValue').textContent = Math.round(e.target.value * 100) + '%';
+    });
+
+    document.getElementById('topngStartBtn').addEventListener('click', async () => {
+      const { file, totalPages } = state.topng;
+      if (!file) return;
+
+      const format = document.getElementById('topngFormat').value;
+      const quality = parseFloat(document.getElementById('topngQuality').value);
+      const scale = parseFloat(document.getElementById('topngScale').value);
+      const pagesInput = document.getElementById('topngPages').value.trim();
+      
+      const progressContainer = document.getElementById('topngProgress');
+      const progressBar = document.getElementById('topngProgressBar');
+      const progressText = document.getElementById('topngProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('topngActions').classList.add('hidden');
+      document.getElementById('topngControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '5%';
+        progressText.textContent = '正在加载 PDF...';
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        
+        // 解析页面范围
+        let pagesToConvert = [];
+        if (pagesInput) {
+          pagesToConvert = parsePageRanges(pagesInput, totalPages).flatMap(([start, end]) => 
+            Array.from({ length: end - start + 1 }, (_, i) => start + i)
+          );
+        } else {
+          pagesToConvert = Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+
+        progressBar.style.width = '10%';
+        progressText.textContent = `共 ${pagesToConvert.length} 页，开始转换...`;
+
+        const images = [];
+        
+        for (let i = 0; i < pagesToConvert.length; i++) {
+          const pageNum = pagesToConvert[i];
+          const pageProgress = 10 + (i / pagesToConvert.length) * 80;
+          progressBar.style.width = pageProgress + '%';
+          progressText.textContent = `正在转换第 ${pageNum}/${totalPages} 页...`;
+
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale });
+          
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          
+          const imageData = format === 'png' 
+            ? canvas.toDataURL('image/png')
+            : canvas.toDataURL('image/jpeg', quality);
+          
+          images.push({
+            name: `page_${String(pageNum).padStart(3, '0')}.${format}`,
+            data: imageData
+          });
+          
+          page.cleanup();
+        }
+
+        progressBar.style.width = '95%';
+        progressText.textContent = '正在打包...';
+
+        // 打包为 ZIP
+        if (typeof JSZip !== 'undefined') {
+          const zip = new JSZip();
+          images.forEach(img => {
+            const base64Data = img.data.split(',')[1];
+            zip.file(img.name, base64Data, { base64: true });
+          });
+          
+          state.topng.result = await zip.generateAsync({ type: 'arraybuffer' });
+          state.topng.resultName = file.name.replace('.pdf', '_images.zip');
+          
+          document.getElementById('topngResultInfo').innerHTML = `
+            成功转换 ${images.length} 页<br>
+            格式: ${format.toUpperCase()}<br>
+            已打包为 ZIP 文件
+          `;
+        } else {
+          // 如果没有 JSZip，只提供第一张图片下载
+          state.topng.result = Uint8Array.from(atob(images[0].data.split(',')[1]), c => c.charCodeAt(0));
+          state.topng.resultName = images[0].name;
+          
+          document.getElementById('topngResultInfo').innerHTML = `
+            成功转换 ${images.length} 页<br>
+            格式: ${format.toUpperCase()}<br>
+            <small style="color: var(--color-muted);">由于缺少 JSZip，仅提供第一页下载</small>
+          `;
+        }
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '转换完成！';
+
+        document.getElementById('topngResult').classList.add('visible');
+        document.getElementById('topngProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('转换失败: ' + err.message);
+        resetTopngUI();
+      }
+    });
+
+    document.getElementById('topngDownloadBtn').addEventListener('click', () => {
+      if (state.topng.result) {
+        const mime = state.topng.resultName.endsWith('.zip') ? 'application/zip' : 
+                     (state.topng.resultName.endsWith('.png') ? 'image/png' : 'image/jpeg');
+        download(state.topng.result, state.topng.resultName, mime);
+      }
+    });
+
+    document.getElementById('topngResetBtn').addEventListener('click', clearTopng);
+    document.getElementById('topngClearBtn').addEventListener('click', clearTopng);
+
+    function clearTopng() {
+      state.topng = { file: null, pdfDoc: null, totalPages: 0 };
+      resetTopngUI();
+    }
+
+    function resetTopngUI() {
+      document.getElementById('topngFileList').classList.add('hidden');
+      document.getElementById('topngUpload').classList.remove('hidden');
+      document.getElementById('topngControls').classList.add('hidden');
+      document.getElementById('topngActions').classList.add('hidden');
+      document.getElementById('topngResult').classList.remove('visible');
+      document.getElementById('topngProgress').classList.remove('visible');
+      document.getElementById('topngFileInput').value = '';
+    }
+
+    // ============ 添加水印功能 ============
+    setupUploadZone('watermarkUpload', 'watermarkFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      if (file.size > 50 * 1024 * 1024) {
+        alert('文件过大，请选择小于 50MB 的文件');
+        return;
+      }
+
+      state.watermark.file = file;
+      
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+        state.watermark.totalPages = pdf.numPages;
+        
+        // 同时用 pdf-lib 加载
+        state.watermark.pdfDoc = await PDFDocument.load(arrayBuffer.slice(0));
+        
+        document.getElementById('watermarkFileList').innerHTML = `
+          <div class="file-item">
+            <span class="file-item-icon">📄</span>
+            <div class="file-item-info">
+              <div class="file-item-name">${file.name}</div>
+              <div class="file-item-size">${formatBytes(file.size)} · ${state.watermark.totalPages} 页</div>
+            </div>
+            <button class="file-item-remove" onclick="clearWatermark()">✕</button>
+          </div>
+        `;
+        document.getElementById('watermarkFileList').classList.remove('hidden');
+        document.getElementById('watermarkUpload').classList.add('hidden');
+        document.getElementById('watermarkControls').classList.remove('hidden');
+        document.getElementById('watermarkActions').classList.remove('hidden');
+      } catch (err) {
+        alert('无法读取 PDF 文件: ' + err.message);
+      }
+    });
+
+    // 水印类型切换
+    document.getElementById('watermarkType').addEventListener('change', (e) => {
+      const isText = e.target.value === 'text';
+      document.getElementById('watermarkTextGroup').classList.toggle('hidden', !isText);
+      document.getElementById('watermarkImageGroup').classList.toggle('hidden', isText);
+      document.getElementById('watermarkSizeGroup').classList.toggle('hidden', !isText);
+      document.getElementById('watermarkColorGroup').classList.toggle('hidden', !isText);
+    });
+
+    // 水印图片上传
+    document.getElementById('watermarkImageInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        state.watermark.watermarkImage = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // 滑块显示更新
+    document.getElementById('watermarkOpacity').addEventListener('input', (e) => {
+      document.getElementById('watermarkOpacityValue').textContent = Math.round(e.target.value * 100) + '%';
+    });
+    document.getElementById('watermarkRotation').addEventListener('input', (e) => {
+      document.getElementById('watermarkRotationValue').textContent = e.target.value + '°';
+    });
+
+    document.getElementById('watermarkStartBtn').addEventListener('click', async () => {
+      const { file, pdfDoc, totalPages, watermarkImage } = state.watermark;
+      if (!file || !pdfDoc) return;
+
+      const type = document.getElementById('watermarkType').value;
+      const text = document.getElementById('watermarkText').value || 'WATERMARK';
+      const position = document.getElementById('watermarkPosition').value;
+      const opacity = parseFloat(document.getElementById('watermarkOpacity').value);
+      const fontSize = parseInt(document.getElementById('watermarkFontSize').value) || 48;
+      const color = document.getElementById('watermarkColor').value;
+      const rotation = parseInt(document.getElementById('watermarkRotation').value) || -45;
+      
+      const progressContainer = document.getElementById('watermarkProgress');
+      const progressBar = document.getElementById('watermarkProgressBar');
+      const progressText = document.getElementById('watermarkProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('watermarkActions').classList.add('hidden');
+      document.getElementById('watermarkControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '10%';
+        progressText.textContent = '正在处理...';
+
+        // 创建新 PDF
+        const newPdf = await PDFDocument.create();
+        
+        // 嵌入水印图片（如果是图片水印）
+        let embeddedWatermarkImage = null;
+        if (type === 'image' && watermarkImage) {
+          const base64Data = watermarkImage.split(',')[1];
+          const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+          
+          if (watermarkImage.includes('image/png')) {
+            embeddedWatermarkImage = await newPdf.embedPng(imageBytes);
+          } else {
+            embeddedWatermarkImage = await newPdf.embedJpg(imageBytes);
+          }
+        }
+
+        progressBar.style.width = '30%';
+        progressText.textContent = `共 ${totalPages} 页，开始添加水印...`;
+
+        // 处理每一页
+        for (let i = 0; i < totalPages; i++) {
+          const pageProgress = 30 + (i / totalPages) * 60;
+          progressBar.style.width = pageProgress + '%';
+          progressText.textContent = `正在处理第 ${i + 1}/${totalPages} 页...`;
+
+          const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
+          const { width, height } = copiedPage.getSize();
+          
+          if (type === 'text') {
+            // 文字水印
+            const rgbColor = hexToRgb(color);
+            
+            if (position === 'tiled') {
+              // 平铺模式
+              const spacingX = fontSize * 3;
+              const spacingY = fontSize * 2;
+              for (let x = -width; x < width * 2; x += spacingX) {
+                for (let y = -height; y < height * 2; y += spacingY) {
+                  copiedPage.drawText(text, {
+                    x: x,
+                    y: y,
+                    size: fontSize,
+                    color: rgb(rgbColor.r / 255, rgbColor.g / 255, rgbColor.b / 255),
+                    opacity: opacity,
+                    rotate: degrees(rotation)
+                  });
+                }
+              }
+            } else {
+              // 单个位置
+              let x, y;
+              switch (position) {
+                case 'topLeft': x = 50; y = height - 50; break;
+                case 'topRight': x = width - 50; y = height - 50; break;
+                case 'bottomLeft': x = 50; y = 50; break;
+                case 'bottomRight': x = width - 50; y = 50; break;
+                default: x = width / 2; y = height / 2;
+              }
+              
+              copiedPage.drawText(text, {
+                x: x,
+                y: y,
+                size: fontSize,
+                color: rgb(rgbColor.r / 255, rgbColor.g / 255, rgbColor.b / 255),
+                opacity: opacity,
+                rotate: degrees(rotation)
+              });
+            }
+          } else if (type === 'image' && embeddedWatermarkImage) {
+            // 图片水印
+            const imgDims = embeddedWatermarkImage.size();
+            const scale = Math.min(width / imgDims.width, height / imgDims.height) * 0.3;
+            
+            let x, y;
+            switch (position) {
+              case 'topLeft': x = 20; y = height - imgDims.height * scale - 20; break;
+              case 'topRight': x = width - imgDims.width * scale - 20; y = height - imgDims.height * scale - 20; break;
+              case 'bottomLeft': x = 20; y = 20; break;
+              case 'bottomRight': x = width - imgDims.width * scale - 20; y = 20; break;
+              default: 
+                x = (width - imgDims.width * scale) / 2;
+                y = (height - imgDims.height * scale) / 2;
+            }
+            
+            copiedPage.drawImage(embeddedWatermarkImage, {
+              x: x,
+              y: y,
+              width: imgDims.width * scale,
+              height: imgDims.height * scale,
+              opacity: opacity
+            });
+          }
+          
+          newPdf.addPage(copiedPage);
+        }
+
+        progressBar.style.width = '95%';
+        progressText.textContent = '正在生成文件...';
+
+        const pdfBytes = await newPdf.save({
+          useObjectStreams: true,
+          addDefaultPage: false
+        });
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '处理完成！';
+
+        state.watermark.result = pdfBytes;
+        state.watermark.resultName = 'watermarked_' + file.name;
+
+        document.getElementById('watermarkResultInfo').innerHTML = `
+          已为 ${totalPages} 页添加${type === 'text' ? '文字' : '图片'}水印<br>
+          位置: ${getPositionName(position)} · 透明度: ${Math.round(opacity * 100)}%
+        `;
+        
+        document.getElementById('watermarkResult').classList.add('visible');
+        document.getElementById('watermarkProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('添加水印失败: ' + err.message);
+        resetWatermarkUI();
+      }
+    });
+
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 128, g: 128, b: 128 };
+    }
+
+    function getPositionName(pos) {
+      const names = {
+        center: '居中',
+        topLeft: '左上',
+        topRight: '右上',
+        bottomLeft: '左下',
+        bottomRight: '右下',
+        tiled: '平铺'
+      };
+      return names[pos] || pos;
+    }
+
+    document.getElementById('watermarkDownloadBtn').addEventListener('click', () => {
+      if (state.watermark.result) {
+        download(state.watermark.result, state.watermark.resultName, 'application/pdf');
+      }
+    });
+
+    document.getElementById('watermarkResetBtn').addEventListener('click', clearWatermark);
+    document.getElementById('watermarkClearBtn').addEventListener('click', clearWatermark);
+
+    function clearWatermark() {
+      state.watermark = { file: null, pdfDoc: null, watermarkImage: null, totalPages: 0 };
+      resetWatermarkUI();
+    }
+
+    function resetWatermarkUI() {
+      document.getElementById('watermarkFileList').classList.add('hidden');
+      document.getElementById('watermarkUpload').classList.remove('hidden');
+      document.getElementById('watermarkControls').classList.add('hidden');
+      document.getElementById('watermarkActions').classList.add('hidden');
+      document.getElementById('watermarkResult').classList.remove('visible');
+      document.getElementById('watermarkProgress').classList.remove('visible');
+      document.getElementById('watermarkFileInput').value = '';
+      document.getElementById('watermarkImageInput').value = '';
     }
   </script>
 </body>
