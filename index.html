@@ -702,21 +702,13 @@
     // 为每个卡片添加浏览量显示
     async function initCards() {
       const cards = document.querySelectorAll('.card');
-      const viewsMap = {};
       
-      // 批量获取浏览量
-      for (const card of cards) {
-        const toolId = getToolId(card);
-        viewsMap[toolId] = await getViews(toolId);
-      }
-      
+      // 先显示占位符
       cards.forEach(card => {
         const toolId = getToolId(card);
-        const views = viewsMap[toolId] || 0;
         card.dataset.toolId = toolId;
-        card.dataset.views = views;
+        card.dataset.views = 0;
         
-        // 添加浏览量显示元素
         if (!card.querySelector('.card-views')) {
           const viewsEl = document.createElement('div');
           viewsEl.className = 'card-views';
@@ -725,20 +717,41 @@
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
-            <span class="view-count">${views[toolId] || 0}</span>
+            <span class="view-count">-</span>
           `;
           card.appendChild(viewsEl);
         }
-        
-        // 点击时记录浏览量
+      });
+      
+      // 异步加载真实数据
+      for (const card of cards) {
+        const toolId = getToolId(card);
+        try {
+          const views = await getViews(toolId);
+          card.dataset.views = views;
+          const countEl = card.querySelector('.view-count');
+          if (countEl) countEl.textContent = views;
+        } catch (e) {
+          console.error('Failed to load views for', toolId, e);
+        }
+      }
+      
+      // 绑定点击事件
+      cards.forEach(card => {
+        const toolId = getToolId(card);
         card.addEventListener('click', async () => {
-          const newViews = await recordAndView(toolId);
-          if (newViews > 0) {
-            const countEl = card.querySelector('.view-count');
-            if (countEl) countEl.textContent = newViews;
-            card.dataset.views = newViews;
+          try {
+            const newViews = await recordAndView(toolId);
+            if (newViews > 0) {
+              const countEl = card.querySelector('.view-count');
+              if (countEl) countEl.textContent = newViews;
+              card.dataset.views = newViews;
+              sortCardsByViews();
+            }
+          } catch (e) {
+            console.error('Failed to record view:', e);
           }
-        }, { once: false });
+        });
       });
     }
     
