@@ -739,8 +739,14 @@
       // 绑定点击事件
       cards.forEach(card => {
         const toolId = getToolId(card);
-        card.addEventListener('click', async () => {
+        const originalHref = card.getAttribute('href');
+        
+        card.addEventListener('click', async (e) => {
+          // 阻止默认跳转
+          e.preventDefault();
+          
           try {
+            // 记录浏览量
             const newViews = await recordAndView(toolId);
             if (newViews > 0) {
               const countEl = card.querySelector('.view-count');
@@ -751,6 +757,13 @@
           } catch (e) {
             console.error('Failed to record view:', e);
           }
+          
+          // 延迟跳转，让用户看到浏览量更新
+          setTimeout(() => {
+            if (originalHref) {
+              window.location.href = originalHref;
+            }
+          }, 200);
         });
       });
     }
