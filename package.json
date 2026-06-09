@@ -1,0 +1,16 @@
+{
+  "name": "xiaofei-ai-tools",
+  "version": "1.0.0",
+  "description": "小飞 AI 工具集",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.28.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
