@@ -304,6 +304,21 @@
       border-radius: 50%;
       opacity: 0.5;
     }
+    
+    .card-views {
+      margin-top: var(--space-sm);
+      font-size: 12px;
+      color: var(--color-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .card-views svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.6;
+    }
 
     /* Featured Cards (独立域名产品) */
     .card.featured {
@@ -624,28 +639,97 @@
     小飞 AI 工具 · 用心做工具
   </footer>
 
-  <!-- Category Filter Script -->
+  <!-- Views & Sort Script -->
   <script>
+    // 浏览量管理
+    const VIEWS_KEY = 'xiaofei_tool_views';
+    
+    function getViews() {
+      const data = localStorage.getItem(VIEWS_KEY);
+      return data ? JSON.parse(data) : {};
+    }
+    
+    function saveViews(views) {
+      localStorage.setItem(VIEWS_KEY, JSON.stringify(views));
+    }
+    
+    function incrementView(toolId) {
+      const views = getViews();
+      views[toolId] = (views[toolId] || 0) + 1;
+      saveViews(views);
+      return views[toolId];
+    }
+    
+    // 为每个卡片添加唯一 ID 和浏览量显示
+    function initCards() {
+      const cards = document.querySelectorAll('.card');
+      const views = getViews();
+      
+      cards.forEach(card => {
+        const href = card.getAttribute('href');
+        const toolId = href.replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/\//g, '-');
+        card.dataset.toolId = toolId;
+        card.dataset.views = views[toolId] || 0;
+        
+        // 添加浏览量显示元素
+        if (!card.querySelector('.card-views')) {
+          const viewsEl = document.createElement('div');
+          viewsEl.className = 'card-views';
+          viewsEl.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <span class="view-count">${views[toolId] || 0}</span> 次浏览
+          `;
+          card.appendChild(viewsEl);
+        }
+        
+        // 点击时增加浏览量
+        card.addEventListener('click', () => {
+          const newCount = incrementView(toolId);
+          const countEl = card.querySelector('.view-count');
+          if (countEl) countEl.textContent = newCount;
+        }, { once: false });
+      });
+    }
+    
+    // 按浏览量排序分类内的卡片
+    function sortCardsByViews() {
+      const sections = document.querySelectorAll('.section');
+      
+      sections.forEach(section => {
+        const grid = section.querySelector('.card-grid');
+        if (!grid) return;
+        
+        const cards = Array.from(grid.querySelectorAll('.card'));
+        cards.sort((a, b) => {
+          const viewsA = parseInt(a.dataset.views) || 0;
+          const viewsB = parseInt(b.dataset.views) || 0;
+          return viewsB - viewsA; // 降序排列
+        });
+        
+        cards.forEach(card => grid.appendChild(card));
+      });
+    }
+    
+    // 分类筛选
     const categoryBtns = document.querySelectorAll('.category-btn');
     const sections = document.querySelectorAll('.section');
-    const cards = document.querySelectorAll('.card');
 
     categoryBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const category = btn.dataset.category;
         
-        // Update active button
         categoryBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         
         if (category === 'all') {
-          // Show all sections
           sections.forEach(section => {
             section.classList.remove('hidden');
             section.classList.add('fade-in');
           });
         } else {
-          // Show only matching section
           sections.forEach(section => {
             if (section.dataset.section === category) {
               section.classList.remove('hidden');
@@ -657,13 +741,18 @@
           });
         }
         
-        // Remove animation class after animation completes
         setTimeout(() => {
           document.querySelectorAll('.fade-in').forEach(el => {
             el.classList.remove('fade-in');
           });
         }, 500);
       });
+    });
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      initCards();
+      sortCardsByViews();
     });
   </script>
 
