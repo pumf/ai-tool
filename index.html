@@ -747,12 +747,29 @@
           
           try {
             // 记录浏览量
-            const newViews = await recordAndView(toolId);
-            if (newViews > 0) {
+            const response = await fetch(`${API_BASE}/${encodeURIComponent(toolId)}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Client-Id': getClientId()
+              }
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
               const countEl = card.querySelector('.view-count');
-              if (countEl) countEl.textContent = newViews;
-              card.dataset.views = newViews;
-              sortCardsByViews();
+              if (countEl) {
+                countEl.textContent = data.views;
+                card.dataset.views = data.views;
+                sortCardsByViews();
+              }
+              
+              // 可选：显示是否记录成功
+              if (data.recorded) {
+                console.log(`✅ 浏览量已记录: ${toolId} → ${data.views}`);
+              } else {
+                console.log(`ℹ️ 今日已浏览过: ${toolId}`);
+              }
             }
           } catch (e) {
             console.error('Failed to record view:', e);
