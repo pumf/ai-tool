@@ -311,13 +311,17 @@
       color: var(--color-muted);
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
+      opacity: 0.7;
     }
     
     .card-views svg {
-      width: 14px;
-      height: 14px;
-      opacity: 0.6;
+      width: 13px;
+      height: 13px;
+    }
+    
+    .view-count {
+      font-weight: 500;
     }
 
     /* Featured Cards (独立域名产品) */
@@ -641,35 +645,76 @@
 
   <!-- Views & Sort Script -->
   <script>
-    // 浏览量管理
-    const VIEWS_KEY = 'xiaofei_tool_views';
+    // 浏览量管理 - 使用后端API
+    const API_BASE = '/api/views';
     
-    function getViews() {
-      const data = localStorage.getItem(VIEWS_KEY);
-      return data ? JSON.parse(data) : {};
+    // 获取客户端ID
+    function getClientId() {
+      let clientId = localStorage.getItem('view_client_id');
+      if (!clientId) {
+        clientId = Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('view_client_id', clientId);
+      }
+      return clientId;
     }
     
-    function saveViews(views) {
-      localStorage.setItem(VIEWS_KEY, JSON.stringify(views));
+    // 记录浏览并获取数据
+    async function recordAndView(toolId) {
+      try {
+        const response = await fetch(`${API_BASE}/${encodeURIComponent(toolId)}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Client-Id': getClientId()
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return data.views;
+        }
+      } catch (e) {
+        console.error('Failed to record view:', e);
+      }
+      return 0;
     }
     
-    function incrementView(toolId) {
-      const views = getViews();
-      views[toolId] = (views[toolId] || 0) + 1;
-      saveViews(views);
-      return views[toolId];
+    // 获取浏览量（不记录）
+    async function getViews(toolId) {
+      try {
+        const response = await fetch(`${API_BASE}/${encodeURIComponent(toolId)}`);
+        if (response.ok) {
+          const data = await response.json();
+          return data.views;
+        }
+      } catch (e) {
+        console.error('Failed to get views:', e);
+      }
+      return 0;
     }
     
-    // 为每个卡片添加唯一 ID 和浏览量显示
-    function initCards() {
+    // 获取工具ID
+    function getToolId(card) {
+      const href = card.getAttribute('href');
+      return href.replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/\//g, '-');
+    }
+    
+    // 为每个卡片添加浏览量显示
+    async function initCards() {
       const cards = document.querySelectorAll('.card');
-      const views = getViews();
+      const viewsMap = {};
+      
+      // 批量获取浏览量
+      for (const card of cards) {
+        const toolId = getToolId(card);
+        viewsMap[toolId] = await getViews(toolId);
+      }
       
       cards.forEach(card => {
-        const href = card.getAttribute('href');
-        const toolId = href.replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/\//g, '-');
+        const toolId = getToolId(card);
+        const views = viewsMap[toolId] || 0;
         card.dataset.toolId = toolId;
-        card.dataset.views = views[toolId] || 0;
+        card.dataset.views = views;
         
         // 添加浏览量显示元素
         if (!card.querySelector('.card-views')) {
@@ -680,16 +725,19 @@
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
-            <span class="view-count">${views[toolId] || 0}</span> 次浏览
+            <span class="view-count">${views[toolId] || 0}</span>
           `;
           card.appendChild(viewsEl);
         }
         
-        // 点击时增加浏览量
-        card.addEventListener('click', () => {
-          const newCount = incrementView(toolId);
-          const countEl = card.querySelector('.view-count');
-          if (countEl) countEl.textContent = newCount;
+        // 点击时记录浏览量
+        card.addEventListener('click', async () => {
+          const newViews = await recordAndView(toolId);
+          if (newViews > 0) {
+            const countEl = card.querySelector('.view-count');
+            if (countEl) countEl.textContent = newViews;
+            card.dataset.views = newViews;
+          }
         }, { once: false });
       });
     }
@@ -750,8 +798,8 @@
     });
     
     // 初始化
-    document.addEventListener('DOMContentLoaded', () => {
-      initCards();
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initCards();
       sortCardsByViews();
     });
   </script>
