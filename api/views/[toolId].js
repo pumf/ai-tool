@@ -6,9 +6,22 @@ const memoryStore = new Map();
 
 // Upstash Redis 配置（推荐）
 let redis = null;
-if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  const { Redis } = require('@upstash/redis');
-  redis = Redis.fromEnv();
+let redisError = null;
+
+try {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const { Redis } = require('@upstash/redis');
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN
+    });
+    console.log('✅ Redis connected successfully');
+  } else {
+    console.log('⚠️ Redis env vars not found, using memory store');
+  }
+} catch (e) {
+  redisError = e.message;
+  console.error('❌ Redis connection failed:', e.message);
 }
 
 // 获取客户端真实IP
@@ -69,23 +82,39 @@ async function incrementViews(toolId) {
 
 // 检查IP今天是否已经浏览过
 async function hasViewed(toolId, ip) {
+  const key = getIPKey(toolId, ip);
   if (redis) {
-    const viewed = await redis.get(getIPKey(toolId, ip));
-    return viewed === '1';
+    try {
+      const viewed = await redis.get(key);
+      console.log(`Redis GET ${key}: ${viewed} (type: ${typeof viewed})`);
+      // Upstash Redis会将数字字符串转为数字，所以需要双重检查
+      return viewed === 1 || viewed === '1';
+    } catch (e) {
+      console.error('Redis GET error:', e.message);
+      return false;
+    }
   } else {
-    return memoryStore.get(getIPKey(toolId, ip)) === true;
+    return memoryStore.get(key) === true;
   }
 }
 
 // 记录IP已浏览
 async function markViewed(toolId, ip) {
+  const key = getIPKey(toolId, ip);
   if (redis) {
-    // 设置24小时过期
-    await redis.setex(getIPKey(toolId, ip), 86400, '1');
+    try {
+      // 设置24小时过期 - 使用正确的Upstash API
+      await redis.set(key, '1', { ex: 86400 });
+      console.log(`Redis SET ${key}: success`);
+      // 验证是否写入成功
+      const verify = await redis.get(key);
+      console.log(`Redis VERIFY ${key}: ${verify}`);
+    } catch (e) {
+      console.error('Redis SET error:', e.message);
+    }
   } else {
     // 内存存储也设置过期（简单实现）
-    memoryStore.set(getIPKey(toolId, ip), true);
-    // 24小时后清除（简化实现，实际应该在内存中维护定时器）
+    memoryStore.set(key, true);
   }
 }
 
@@ -127,14 +156,20 @@ export default async function handler(req, res) {
       } else {
         // 第一次浏览，增加浏览量并标记
         views = await incrementViews(toolId);
-        await markViewed(toolId, ip);
+        await markViewed(toolId, ip); // ✅ 关键：必须等待写入完成
       }
       
       return res.status(200).json({ 
         views, 
         toolId, 
         recorded: !hasAlreadyViewed,
-        ip: ip.substring(0, 3) + '***' // 隐藏部分IP
+        ip: ip.substring(0, 3) + '***', // 隐藏部分IP
+        debug: {
+          redis: redis ? 'connected' : 'disabled',
+          redisError: redisError || null,
+          ipKey: getIPKey(toolId, ip),
+          hasViewed: hasAlreadyViewed
+        }
       });
     }
     

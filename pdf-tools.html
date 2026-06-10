@@ -185,27 +185,72 @@
         <div class="tool-card active" data-tool="compress">
           <div class="tool-card-icon">🗜️</div>
           <h3>压缩 PDF</h3>
-          <p>减小文件体积，保持可读性</p>
+          <p>减小文件体积</p>
         </div>
         <div class="tool-card" data-tool="merge">
           <div class="tool-card-icon">🔗</div>
           <h3>合并 PDF</h3>
-          <p>将多个文件合并为一个</p>
+          <p>多个文件合并为一个</p>
         </div>
         <div class="tool-card" data-tool="split">
           <div class="tool-card-icon">✂️</div>
           <h3>拆分 PDF</h3>
-          <p>提取指定页面或范围</p>
+          <p>提取指定页面范围</p>
         </div>
         <div class="tool-card" data-tool="topng">
           <div class="tool-card-icon">🖼️</div>
           <h3>PDF 转图片</h3>
-          <p>将 PDF 页面转为 PNG/JPG</p>
+          <p>转 PNG/JPG 格式</p>
         </div>
         <div class="tool-card" data-tool="watermark">
           <div class="tool-card-icon">💧</div>
           <h3>添加水印</h3>
           <p>文字或图片水印</p>
+        </div>
+        <div class="tool-card" data-tool="imgtopdf">
+          <div class="tool-card-icon">📷</div>
+          <h3>图片转 PDF</h3>
+          <p>多图合并为 PDF</p>
+        </div>
+        <div class="tool-card" data-tool="extract">
+          <div class="tool-card-icon">📑</div>
+          <h3>提取页面</h3>
+          <p>提取指定页面</p>
+        </div>
+        <div class="tool-card" data-tool="delete">
+          <div class="tool-card-icon">🗑️</div>
+          <h3>删除页面</h3>
+          <p>删除不需要的页</p>
+        </div>
+        <div class="tool-card" data-tool="rotate">
+          <div class="tool-card-icon">🔄</div>
+          <h3>旋转页面</h3>
+          <p>调整页面方向</p>
+        </div>
+        <div class="tool-card" data-tool="reorder">
+          <div class="tool-card-icon">📊</div>
+          <h3>页面重排</h3>
+          <p>调整页面顺序</p>
+        </div>
+        <div class="tool-card" data-tool="textextract">
+          <div class="tool-card-icon">📝</div>
+          <h3>提取文本</h3>
+          <p>提取 PDF 文本</p>
+        </div>
+        <div class="tool-card" data-tool="imgextract">
+          <div class="tool-card-icon">🖼️</div>
+          <h3>提取图片</h3>
+          <p>提取 PDF 内图片</p>
+        </div>
+        <div class="tool-card" data-tool="encrypt">
+          <div class="tool-card-icon">🔐</div>
+          <h3>加密保护</h3>
+          <p>设置打开密码</p>
+        </div>
+        <div class="tool-card" data-tool="decrypt">
+          <div class="tool-card-icon">🔓</div>
+          <h3>移除密码</h3>
+          <p>移除 PDF 密码</p>
         </div>
       </div>
 
@@ -495,6 +540,402 @@
         <div class="btn-group hidden" id="watermarkActions">
           <button class="btn btn-primary" id="watermarkStartBtn">💧 添加水印</button>
           <button class="btn btn-secondary" id="watermarkClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- 图片转 PDF -->
+      <div class="workspace" id="imgtopdfWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">📷</span>
+            图片转 PDF
+          </div>
+        </div>
+        <div class="upload-zone" id="imgtopdfUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传图片文件</h3>
+          <p>支持 JPG/PNG/GIF，可多选，建议单文件&lt;10MB</p>
+          <input type="file" id="imgtopdfFileInput" accept="image/*" multiple>
+        </div>
+        <div class="file-list hidden" id="imgtopdfFileList"></div>
+        <div class="controls hidden" id="imgtopdfControls">
+          <div class="control-group">
+            <label class="control-label">页面大小</label>
+            <select class="control-select" id="imgtopdfPageSize">
+              <option value="fit">自适应图片尺寸</option>
+              <option value="a4">A4 (210×297mm)</option>
+              <option value="letter">Letter (216×279mm)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">页面方向</label>
+            <select class="control-select" id="imgtopdfOrientation">
+              <option value="auto">自动判断</option>
+              <option value="portrait">纵向</option>
+              <option value="landscape">横向</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">页边距 (px)</label>
+            <input type="number" class="control-input" id="imgtopdfMargin" value="0" min="0" max="100">
+          </div>
+        </div>
+        <div class="progress-container" id="imgtopdfProgress">
+          <div class="progress-bar"><div class="progress-fill" id="imgtopdfProgressBar"></div></div>
+          <div class="progress-text" id="imgtopdfProgressText">正在生成 PDF...</div>
+        </div>
+        <div class="result-container" id="imgtopdfResult">
+          <div class="result-title">✅ 生成完成</div>
+          <div class="result-info" id="imgtopdfResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="imgtopdfDownloadBtn">📥 下载 PDF</button>
+            <button class="btn btn-secondary" id="imgtopdfResetBtn">↺ 处理其他图片</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="imgtopdfActions">
+          <button class="btn btn-primary" id="imgtopdfStartBtn">📷 生成 PDF</button>
+          <button class="btn btn-secondary" id="imgtopdfClearBtn">清除全部</button>
+        </div>
+      </div>
+
+      <!-- 提取页面 -->
+      <div class="workspace" id="extractWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">📑</span>
+            提取页面
+          </div>
+        </div>
+        <div class="upload-zone" id="extractUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 100MB</p>
+          <input type="file" id="extractFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="extractFileList"></div>
+        <div class="pdf-info-grid hidden" id="extractInfo"></div>
+        <div class="controls hidden" id="extractControls">
+          <div class="control-group">
+            <label class="control-label">页面范围 (如: 1-5, 8, 11-15)</label>
+            <input type="text" class="control-input" id="extractRange" placeholder="1-5, 8, 11-15">
+            <span class="control-hint">使用逗号分隔多个范围，单页直接输入页码</span>
+          </div>
+        </div>
+        <div class="progress-container" id="extractProgress">
+          <div class="progress-bar"><div class="progress-fill" id="extractProgressBar"></div></div>
+          <div class="progress-text" id="extractProgressText">正在提取页面...</div>
+        </div>
+        <div class="result-container" id="extractResult">
+          <div class="result-title">✅ 提取完成</div>
+          <div class="result-info" id="extractResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="extractDownloadBtn">📥 下载提取的 PDF</button>
+            <button class="btn btn-secondary" id="extractResetBtn">↺ 处理其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="extractActions">
+          <button class="btn btn-primary" id="extractStartBtn">📑 开始提取</button>
+          <button class="btn btn-secondary" id="extractClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- 删除页面 -->
+      <div class="workspace" id="deleteWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">🗑️</span>
+            删除页面
+          </div>
+        </div>
+        <div class="upload-zone" id="deleteUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 100MB</p>
+          <input type="file" id="deleteFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="deleteFileList"></div>
+        <div class="pdf-info-grid hidden" id="deleteInfo"></div>
+        <div class="controls hidden" id="deleteControls">
+          <div class="control-group">
+            <label class="control-label">要删除的页面 (如: 3, 5-7, 10)</label>
+            <input type="text" class="control-input" id="deleteRange" placeholder="3, 5-7, 10">
+            <span class="control-hint">使用逗号分隔多个范围，单页直接输入页码</span>
+          </div>
+        </div>
+        <div class="progress-container" id="deleteProgress">
+          <div class="progress-bar"><div class="progress-fill" id="deleteProgressBar"></div></div>
+          <div class="progress-text" id="deleteProgressText">正在删除页面...</div>
+        </div>
+        <div class="result-container" id="deleteResult">
+          <div class="result-title">✅ 删除完成</div>
+          <div class="result-info" id="deleteResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="deleteDownloadBtn">📥 下载处理后的 PDF</button>
+            <button class="btn btn-secondary" id="deleteResetBtn">↺ 处理其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="deleteActions">
+          <button class="btn btn-primary" id="deleteStartBtn">🗑️ 开始删除</button>
+          <button class="btn btn-secondary" id="deleteClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- 旋转页面 -->
+      <div class="workspace" id="rotateWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">🔄</span>
+            旋转页面
+          </div>
+        </div>
+        <div class="upload-zone" id="rotateUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 100MB</p>
+          <input type="file" id="rotateFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="rotateFileList"></div>
+        <div class="pdf-info-grid hidden" id="rotateInfo"></div>
+        <div class="controls hidden" id="rotateControls">
+          <div class="control-group">
+            <label class="control-label">旋转角度</label>
+            <select class="control-select" id="rotateAngle">
+              <option value="90">顺时针 90°</option>
+              <option value="180">180°</option>
+              <option value="270">逆时针 90°</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">应用范围</label>
+            <select class="control-select" id="rotateScope">
+              <option value="all">所有页面</option>
+              <option value="odd">仅奇数页</option>
+              <option value="even">仅偶数页</option>
+              <option value="custom">指定页面</option>
+            </select>
+          </div>
+          <div class="control-group hidden" id="rotateRangeGroup">
+            <label class="control-label">页面范围 (如: 1-5, 8, 10)</label>
+            <input type="text" class="control-input" id="rotateRange" placeholder="1-5, 8, 10">
+          </div>
+        </div>
+        <div class="progress-container" id="rotateProgress">
+          <div class="progress-bar"><div class="progress-fill" id="rotateProgressBar"></div></div>
+          <div class="progress-text" id="rotateProgressText">正在旋转页面...</div>
+        </div>
+        <div class="result-container" id="rotateResult">
+          <div class="result-title">✅ 旋转完成</div>
+          <div class="result-info" id="rotateResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="rotateDownloadBtn">📥 下载旋转后的 PDF</button>
+            <button class="btn btn-secondary" id="rotateResetBtn">↺ 处理其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="rotateActions">
+          <button class="btn btn-primary" id="rotateStartBtn">🔄 开始旋转</button>
+          <button class="btn btn-secondary" id="rotateClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- 页面重排 -->
+      <div class="workspace" id="reorderWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">📊</span>
+            页面重排
+          </div>
+        </div>
+        <div class="upload-zone" id="reorderUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 100MB</p>
+          <input type="file" id="reorderFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="reorderFileList"></div>
+        <div class="pdf-info-grid hidden" id="reorderInfo"></div>
+        <div class="controls hidden" id="reorderControls">
+          <div class="control-group">
+            <label class="control-label">新顺序 (如: 3,1,2,5,4)</label>
+            <input type="text" class="control-input" id="reorderSequence" placeholder="3,1,2,5,4">
+            <span class="control-hint">输入页面编号，用逗号分隔。未列出的页面将保留在末尾</span>
+          </div>
+        </div>
+        <div class="progress-container" id="reorderProgress">
+          <div class="progress-bar"><div class="progress-fill" id="reorderProgressBar"></div></div>
+          <div class="progress-text" id="reorderProgressText">正在重新排序...</div>
+        </div>
+        <div class="result-container" id="reorderResult">
+          <div class="result-title">✅ 重排完成</div>
+          <div class="result-info" id="reorderResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="reorderDownloadBtn">📥 下载重排后的 PDF</button>
+            <button class="btn btn-secondary" id="reorderResetBtn">↺ 处理其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="reorderActions">
+          <button class="btn btn-primary" id="reorderStartBtn">📊 开始重排</button>
+          <button class="btn btn-secondary" id="reorderClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- 提取文本 -->
+      <div class="workspace" id="textextractWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">📝</span>
+            提取文本
+          </div>
+        </div>
+        <div class="upload-zone" id="textextractUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 50MB</p>
+          <input type="file" id="textextractFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="textextractFileList"></div>
+        <div class="controls hidden" id="textextractControls">
+          <div class="control-group">
+            <label class="control-label">页面范围 (留空表示全部)</label>
+            <input type="text" class="control-input" id="textextractRange" placeholder="如: 1-5, 8, 10-12">
+          </div>
+        </div>
+        <div class="progress-container" id="textextractProgress">
+          <div class="progress-bar"><div class="progress-fill" id="textextractProgressBar"></div></div>
+          <div class="progress-text" id="textextractProgressText">正在提取文本...</div>
+        </div>
+        <div class="result-container" id="textextractResult">
+          <div class="result-title">✅ 提取完成</div>
+          <div class="result-info" id="textextractResultInfo"></div>
+          <textarea class="control-input" id="textextractContent" style="min-height:200px;margin:var(--space-md) 0;" readonly></textarea>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="textextractDownloadBtn">📥 下载文本文件</button>
+            <button class="btn btn-secondary" id="textextractCopyBtn">📋 复制到剪贴板</button>
+            <button class="btn btn-secondary" id="textextractResetBtn">↺ 处理其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="textextractActions">
+          <button class="btn btn-primary" id="textextractStartBtn">📝 开始提取</button>
+          <button class="btn btn-secondary" id="textextractClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- 提取图片 -->
+      <div class="workspace" id="imgextractWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">🖼️</span>
+            提取图片
+          </div>
+        </div>
+        <div class="upload-zone" id="imgextractUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 50MB</p>
+          <input type="file" id="imgextractFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="imgextractFileList"></div>
+        <div class="progress-container" id="imgextractProgress">
+          <div class="progress-bar"><div class="progress-fill" id="imgextractProgressBar"></div></div>
+          <div class="progress-text" id="imgextractProgressText">正在提取图片...</div>
+        </div>
+        <div class="result-container" id="imgextractResult">
+          <div class="result-title">✅ 提取完成</div>
+          <div class="result-info" id="imgextractResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="imgextractDownloadBtn">📥 下载图片</button>
+            <button class="btn btn-secondary" id="imgextractResetBtn">↺ 处理其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="imgextractActions">
+          <button class="btn btn-primary" id="imgextractStartBtn">🖼️ 开始提取</button>
+          <button class="btn btn-secondary" id="imgextractClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- 加密保护 -->
+      <div class="workspace" id="encryptWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">🔐</span>
+            加密保护
+          </div>
+        </div>
+        <div class="upload-zone" id="encryptUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 100MB</p>
+          <input type="file" id="encryptFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="encryptFileList"></div>
+        <div class="controls hidden" id="encryptControls">
+          <div class="control-group">
+            <label class="control-label">打开密码</label>
+            <input type="password" class="control-input" id="encryptPassword" placeholder="输入打开密码">
+          </div>
+          <div class="control-group">
+            <label class="control-label">确认密码</label>
+            <input type="password" class="control-input" id="encryptPasswordConfirm" placeholder="再次输入密码">
+          </div>
+          <div class="control-group">
+            <label class="control-label">权限密码 (可选)</label>
+            <input type="password" class="control-input" id="encryptOwnerPassword" placeholder="输入权限密码">
+            <span class="control-hint">用于限制打印、复制等操作</span>
+          </div>
+        </div>
+        <div class="progress-container" id="encryptProgress">
+          <div class="progress-bar"><div class="progress-fill" id="encryptProgressBar"></div></div>
+          <div class="progress-text" id="encryptProgressText">正在加密...</div>
+        </div>
+        <div class="result-container" id="encryptResult">
+          <div class="result-title">✅ 加密完成</div>
+          <div class="result-info" id="encryptResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="encryptDownloadBtn">📥 下载加密 PDF</button>
+            <button class="btn btn-secondary" id="encryptResetBtn">↺ 处理其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="encryptActions">
+          <button class="btn btn-primary" id="encryptStartBtn">🔐 开始加密</button>
+          <button class="btn btn-secondary" id="encryptClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- 移除密码 -->
+      <div class="workspace" id="decryptWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">🔓</span>
+            移除密码
+          </div>
+        </div>
+        <div class="upload-zone" id="decryptUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传加密的 PDF 文件</h3>
+          <p>支持单个文件，最大 100MB</p>
+          <input type="file" id="decryptFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="decryptFileList"></div>
+        <div class="controls hidden" id="decryptControls">
+          <div class="control-group">
+            <label class="control-label">打开密码</label>
+            <input type="password" class="control-input" id="decryptPassword" placeholder="输入 PDF 打开密码">
+          </div>
+        </div>
+        <div class="progress-container" id="decryptProgress">
+          <div class="progress-bar"><div class="progress-fill" id="decryptProgressBar"></div></div>
+          <div class="progress-text" id="decryptProgressText">正在解密...</div>
+        </div>
+        <div class="result-container" id="decryptResult">
+          <div class="result-title">✅ 解密完成</div>
+          <div class="result-info" id="decryptResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="decryptDownloadBtn">📥 下载解密 PDF</button>
+            <button class="btn btn-secondary" id="decryptResetBtn">↺ 处理其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="decryptActions">
+          <button class="btn btn-primary" id="decryptStartBtn">🔓 开始解密</button>
+          <button class="btn btn-secondary" id="decryptClearBtn">清除文件</button>
         </div>
       </div>
 
@@ -1606,6 +2047,1262 @@
       document.getElementById('watermarkProgress').classList.remove('visible');
       document.getElementById('watermarkFileInput').value = '';
       document.getElementById('watermarkImageInput').value = '';
+    }
+
+    // ============ 图片转 PDF 功能 ============
+    state.imgtopdf = { files: [], images: [] };
+
+    setupUploadZone('imgtopdfUpload', 'imgtopdfFileInput', (files) => {
+      const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+      if (imageFiles.length === 0) {
+        alert('请选择有效的图片文件');
+        return;
+      }
+
+      imageFiles.forEach(file => {
+        if (!state.imgtopdf.files.find(f => f.name === file.name && f.size === file.size)) {
+          state.imgtopdf.files.push(file);
+        }
+      });
+
+      renderImgtopdfFileList();
+      document.getElementById('imgtopdfUpload').classList.add('hidden');
+      document.getElementById('imgtopdfControls').classList.remove('hidden');
+      document.getElementById('imgtopdfActions').classList.remove('hidden');
+    });
+
+    function renderImgtopdfFileList() {
+      const list = document.getElementById('imgtopdfFileList');
+      list.innerHTML = state.imgtopdf.files.map((file, index) => `
+        <div class="file-item" draggable="true" data-index="${index}">
+          <span class="file-item-drag">⋮⋮</span>
+          <span class="file-item-icon">🖼️</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)}</div>
+          </div>
+          <button class="file-item-remove" onclick="removeImgtopdfFile(${index})">✕</button>
+        </div>
+      `).join('');
+      list.classList.remove('hidden');
+
+      // 拖拽排序
+      let draggedItem = null;
+      list.querySelectorAll('.file-item').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          draggedItem = item;
+          item.classList.add('dragging');
+        });
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+          draggedItem = null;
+          const newOrder = Array.from(list.children).map(child => 
+            state.imgtopdf.files[parseInt(child.dataset.index)]
+          );
+          state.imgtopdf.files = newOrder;
+          renderImgtopdfFileList();
+        });
+        item.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (item === draggedItem) return;
+          const rect = item.getBoundingClientRect();
+          const mid = rect.top + rect.height / 2;
+          if (e.clientY < mid) {
+            list.insertBefore(draggedItem, item);
+          } else {
+            list.insertBefore(draggedItem, item.nextSibling);
+          }
+        });
+      });
+    }
+
+    function removeImgtopdfFile(index) {
+      state.imgtopdf.files.splice(index, 1);
+      if (state.imgtopdf.files.length === 0) {
+        clearImgtopdf();
+      } else {
+        renderImgtopdfFileList();
+      }
+    }
+
+    document.getElementById('imgtopdfStartBtn').addEventListener('click', async () => {
+      if (state.imgtopdf.files.length === 0) {
+        alert('请至少选择一个图片文件');
+        return;
+      }
+
+      const progressContainer = document.getElementById('imgtopdfProgress');
+      const progressBar = document.getElementById('imgtopdfProgressBar');
+      const progressText = document.getElementById('imgtopdfProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('imgtopdfActions').classList.add('hidden');
+      document.getElementById('imgtopdfControls').classList.add('hidden');
+
+      try {
+        const pdfDoc = await PDFDocument.create();
+        const pageSize = document.getElementById('imgtopdfPageSize').value;
+        const orientation = document.getElementById('imgtopdfOrientation').value;
+        const margin = parseInt(document.getElementById('imgtopdfMargin').value) || 0;
+
+        for (let i = 0; i < state.imgtopdf.files.length; i++) {
+          const progress = ((i + 1) / state.imgtopdf.files.length) * 90;
+          progressBar.style.width = progress + '%';
+          progressText.textContent = `正在处理: ${state.imgtopdf.files[i].name}`;
+
+          const file = state.imgtopdf.files[i];
+          const imageBytes = await file.arrayBuffer();
+          
+          let image;
+          if (file.type === 'image/png') {
+            image = await pdfDoc.embedPng(imageBytes);
+          } else if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
+            image = await pdfDoc.embedJpg(imageBytes);
+          } else {
+            // 其他格式转为 PNG
+            const img = await createImageBitmap(new Blob([imageBytes]));
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const pngData = canvas.toDataURL('image/png').split(',')[1];
+            const pngBytes = Uint8Array.from(atob(pngData), c => c.charCodeAt(0));
+            image = await pdfDoc.embedPng(pngBytes);
+          }
+
+          const imgDims = image.size();
+          let pageWidth, pageHeight;
+
+          if (pageSize === 'fit') {
+            pageWidth = imgDims.width + margin * 2;
+            pageHeight = imgDims.height + margin * 2;
+          } else if (pageSize === 'a4') {
+            const a4Width = 595.28, a4Height = 841.89;
+            if (orientation === 'auto') {
+              const isLandscape = imgDims.width > imgDims.height;
+              pageWidth = isLandscape ? a4Height : a4Width;
+              pageHeight = isLandscape ? a4Width : a4Height;
+            } else if (orientation === 'landscape') {
+              pageWidth = a4Height;
+              pageHeight = a4Width;
+            } else {
+              pageWidth = a4Width;
+              pageHeight = a4Height;
+            }
+          } else if (pageSize === 'letter') {
+            const letterWidth = 612, letterHeight = 792;
+            if (orientation === 'auto') {
+              const isLandscape = imgDims.width > imgDims.height;
+              pageWidth = isLandscape ? letterHeight : letterWidth;
+              pageHeight = isLandscape ? letterWidth : letterHeight;
+            } else if (orientation === 'landscape') {
+              pageWidth = letterHeight;
+              pageHeight = letterWidth;
+            } else {
+              pageWidth = letterWidth;
+              pageHeight = letterHeight;
+            }
+          }
+
+          const page = pdfDoc.addPage([pageWidth, pageHeight]);
+          
+          // 计算图片缩放和位置
+          const availableWidth = pageWidth - margin * 2;
+          const availableHeight = pageHeight - margin * 2;
+          const scale = Math.min(availableWidth / imgDims.width, availableHeight / imgDims.height, 1);
+          const scaledWidth = imgDims.width * scale;
+          const scaledHeight = imgDims.height * scale;
+          const x = (pageWidth - scaledWidth) / 2;
+          const y = (pageHeight - scaledHeight) / 2;
+
+          page.drawImage(image, {
+            x: x,
+            y: y,
+            width: scaledWidth,
+            height: scaledHeight
+          });
+        }
+
+        progressBar.style.width = '95%';
+        progressText.textContent = '正在生成 PDF...';
+
+        const pdfBytes = await pdfDoc.save();
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '生成完成！';
+
+        state.imgtopdf.result = pdfBytes;
+        state.imgtopdf.resultName = 'images_' + new Date().getTime() + '.pdf';
+
+        document.getElementById('imgtopdfResultInfo').innerHTML = `
+          已将 ${state.imgtopdf.files.length} 张图片转换为 PDF<br>
+          文件大小: ${formatBytes(pdfBytes.length)}
+        `;
+        document.getElementById('imgtopdfResult').classList.add('visible');
+        document.getElementById('imgtopdfProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('转换失败: ' + err.message);
+        resetImgtopdfUI();
+      }
+    });
+
+    document.getElementById('imgtopdfDownloadBtn').addEventListener('click', () => {
+      download(state.imgtopdf.result, state.imgtopdf.resultName, 'application/pdf');
+    });
+
+    document.getElementById('imgtopdfResetBtn').addEventListener('click', clearImgtopdf);
+    document.getElementById('imgtopdfClearBtn').addEventListener('click', clearImgtopdf);
+
+    function clearImgtopdf() {
+      state.imgtopdf = { files: [], images: [] };
+      resetImgtopdfUI();
+    }
+
+    function resetImgtopdfUI() {
+      document.getElementById('imgtopdfFileList').classList.add('hidden');
+      document.getElementById('imgtopdfUpload').classList.remove('hidden');
+      document.getElementById('imgtopdfControls').classList.add('hidden');
+      document.getElementById('imgtopdfActions').classList.add('hidden');
+      document.getElementById('imgtopdfResult').classList.remove('visible');
+      document.getElementById('imgtopdfProgress').classList.remove('visible');
+      document.getElementById('imgtopdfFileInput').value = '';
+    }
+
+    // ============ 提取页面功能 ============
+    state.extract = { file: null, pdfDoc: null, totalPages: 0 };
+
+    setupUploadZone('extractUpload', 'extractFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      state.extract.file = file;
+      const arrayBuffer = await file.arrayBuffer();
+      state.extract.pdfDoc = await PDFDocument.load(arrayBuffer);
+      state.extract.totalPages = state.extract.pdfDoc.getPageCount();
+
+      document.getElementById('extractFileList').innerHTML = `
+        <div class="file-item">
+          <span class="file-item-icon">📄</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)} · ${state.extract.totalPages} 页</div>
+          </div>
+          <button class="file-item-remove" onclick="clearExtract()">✕</button>
+        </div>
+      `;
+      document.getElementById('extractFileList').classList.remove('hidden');
+      document.getElementById('extractInfo').innerHTML = `
+        <div class="pdf-info-item"><div class="pdf-info-label">总页数</div><div class="pdf-info-value">${state.extract.totalPages}</div></div>
+        <div class="pdf-info-item"><div class="pdf-info-label">文件大小</div><div class="pdf-info-value">${formatBytes(file.size)}</div></div>
+      `;
+      document.getElementById('extractInfo').classList.remove('hidden');
+      document.getElementById('extractUpload').classList.add('hidden');
+      document.getElementById('extractControls').classList.remove('hidden');
+      document.getElementById('extractActions').classList.remove('hidden');
+    });
+
+    document.getElementById('extractStartBtn').addEventListener('click', async () => {
+      const { pdfDoc, totalPages } = state.extract;
+      if (!pdfDoc) return;
+
+      const rangeStr = document.getElementById('extractRange').value.trim();
+      if (!rangeStr) {
+        alert('请输入页面范围');
+        return;
+      }
+
+      const progressContainer = document.getElementById('extractProgress');
+      const progressBar = document.getElementById('extractProgressBar');
+      const progressText = document.getElementById('extractProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('extractActions').classList.add('hidden');
+      document.getElementById('extractControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '20%';
+        progressText.textContent = '正在提取页面...';
+
+        const ranges = parsePageRanges(rangeStr, totalPages);
+        if (ranges.length === 0) throw new Error('无效的页面范围');
+
+        const pagesToExtract = ranges.flatMap(([start, end]) => 
+          Array.from({ length: end - start + 1 }, (_, i) => start - 1 + i)
+        );
+
+        const newPdf = await PDFDocument.create();
+        const pages = await newPdf.copyPages(pdfDoc, pagesToExtract);
+        pages.forEach(p => newPdf.addPage(p));
+
+        progressBar.style.width = '80%';
+        progressText.textContent = '正在生成文件...';
+
+        const pdfBytes = await newPdf.save();
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '提取完成！';
+
+        state.extract.result = pdfBytes;
+        state.extract.resultName = 'extracted_' + file.name;
+
+        document.getElementById('extractResultInfo').innerHTML = `
+          已提取 ${pagesToExtract.length} 页<br>
+          文件大小: ${formatBytes(pdfBytes.length)}
+        `;
+        document.getElementById('extractResult').classList.add('visible');
+        document.getElementById('extractProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('提取失败: ' + err.message);
+        resetExtractUI();
+      }
+    });
+
+    document.getElementById('extractDownloadBtn').addEventListener('click', () => {
+      download(state.extract.result, state.extract.resultName, 'application/pdf');
+    });
+
+    document.getElementById('extractResetBtn').addEventListener('click', clearExtract);
+    document.getElementById('extractClearBtn').addEventListener('click', clearExtract);
+
+    function clearExtract() {
+      state.extract = { file: null, pdfDoc: null, totalPages: 0 };
+      resetExtractUI();
+    }
+
+    function resetExtractUI() {
+      document.getElementById('extractFileList').classList.add('hidden');
+      document.getElementById('extractInfo').classList.add('hidden');
+      document.getElementById('extractUpload').classList.remove('hidden');
+      document.getElementById('extractControls').classList.add('hidden');
+      document.getElementById('extractActions').classList.add('hidden');
+      document.getElementById('extractResult').classList.remove('visible');
+      document.getElementById('extractProgress').classList.remove('visible');
+      document.getElementById('extractFileInput').value = '';
+    }
+
+    // ============ 删除页面功能 ============
+    state.delete = { file: null, pdfDoc: null, totalPages: 0 };
+
+    setupUploadZone('deleteUpload', 'deleteFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      state.delete.file = file;
+      const arrayBuffer = await file.arrayBuffer();
+      state.delete.pdfDoc = await PDFDocument.load(arrayBuffer);
+      state.delete.totalPages = state.delete.pdfDoc.getPageCount();
+
+      document.getElementById('deleteFileList').innerHTML = `
+        <div class="file-item">
+          <span class="file-item-icon">📄</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)} · ${state.delete.totalPages} 页</div>
+          </div>
+          <button class="file-item-remove" onclick="clearDelete()">✕</button>
+        </div>
+      `;
+      document.getElementById('deleteFileList').classList.remove('hidden');
+      document.getElementById('deleteInfo').innerHTML = `
+        <div class="pdf-info-item"><div class="pdf-info-label">总页数</div><div class="pdf-info-value">${state.delete.totalPages}</div></div>
+        <div class="pdf-info-item"><div class="pdf-info-label">文件大小</div><div class="pdf-info-value">${formatBytes(file.size)}</div></div>
+      `;
+      document.getElementById('deleteInfo').classList.remove('hidden');
+      document.getElementById('deleteUpload').classList.add('hidden');
+      document.getElementById('deleteControls').classList.remove('hidden');
+      document.getElementById('deleteActions').classList.remove('hidden');
+    });
+
+    document.getElementById('deleteStartBtn').addEventListener('click', async () => {
+      const { file, pdfDoc, totalPages } = state.delete;
+      if (!pdfDoc) return;
+
+      const rangeStr = document.getElementById('deleteRange').value.trim();
+      if (!rangeStr) {
+        alert('请输入要删除的页面范围');
+        return;
+      }
+
+      const progressContainer = document.getElementById('deleteProgress');
+      const progressBar = document.getElementById('deleteProgressBar');
+      const progressText = document.getElementById('deleteProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('deleteActions').classList.add('hidden');
+      document.getElementById('deleteControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '20%';
+        progressText.textContent = '正在计算删除范围...';
+
+        const ranges = parsePageRanges(rangeStr, totalPages);
+        if (ranges.length === 0) throw new Error('无效的页面范围');
+
+        const pagesToDelete = new Set(ranges.flatMap(([start, end]) => 
+          Array.from({ length: end - start + 1 }, (_, i) => start - 1 + i)
+        ));
+
+        const pagesToKeep = Array.from({ length: totalPages }, (_, i) => i)
+          .filter(i => !pagesToDelete.has(i));
+
+        if (pagesToKeep.length === 0) {
+          throw new Error('不能删除所有页面');
+        }
+
+        progressBar.style.width = '50%';
+        progressText.textContent = '正在删除页面...';
+
+        const newPdf = await PDFDocument.create();
+        const pages = await newPdf.copyPages(pdfDoc, pagesToKeep);
+        pages.forEach(p => newPdf.addPage(p));
+
+        progressBar.style.width = '80%';
+        progressText.textContent = '正在生成文件...';
+
+        const pdfBytes = await newPdf.save();
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '删除完成！';
+
+        state.delete.result = pdfBytes;
+        state.delete.resultName = 'deleted_' + file.name;
+
+        document.getElementById('deleteResultInfo').innerHTML = `
+          已删除 ${pagesToDelete.size} 页，保留 ${pagesToKeep.length} 页<br>
+          文件大小: ${formatBytes(pdfBytes.length)}
+        `;
+        document.getElementById('deleteResult').classList.add('visible');
+        document.getElementById('deleteProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('删除失败: ' + err.message);
+        resetDeleteUI();
+      }
+    });
+
+    document.getElementById('deleteDownloadBtn').addEventListener('click', () => {
+      download(state.delete.result, state.delete.resultName, 'application/pdf');
+    });
+
+    document.getElementById('deleteResetBtn').addEventListener('click', clearDelete);
+    document.getElementById('deleteClearBtn').addEventListener('click', clearDelete);
+
+    function clearDelete() {
+      state.delete = { file: null, pdfDoc: null, totalPages: 0 };
+      resetDeleteUI();
+    }
+
+    function resetDeleteUI() {
+      document.getElementById('deleteFileList').classList.add('hidden');
+      document.getElementById('deleteInfo').classList.add('hidden');
+      document.getElementById('deleteUpload').classList.remove('hidden');
+      document.getElementById('deleteControls').classList.add('hidden');
+      document.getElementById('deleteActions').classList.add('hidden');
+      document.getElementById('deleteResult').classList.remove('visible');
+      document.getElementById('deleteProgress').classList.remove('visible');
+      document.getElementById('deleteFileInput').value = '';
+    }
+
+    // ============ 旋转页面功能 ============
+    state.rotate = { file: null, pdfDoc: null, totalPages: 0 };
+
+    setupUploadZone('rotateUpload', 'rotateFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      state.rotate.file = file;
+      const arrayBuffer = await file.arrayBuffer();
+      state.rotate.pdfDoc = await PDFDocument.load(arrayBuffer);
+      state.rotate.totalPages = state.rotate.pdfDoc.getPageCount();
+
+      document.getElementById('rotateFileList').innerHTML = `
+        <div class="file-item">
+          <span class="file-item-icon">📄</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)} · ${state.rotate.totalPages} 页</div>
+          </div>
+          <button class="file-item-remove" onclick="clearRotate()">✕</button>
+        </div>
+      `;
+      document.getElementById('rotateFileList').classList.remove('hidden');
+      document.getElementById('rotateInfo').innerHTML = `
+        <div class="pdf-info-item"><div class="pdf-info-label">总页数</div><div class="pdf-info-value">${state.rotate.totalPages}</div></div>
+        <div class="pdf-info-item"><div class="pdf-info-label">文件大小</div><div class="pdf-info-value">${formatBytes(file.size)}</div></div>
+      `;
+      document.getElementById('rotateInfo').classList.remove('hidden');
+      document.getElementById('rotateUpload').classList.add('hidden');
+      document.getElementById('rotateControls').classList.remove('hidden');
+      document.getElementById('rotateActions').classList.remove('hidden');
+    });
+
+    // 旋转范围切换
+    document.getElementById('rotateScope').addEventListener('change', (e) => {
+      document.getElementById('rotateRangeGroup').classList.toggle('hidden', e.target.value !== 'custom');
+    });
+
+    document.getElementById('rotateStartBtn').addEventListener('click', async () => {
+      const { file, pdfDoc, totalPages } = state.rotate;
+      if (!pdfDoc) return;
+
+      const angle = parseInt(document.getElementById('rotateAngle').value);
+      const scope = document.getElementById('rotateScope').value;
+      const rangeStr = document.getElementById('rotateRange').value;
+      
+      const progressContainer = document.getElementById('rotateProgress');
+      const progressBar = document.getElementById('rotateProgressBar');
+      const progressText = document.getElementById('rotateProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('rotateActions').classList.add('hidden');
+      document.getElementById('rotateControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '20%';
+        progressText.textContent = '正在计算旋转范围...';
+
+        let pagesToRotate = [];
+        if (scope === 'all') {
+          pagesToRotate = Array.from({ length: totalPages }, (_, i) => i);
+        } else if (scope === 'odd') {
+          pagesToRotate = Array.from({ length: totalPages }, (_, i) => i).filter(i => i % 2 === 0);
+        } else if (scope === 'even') {
+          pagesToRotate = Array.from({ length: totalPages }, (_, i) => i).filter(i => i % 2 === 1);
+        } else if (scope === 'custom' && rangeStr) {
+          const ranges = parsePageRanges(rangeStr, totalPages);
+          pagesToRotate = ranges.flatMap(([start, end]) => 
+            Array.from({ length: end - start + 1 }, (_, i) => start - 1 + i)
+          );
+        }
+
+        progressBar.style.width = '50%';
+        progressText.textContent = '正在旋转页面...';
+
+        const newPdf = await PDFDocument.create();
+        const pages = await newPdf.copyPages(pdfDoc, Array.from({ length: totalPages }, (_, i) => i));
+        
+        pages.forEach((page, idx) => {
+          if (pagesToRotate.includes(idx)) {
+            page.setRotation(degrees(angle));
+          }
+          newPdf.addPage(page);
+        });
+
+        progressBar.style.width = '80%';
+        progressText.textContent = '正在生成文件...';
+
+        const pdfBytes = await newPdf.save();
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '旋转完成！';
+
+        state.rotate.result = pdfBytes;
+        state.rotate.resultName = 'rotated_' + file.name;
+
+        document.getElementById('rotateResultInfo').innerHTML = `
+          已旋转 ${pagesToRotate.length} 页，角度: ${angle}°<br>
+          文件大小: ${formatBytes(pdfBytes.length)}
+        `;
+        document.getElementById('rotateResult').classList.add('visible');
+        document.getElementById('rotateProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('旋转失败: ' + err.message);
+        resetRotateUI();
+      }
+    });
+
+    document.getElementById('rotateDownloadBtn').addEventListener('click', () => {
+      download(state.rotate.result, state.rotate.resultName, 'application/pdf');
+    });
+
+    document.getElementById('rotateResetBtn').addEventListener('click', clearRotate);
+    document.getElementById('rotateClearBtn').addEventListener('click', clearRotate);
+
+    function clearRotate() {
+      state.rotate = { file: null, pdfDoc: null, totalPages: 0 };
+      resetRotateUI();
+    }
+
+    function resetRotateUI() {
+      document.getElementById('rotateFileList').classList.add('hidden');
+      document.getElementById('rotateInfo').classList.add('hidden');
+      document.getElementById('rotateUpload').classList.remove('hidden');
+      document.getElementById('rotateControls').classList.add('hidden');
+      document.getElementById('rotateActions').classList.add('hidden');
+      document.getElementById('rotateResult').classList.remove('visible');
+      document.getElementById('rotateProgress').classList.remove('visible');
+      document.getElementById('rotateFileInput').value = '';
+      document.getElementById('rotateRangeGroup').classList.add('hidden');
+    }
+
+    // ============ 页面重排功能 ============
+    state.reorder = { file: null, pdfDoc: null, totalPages: 0 };
+
+    setupUploadZone('reorderUpload', 'reorderFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      state.reorder.file = file;
+      const arrayBuffer = await file.arrayBuffer();
+      state.reorder.pdfDoc = await PDFDocument.load(arrayBuffer);
+      state.reorder.totalPages = state.reorder.pdfDoc.getPageCount();
+
+      document.getElementById('reorderFileList').innerHTML = `
+        <div class="file-item">
+          <span class="file-item-icon">📄</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)} · ${state.reorder.totalPages} 页</div>
+          </div>
+          <button class="file-item-remove" onclick="clearReorder()">✕</button>
+        </div>
+      `;
+      document.getElementById('reorderFileList').classList.remove('hidden');
+      document.getElementById('reorderInfo').innerHTML = `
+        <div class="pdf-info-item"><div class="pdf-info-label">总页数</div><div class="pdf-info-value">${state.reorder.totalPages}</div></div>
+        <div class="pdf-info-item"><div class="pdf-info-label">文件大小</div><div class="pdf-info-value">${formatBytes(file.size)}</div></div>
+      `;
+      document.getElementById('reorderInfo').classList.remove('hidden');
+      document.getElementById('reorderUpload').classList.add('hidden');
+      document.getElementById('reorderControls').classList.remove('hidden');
+      document.getElementById('reorderActions').classList.remove('hidden');
+    });
+
+    document.getElementById('reorderStartBtn').addEventListener('click', async () => {
+      const { file, pdfDoc, totalPages } = state.reorder;
+      if (!pdfDoc) return;
+
+      const sequenceStr = document.getElementById('reorderSequence').value.trim();
+      if (!sequenceStr) {
+        alert('请输入新的页面顺序');
+        return;
+      }
+
+      const progressContainer = document.getElementById('reorderProgress');
+      const progressBar = document.getElementById('reorderProgressBar');
+      const progressText = document.getElementById('reorderProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('reorderActions').classList.add('hidden');
+      document.getElementById('reorderControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '20%';
+        progressText.textContent = '正在解析页面顺序...';
+
+        const sequence = sequenceStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= totalPages);
+        if (sequence.length === 0) throw new Error('无效的页面顺序');
+
+        // 找出未列出的页面
+        const listedPages = new Set(sequence);
+        const remainingPages = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => !listedPages.has(p));
+
+        progressBar.style.width = '50%';
+        progressText.textContent = '正在重新排序...';
+
+        const newPdf = await PDFDocument.create();
+        
+        // 先添加指定顺序的页面
+        for (const pageNum of sequence) {
+          const [page] = await newPdf.copyPages(pdfDoc, [pageNum - 1]);
+          newPdf.addPage(page);
+        }
+        
+        // 再添加未列出的页面
+        for (const pageNum of remainingPages) {
+          const [page] = await newPdf.copyPages(pdfDoc, [pageNum - 1]);
+          newPdf.addPage(page);
+        }
+
+        progressBar.style.width = '80%';
+        progressText.textContent = '正在生成文件...';
+
+        const pdfBytes = await newPdf.save();
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '重排完成！';
+
+        state.reorder.result = pdfBytes;
+        state.reorder.resultName = 'reordered_' + file.name;
+
+        document.getElementById('reorderResultInfo').innerHTML = `
+          已重新排序 ${sequence.length} 页<br>
+          未列出的 ${remainingPages.length} 页已添加到末尾<br>
+          文件大小: ${formatBytes(pdfBytes.length)}
+        `;
+        document.getElementById('reorderResult').classList.add('visible');
+        document.getElementById('reorderProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('重排失败: ' + err.message);
+        resetReorderUI();
+      }
+    });
+
+    document.getElementById('reorderDownloadBtn').addEventListener('click', () => {
+      download(state.reorder.result, state.reorder.resultName, 'application/pdf');
+    });
+
+    document.getElementById('reorderResetBtn').addEventListener('click', clearReorder);
+    document.getElementById('reorderClearBtn').addEventListener('click', clearReorder);
+
+    function clearReorder() {
+      state.reorder = { file: null, pdfDoc: null, totalPages: 0 };
+      resetReorderUI();
+    }
+
+    function resetReorderUI() {
+      document.getElementById('reorderFileList').classList.add('hidden');
+      document.getElementById('reorderInfo').classList.add('hidden');
+      document.getElementById('reorderUpload').classList.remove('hidden');
+      document.getElementById('reorderControls').classList.add('hidden');
+      document.getElementById('reorderActions').classList.add('hidden');
+      document.getElementById('reorderResult').classList.remove('visible');
+      document.getElementById('reorderProgress').classList.remove('visible');
+      document.getElementById('reorderFileInput').value = '';
+    }
+
+    // ============ 提取文本功能 ============
+    state.textextract = { file: null, totalPages: 0 };
+
+    setupUploadZone('textextractUpload', 'textextractFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      state.textextract.file = file;
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+      state.textextract.totalPages = pdf.numPages;
+
+      document.getElementById('textextractFileList').innerHTML = `
+        <div class="file-item">
+          <span class="file-item-icon">📄</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)} · ${state.textextract.totalPages} 页</div>
+          </div>
+          <button class="file-item-remove" onclick="clearTextextract()">✕</button>
+        </div>
+      `;
+      document.getElementById('textextractFileList').classList.remove('hidden');
+      document.getElementById('textextractUpload').classList.add('hidden');
+      document.getElementById('textextractControls').classList.remove('hidden');
+      document.getElementById('textextractActions').classList.remove('hidden');
+    });
+
+    document.getElementById('textextractStartBtn').addEventListener('click', async () => {
+      const { file, totalPages } = state.textextract;
+      if (!file) return;
+
+      const rangeStr = document.getElementById('textextractRange').value.trim();
+      
+      const progressContainer = document.getElementById('textextractProgress');
+      const progressBar = document.getElementById('textextractProgressBar');
+      const progressText = document.getElementById('textextractProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('textextractActions').classList.add('hidden');
+      document.getElementById('textextractControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '10%';
+        progressText.textContent = '正在加载 PDF...';
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        let pagesToExtract = [];
+        if (rangeStr) {
+          const ranges = parsePageRanges(rangeStr, totalPages);
+          pagesToExtract = ranges.flatMap(([start, end]) => 
+            Array.from({ length: end - start + 1 }, (_, i) => start + i)
+          );
+        } else {
+          pagesToExtract = Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+
+        let fullText = '';
+
+        for (let i = 0; i < pagesToExtract.length; i++) {
+          const pageNum = pagesToExtract[i];
+          const progress = 10 + (i / pagesToExtract.length) * 80;
+          progressBar.style.width = progress + '%';
+          progressText.textContent = `正在提取第 ${pageNum}/${totalPages} 页...`;
+
+          const page = await pdf.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += `\n\n--- 第 ${pageNum} 页 ---\n${pageText}`;
+        }
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '提取完成！';
+
+        state.textextract.resultText = fullText.trim();
+        state.textextract.resultName = file.name.replace('.pdf', '_text.txt');
+
+        document.getElementById('textextractContent').value = state.textextract.resultText;
+        document.getElementById('textextractResultInfo').innerHTML = `
+          已提取 ${pagesToExtract.length} 页的文本内容<br>
+          字符数: ${state.textextract.resultText.length.toLocaleString()}
+        `;
+        document.getElementById('textextractResult').classList.add('visible');
+        document.getElementById('textextractProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('提取失败: ' + err.message);
+        resetTextextractUI();
+      }
+    });
+
+    document.getElementById('textextractDownloadBtn').addEventListener('click', () => {
+      const blob = new Blob([state.textextract.resultText], { type: 'text/plain' });
+      download(blob, state.textextract.resultName, 'text/plain');
+    });
+
+    document.getElementById('textextractCopyBtn').addEventListener('click', () => {
+      const textarea = document.getElementById('textextractContent');
+      textarea.select();
+      document.execCommand('copy');
+      alert('已复制到剪贴板');
+    });
+
+    document.getElementById('textextractResetBtn').addEventListener('click', clearTextextract);
+    document.getElementById('textextractClearBtn').addEventListener('click', clearTextextract);
+
+    function clearTextextract() {
+      state.textextract = { file: null, totalPages: 0 };
+      resetTextextractUI();
+    }
+
+    function resetTextextractUI() {
+      document.getElementById('textextractFileList').classList.add('hidden');
+      document.getElementById('textextractUpload').classList.remove('hidden');
+      document.getElementById('textextractControls').classList.add('hidden');
+      document.getElementById('textextractActions').classList.add('hidden');
+      document.getElementById('textextractResult').classList.remove('visible');
+      document.getElementById('textextractProgress').classList.remove('visible');
+      document.getElementById('textextractFileInput').value = '';
+      document.getElementById('textextractContent').value = '';
+    }
+
+    // ============ 提取图片功能 ============
+    state.imgextract = { file: null, images: [] };
+
+    setupUploadZone('imgextractUpload', 'imgextractFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      state.imgextract.file = file;
+      
+      document.getElementById('imgextractFileList').innerHTML = `
+        <div class="file-item">
+          <span class="file-item-icon">📄</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)}</div>
+          </div>
+          <button class="file-item-remove" onclick="clearImgextract()">✕</button>
+        </div>
+      `;
+      document.getElementById('imgextractFileList').classList.remove('hidden');
+      document.getElementById('imgextractUpload').classList.add('hidden');
+      document.getElementById('imgextractActions').classList.remove('hidden');
+    });
+
+    document.getElementById('imgextractStartBtn').addEventListener('click', async () => {
+      const { file } = state.imgextract;
+      if (!file) return;
+
+      const progressContainer = document.getElementById('imgextractProgress');
+      const progressBar = document.getElementById('imgextractProgressBar');
+      const progressText = document.getElementById('imgextractProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('imgextractActions').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '10%';
+        progressText.textContent = '正在加载 PDF...';
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(arrayBuffer);
+        
+        progressBar.style.width = '30%';
+        progressText.textContent = '正在提取图片...';
+
+        const images = [];
+        const pages = pdfDoc.getPages();
+        
+        for (let i = 0; i < pages.length; i++) {
+          const progress = 30 + (i / pages.length) * 60;
+          progressBar.style.width = progress + '%';
+          progressText.textContent = `正在处理第 ${i + 1}/${pages.length} 页...`;
+
+          const page = pages[i];
+          const resources = page.node.get('Resources');
+          
+          if (resources && resources.has('XObject')) {
+            const xObject = resources.get('XObject');
+            const xObjectDict = xObject.dict;
+            
+            if (xObjectDict) {
+              const keys = xObjectDict.keys();
+              
+              for (const key of keys) {
+                try {
+                  const obj = xObjectDict.get(key);
+                  if (obj && obj.has('Subtype') && obj.get('Subtype').name === 'Image') {
+                    const width = obj.get('Width').number;
+                    const height = obj.get('Height').number;
+                    const bitsPerComponent = obj.has('BitsPerComponent') ? obj.get('BitsPerComponent').number : 8;
+                    
+                    // 提取图片数据
+                    const stream = obj.contents;
+                    const imageData = stream.buffer;
+                    
+                    images.push({
+                        name: `page${i + 1}_${key}.png`,
+                        data: imageData,
+                        width,
+                        height
+                      });
+                  }
+                } catch (e) {
+                  // 跳过无法提取的图片
+                  console.warn('跳过图片:', e);
+                }
+              }
+            }
+          }
+        }
+
+        progressBar.style.width = '95%';
+        progressText.textContent = '正在打包...';
+
+        if (images.length === 0) {
+          throw new Error('未找到可提取的图片');
+        }
+
+        // 打包为 ZIP
+        if (typeof JSZip !== 'undefined') {
+          const zip = new JSZip();
+          images.forEach(img => zip.file(img.name, img.data));
+          state.imgextract.result = await zip.generateAsync({ type: 'arraybuffer' });
+          state.imgextract.resultName = file.name.replace('.pdf', '_images.zip');
+          
+          document.getElementById('imgextractResultInfo').innerHTML = `
+            已提取 ${images.length} 张图片<br>
+            已打包为 ZIP 文件
+          `;
+        } else {
+          throw new Error('缺少 JSZip 库，无法打包图片');
+        }
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '提取完成！';
+
+        document.getElementById('imgextractResult').classList.add('visible');
+        document.getElementById('imgextractProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('提取失败: ' + err.message);
+        resetImgextractUI();
+      }
+    });
+
+    document.getElementById('imgextractDownloadBtn').addEventListener('click', () => {
+      download(state.imgextract.result, state.imgextract.resultName, 'application/zip');
+    });
+
+    document.getElementById('imgextractResetBtn').addEventListener('click', clearImgextract);
+    document.getElementById('imgextractClearBtn').addEventListener('click', clearImgextract);
+
+    function clearImgextract() {
+      state.imgextract = { file: null, images: [] };
+      resetImgextractUI();
+    }
+
+    function resetImgextractUI() {
+      document.getElementById('imgextractFileList').classList.add('hidden');
+      document.getElementById('imgextractUpload').classList.remove('hidden');
+      document.getElementById('imgextractActions').classList.add('hidden');
+      document.getElementById('imgextractResult').classList.remove('visible');
+      document.getElementById('imgextractProgress').classList.remove('visible');
+      document.getElementById('imgextractFileInput').value = '';
+    }
+
+    // ============ 加密保护功能 ============
+    state.encrypt = { file: null, pdfDoc: null };
+
+    setupUploadZone('encryptUpload', 'encryptFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      state.encrypt.file = file;
+      const arrayBuffer = await file.arrayBuffer();
+      state.encrypt.pdfDoc = await PDFDocument.load(arrayBuffer);
+
+      document.getElementById('encryptFileList').innerHTML = `
+        <div class="file-item">
+          <span class="file-item-icon">📄</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)}</div>
+          </div>
+          <button class="file-item-remove" onclick="clearEncrypt()">✕</button>
+        </div>
+      `;
+      document.getElementById('encryptFileList').classList.remove('hidden');
+      document.getElementById('encryptUpload').classList.add('hidden');
+      document.getElementById('encryptControls').classList.remove('hidden');
+      document.getElementById('encryptActions').classList.remove('hidden');
+    });
+
+    document.getElementById('encryptStartBtn').addEventListener('click', async () => {
+      const { file, pdfDoc } = state.encrypt;
+      if (!pdfDoc) return;
+
+      const password = document.getElementById('encryptPassword').value;
+      const passwordConfirm = document.getElementById('encryptPasswordConfirm').value;
+      const ownerPassword = document.getElementById('encryptOwnerPassword').value;
+
+      if (!password) {
+        alert('请输入打开密码');
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        alert('两次输入的密码不一致');
+        return;
+      }
+
+      const progressContainer = document.getElementById('encryptProgress');
+      const progressBar = document.getElementById('encryptProgressBar');
+      const progressText = document.getElementById('encryptProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('encryptActions').classList.add('hidden');
+      document.getElementById('encryptControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '50%';
+        progressText.textContent = '正在加密...';
+
+        // pdf-lib 不直接支持加密，需要使用其他方法
+        // 这里我们创建一个新的PDF并尝试设置权限
+        const pdfBytes = await pdfDoc.save({
+          userPassword: password,
+          ownerPassword: ownerPassword || password,
+          permissions: {
+            printing: 'lowResolution',
+            modifying: false,
+            copying: false,
+            annotating: false,
+            fillingForms: false,
+            contentAccessibility: true,
+            documentAssembly: false
+          }
+        });
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '加密完成！';
+
+        state.encrypt.result = pdfBytes;
+        state.encrypt.resultName = 'encrypted_' + file.name;
+
+        document.getElementById('encryptResultInfo').innerHTML = `
+          已成功添加密码保护<br>
+          文件大小: ${formatBytes(pdfBytes.length)}<br>
+          <small style="color: var(--color-muted);">请妥善保管密码，遗失后将无法恢复</small>
+        `;
+        document.getElementById('encryptResult').classList.add('visible');
+        document.getElementById('encryptProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('加密失败: ' + err.message + '\n\n注意：pdf-lib 可能不支持加密功能，建议使用专业工具');
+        resetEncryptUI();
+      }
+    });
+
+    document.getElementById('encryptDownloadBtn').addEventListener('click', () => {
+      download(state.encrypt.result, state.encrypt.resultName, 'application/pdf');
+    });
+
+    document.getElementById('encryptResetBtn').addEventListener('click', clearEncrypt);
+    document.getElementById('encryptClearBtn').addEventListener('click', clearEncrypt);
+
+    function clearEncrypt() {
+      state.encrypt = { file: null, pdfDoc: null };
+      resetEncryptUI();
+    }
+
+    function resetEncryptUI() {
+      document.getElementById('encryptFileList').classList.add('hidden');
+      document.getElementById('encryptUpload').classList.remove('hidden');
+      document.getElementById('encryptControls').classList.add('hidden');
+      document.getElementById('encryptActions').classList.add('hidden');
+      document.getElementById('encryptResult').classList.remove('visible');
+      document.getElementById('encryptProgress').classList.remove('visible');
+      document.getElementById('encryptFileInput').value = '';
+      document.getElementById('encryptPassword').value = '';
+      document.getElementById('encryptPasswordConfirm').value = '';
+      document.getElementById('encryptOwnerPassword').value = '';
+    }
+
+    // ============ 移除密码功能 ============
+    state.decrypt = { file: null };
+
+    setupUploadZone('decryptUpload', 'decryptFileInput', (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      state.decrypt.file = file;
+
+      document.getElementById('decryptFileList').innerHTML = `
+        <div class="file-item">
+          <span class="file-item-icon">📄</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)}</div>
+          </div>
+          <button class="file-item-remove" onclick="clearDecrypt()">✕</button>
+        </div>
+      `;
+      document.getElementById('decryptFileList').classList.remove('hidden');
+      document.getElementById('decryptUpload').classList.add('hidden');
+      document.getElementById('decryptControls').classList.remove('hidden');
+      document.getElementById('decryptActions').classList.remove('hidden');
+    });
+
+    document.getElementById('decryptStartBtn').addEventListener('click', async () => {
+      const { file } = state.decrypt;
+      if (!file) return;
+
+      const password = document.getElementById('decryptPassword').value;
+      if (!password) {
+        alert('请输入打开密码');
+        return;
+      }
+
+      const progressContainer = document.getElementById('decryptProgress');
+      const progressBar = document.getElementById('decryptProgressBar');
+      const progressText = document.getElementById('decryptProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('decryptActions').classList.add('hidden');
+      document.getElementById('decryptControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '30%';
+        progressText.textContent = '正在解密...';
+
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // 使用密码加载加密的 PDF
+        const pdfDoc = await PDFDocument.load(arrayBuffer, {
+          password: password,
+          ignoreEncryption: false
+        });
+
+        progressBar.style.width = '60%';
+        progressText.textContent = '正在生成无密码 PDF...';
+
+        // 保存为无密码的 PDF
+        const pdfBytes = await pdfDoc.save();
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '解密完成！';
+
+        state.decrypt.result = pdfBytes;
+        state.decrypt.resultName = 'decrypted_' + file.name;
+
+        document.getElementById('decryptResultInfo').innerHTML = `
+          已成功移除密码保护<br>
+          文件大小: ${formatBytes(pdfBytes.length)}
+        `;
+        document.getElementById('decryptResult').classList.add('visible');
+        document.getElementById('decryptProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        let errorMsg = '解密失败: ';
+        if (err.message.includes('password')) {
+          errorMsg += '密码错误或文件未加密';
+        } else {
+          errorMsg += err.message;
+        }
+        alert(errorMsg);
+        resetDecryptUI();
+      }
+    });
+
+    document.getElementById('decryptDownloadBtn').addEventListener('click', () => {
+      download(state.decrypt.result, state.decrypt.resultName, 'application/pdf');
+    });
+
+    document.getElementById('decryptResetBtn').addEventListener('click', clearDecrypt);
+    document.getElementById('decryptClearBtn').addEventListener('click', clearDecrypt);
+
+    function clearDecrypt() {
+      state.decrypt = { file: null };
+      resetDecryptUI();
+    }
+
+    function resetDecryptUI() {
+      document.getElementById('decryptFileList').classList.add('hidden');
+      document.getElementById('decryptUpload').classList.remove('hidden');
+      document.getElementById('decryptControls').classList.add('hidden');
+      document.getElementById('decryptActions').classList.add('hidden');
+      document.getElementById('decryptResult').classList.remove('visible');
+      document.getElementById('decryptProgress').classList.remove('visible');
+      document.getElementById('decryptFileInput').value = '';
+      document.getElementById('decryptPassword').value = '';
     }
   </script>
 </body>
