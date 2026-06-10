@@ -11,6 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/downloadjs@1.4.7/download.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.2.0/build/index.umd.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
   </script>
@@ -251,6 +252,11 @@
           <div class="tool-card-icon">🔓</div>
           <h3>移除密码</h3>
           <p>移除 PDF 密码</p>
+        </div>
+        <div class="tool-card" data-tool="toword">
+          <div class="tool-card-icon">📝</div>
+          <h3>PDF 转 Word</h3>
+          <p>转为可编辑文档</p>
         </div>
       </div>
 
@@ -936,6 +942,58 @@
         <div class="btn-group hidden" id="decryptActions">
           <button class="btn btn-primary" id="decryptStartBtn">🔓 开始解密</button>
           <button class="btn btn-secondary" id="decryptClearBtn">清除文件</button>
+        </div>
+      </div>
+
+      <!-- PDF 转 Word -->
+      <div class="workspace" id="towordWorkspace">
+        <div class="workspace-header">
+          <div class="workspace-title">
+            <span class="workspace-title-icon">📝</span>
+            PDF 转 Word
+          </div>
+        </div>
+        <div class="upload-zone" id="towordUpload">
+          <div class="upload-zone-icon">📁</div>
+          <h3>点击或拖拽上传 PDF 文件</h3>
+          <p>支持单个文件，最大 50MB</p>
+          <input type="file" id="towordFileInput" accept=".pdf,application/pdf">
+        </div>
+        <div class="file-list hidden" id="towordFileList"></div>
+        <div class="controls hidden" id="towordControls">
+          <div class="control-group">
+            <label class="control-label">页面范围 (留空表示全部)</label>
+            <input type="text" class="control-input" id="towordRange" placeholder="如: 1-5, 8, 10-12">
+          </div>
+          <div class="control-group">
+            <label class="control-label">转换选项</label>
+            <div class="checkbox-group">
+              <div class="checkbox-item">
+                <input type="checkbox" id="towordKeepFormat" checked>
+                <label for="towordKeepFormat">保持原始格式（段落、字体大小）</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="towordExtractImages">
+                <label for="towordExtractImages">提取并嵌入图片</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="progress-container" id="towordProgress">
+          <div class="progress-bar"><div class="progress-fill" id="towordProgressBar"></div></div>
+          <div class="progress-text" id="towordProgressText">正在转换...</div>
+        </div>
+        <div class="result-container" id="towordResult">
+          <div class="result-title">✅ 转换完成</div>
+          <div class="result-info" id="towordResultInfo"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="towordDownloadBtn">📥 下载 Word 文档</button>
+            <button class="btn btn-secondary" id="towordResetBtn">↺ 转换其他文件</button>
+          </div>
+        </div>
+        <div class="btn-group hidden" id="towordActions">
+          <button class="btn btn-primary" id="towordStartBtn">📝 开始转换</button>
+          <button class="btn btn-secondary" id="towordClearBtn">清除文件</button>
         </div>
       </div>
 
@@ -2960,54 +3018,107 @@
         progressText.textContent = '正在加载 PDF...';
 
         const arrayBuffer = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(arrayBuffer);
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const totalPages = pdf.numPages;
         
-        progressBar.style.width = '30%';
+        progressBar.style.width = '20%';
         progressText.textContent = '正在提取图片...';
 
         const images = [];
-        const pages = pdfDoc.getPages();
         
-        for (let i = 0; i < pages.length; i++) {
-          const progress = 30 + (i / pages.length) * 60;
+        for (let i = 1; i <= totalPages; i++) {
+          const progress = 20 + ((i - 1) / totalPages) * 70;
           progressBar.style.width = progress + '%';
-          progressText.textContent = `正在处理第 ${i + 1}/${pages.length} 页...`;
+          progressText.textContent = `正在处理第 ${i}/${totalPages} 页...`;
 
-          const page = pages[i];
-          const resources = page.node.get('Resources');
+          const page = await pdf.getPage(i);
           
-          if (resources && resources.has('XObject')) {
-            const xObject = resources.get('XObject');
-            const xObjectDict = xObject.dict;
+          // 方法1: 通过操作列表提取图片
+          try {
+            const operatorList = await page.getOperatorList();
             
-            if (xObjectDict) {
-              const keys = xObjectDict.keys();
+            for (let j = 0; j < operatorList.fnArray.length; j++) {
+              const fn = operatorList.fnArray[j];
+              const args = operatorList.argsArray[j];
               
-              for (const key of keys) {
+              // PaintImageXObject - 绘制图片对象
+              if (fn === pdfjsLib.OPS.paintImageXObject || fn === pdfjsLib.OPS.paintJpegXObject) {
+                const imgName = args[0];
+                
                 try {
-                  const obj = xObjectDict.get(key);
-                  if (obj && obj.has('Subtype') && obj.get('Subtype').name === 'Image') {
-                    const width = obj.get('Width').number;
-                    const height = obj.get('Height').number;
-                    const bitsPerComponent = obj.has('BitsPerComponent') ? obj.get('BitsPerComponent').number : 8;
-                    
-                    // 提取图片数据
-                    const stream = obj.contents;
-                    const imageData = stream.buffer;
-                    
-                    images.push({
-                        name: `page${i + 1}_${key}.png`,
-                        data: imageData,
-                        width,
-                        height
-                      });
+                  // 从页面资源中获取图片
+                  const resources = await page.getResources();
+                  if (resources && resources.xObject) {
+                    const xObject = resources.xObject[imgName];
+                    if (xObject) {
+                      const imgData = await xObject.decode();
+                      
+                      if (imgData && imgData.data) {
+                        // 将图片数据转为可用的格式
+                        const canvas = document.createElement('canvas');
+                        canvas.width = imgData.width;
+                        canvas.height = imgData.height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        const imgArray = new Uint8ClampedArray(imgData.data);
+                        const imageData = new ImageData(imgArray, imgData.width, imgData.height);
+                        ctx.putImageData(imageData, 0, 0);
+                        
+                        const dataUrl = canvas.toDataURL('image/png');
+                        const base64Data = dataUrl.split(',')[1];
+                        
+                        images.push({
+                          name: `page${i}_img${images.length + 1}.png`,
+                          data: base64Data,
+                          width: imgData.width,
+                          height: imgData.height
+                        });
+                      }
+                    }
                   }
                 } catch (e) {
-                  // 跳过无法提取的图片
                   console.warn('跳过图片:', e);
                 }
               }
             }
+          } catch (e) {
+            console.warn('操作列表提取失败，尝试渲染方式:', e);
+          }
+          
+          page.cleanup();
+        }
+
+        // 方法2: 如果方法1没有提取到图片，使用渲染方式
+        if (images.length === 0) {
+          progressText.textContent = '使用渲染方式提取图片...';
+          
+          for (let i = 1; i <= totalPages; i++) {
+            const progress = 20 + ((i - 1) / totalPages) * 70;
+            progressBar.style.width = progress + '%';
+            progressText.textContent = `正在渲染第 ${i}/${totalPages} 页...`;
+
+            const page = await pdf.getPage(i);
+            const scale = 2;
+            const viewport = page.getViewport({ scale });
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            
+            const dataUrl = canvas.toDataURL('image/png');
+            const base64Data = dataUrl.split(',')[1];
+            
+            images.push({
+              name: `page${i}.png`,
+              data: base64Data,
+              width: canvas.width,
+              height: canvas.height
+            });
+            
+            page.cleanup();
           }
         }
 
@@ -3021,7 +3132,7 @@
         // 打包为 ZIP
         if (typeof JSZip !== 'undefined') {
           const zip = new JSZip();
-          images.forEach(img => zip.file(img.name, img.data));
+          images.forEach(img => zip.file(img.name, img.data, { base64: true }));
           state.imgextract.result = await zip.generateAsync({ type: 'arraybuffer' });
           state.imgextract.resultName = file.name.replace('.pdf', '_images.zip');
           
@@ -3303,6 +3414,271 @@
       document.getElementById('decryptProgress').classList.remove('visible');
       document.getElementById('decryptFileInput').value = '';
       document.getElementById('decryptPassword').value = '';
+    }
+
+    // ============ PDF 转 Word 功能 ============
+    state.toword = { file: null, totalPages: 0 };
+
+    setupUploadZone('towordUpload', 'towordFileInput', async (files) => {
+      const file = files[0];
+      if (!file || file.type !== 'application/pdf') {
+        alert('请选择有效的 PDF 文件');
+        return;
+      }
+
+      if (file.size > 50 * 1024 * 1024) {
+        alert('文件过大，请选择小于 50MB 的文件');
+        return;
+      }
+
+      state.toword.file = file;
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+      state.toword.totalPages = pdf.numPages;
+
+      document.getElementById('towordFileList').innerHTML = `
+        <div class="file-item">
+          <span class="file-item-icon">📄</span>
+          <div class="file-item-info">
+            <div class="file-item-name">${file.name}</div>
+            <div class="file-item-size">${formatBytes(file.size)} · ${state.toword.totalPages} 页</div>
+          </div>
+          <button class="file-item-remove" onclick="clearToword()">✕</button>
+        </div>
+      `;
+      document.getElementById('towordFileList').classList.remove('hidden');
+      document.getElementById('towordUpload').classList.add('hidden');
+      document.getElementById('towordControls').classList.remove('hidden');
+      document.getElementById('towordActions').classList.remove('hidden');
+    });
+
+    document.getElementById('towordStartBtn').addEventListener('click', async () => {
+      const { file, totalPages } = state.toword;
+      if (!file) return;
+
+      const rangeStr = document.getElementById('towordRange').value.trim();
+      const keepFormat = document.getElementById('towordKeepFormat').checked;
+      const extractImages = document.getElementById('towordExtractImages').checked;
+      
+      const progressContainer = document.getElementById('towordProgress');
+      const progressBar = document.getElementById('towordProgressBar');
+      const progressText = document.getElementById('towordProgressText');
+      
+      progressContainer.classList.add('visible');
+      document.getElementById('towordActions').classList.add('hidden');
+      document.getElementById('towordControls').classList.add('hidden');
+
+      try {
+        progressBar.style.width = '10%';
+        progressText.textContent = '正在加载 PDF...';
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        let pagesToConvert = [];
+        if (rangeStr) {
+          const ranges = parsePageRanges(rangeStr, totalPages);
+          pagesToConvert = ranges.flatMap(([start, end]) => 
+            Array.from({ length: end - start + 1 }, (_, i) => start + i)
+          );
+        } else {
+          pagesToConvert = Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+
+        progressBar.style.width = '20%';
+        progressText.textContent = '正在提取内容...';
+
+        // 使用docx库创建Word文档
+        const { Document, Paragraph, TextRun, HeadingLevel, ImageRun, AlignmentType } = docx;
+        
+        const sections = [];
+        let totalParagraphs = 0;
+        let totalImages = 0;
+
+        for (let i = 0; i < pagesToConvert.length; i++) {
+          const pageNum = pagesToConvert[i];
+          const progress = 20 + (i / pagesToConvert.length) * 70;
+          progressBar.style.width = progress + '%';
+          progressText.textContent = `正在处理第 ${pageNum}/${totalPages} 页...`;
+
+          const page = await pdf.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          
+          // 添加页面分隔
+          if (i > 0) {
+            sections.push(new Paragraph({
+              children: [new TextRun({ text: `--- 第 ${pageNum} 页 ---`, break: 1 })],
+              spacing: { before: 400, after: 200 }
+            }));
+          }
+
+          // 提取文本内容
+          let lastY = null;
+          let currentParagraph = [];
+          let currentFontSize = 12;
+          let isBold = false;
+
+          for (const item of textContent.items) {
+            if (item.str.trim() === '') continue;
+
+            // 检查是否是新段落（Y坐标变化）
+            const y = item.transform[5];
+            if (lastY !== null && Math.abs(y - lastY) > 5) {
+              // 保存当前段落
+              if (currentParagraph.length > 0) {
+                sections.push(new Paragraph({
+                  children: currentParagraph,
+                  spacing: { after: 200 }
+                }));
+                currentParagraph = [];
+              }
+            }
+
+            // 提取字体信息
+            if (keepFormat && item.fontName) {
+              // 根据字体名称判断是否粗体
+              isBold = item.fontName.toLowerCase().includes('bold');
+              currentFontSize = Math.round(item.height || 12);
+            }
+
+            // 添加文本
+            const textRun = new TextRun({
+              text: item.str,
+              bold: isBold,
+              size: currentFontSize * 2 // Word使用半点
+            });
+
+            currentParagraph.push(textRun);
+            lastY = y;
+            totalParagraphs++;
+          }
+
+          // 保存最后一个段落
+          if (currentParagraph.length > 0) {
+            sections.push(new Paragraph({
+              children: currentParagraph,
+              spacing: { after: 200 }
+            }));
+          }
+
+          // 提取图片（如果启用）
+          if (extractImages) {
+            try {
+              const operatorList = await page.getOperatorList();
+              
+              for (let j = 0; j < operatorList.fnArray.length; j++) {
+                const fn = operatorList.fnArray[j];
+                const args = operatorList.argsArray[j];
+                
+                if (fn === pdfjsLib.OPS.paintImageXObject || fn === pdfjsLib.OPS.paintJpegXObject) {
+                  const imgName = args[0];
+                  const resources = await page.getResources();
+                  
+                  if (resources && resources.xObject) {
+                    const xObject = resources.xObject[imgName];
+                    if (xObject) {
+                      const imgData = await xObject.decode();
+                      
+                      if (imgData && imgData.data) {
+                        // 将图片转为PNG
+                        const canvas = document.createElement('canvas');
+                        canvas.width = imgData.width;
+                        canvas.height = imgData.height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        const imgArray = new Uint8ClampedArray(imgData.data);
+                        const imageData = new ImageData(imgArray, imgData.width, imgData.height);
+                        ctx.putImageData(imageData, 0, 0);
+                        
+                        const dataUrl = canvas.toDataURL('image/png');
+                        const base64Data = dataUrl.split(',')[1];
+                        const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                        
+                        // 添加图片到Word
+                        sections.push(new Paragraph({
+                          children: [
+                            new ImageRun({
+                              data: imageBytes,
+                              transformation: {
+                                width: Math.min(imgData.width, 600),
+                                height: Math.min(imgData.height, 800)
+                              }
+                            })
+                          ],
+                          spacing: { before: 200, after: 200 }
+                        }));
+                        
+                        totalImages++;
+                      }
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('图片提取失败:', e);
+            }
+          }
+
+          page.cleanup();
+        }
+
+        progressBar.style.width = '95%';
+        progressText.textContent = '正在生成 Word 文档...';
+
+        // 创建Word文档
+        const doc = new Document({
+          sections: [{
+            properties: {},
+            children: sections
+          }]
+        });
+
+        // 生成并下载
+        const docxBlob = await doc.toBlob();
+
+        progressBar.style.width = '100%';
+        progressText.textContent = '转换完成！';
+
+        state.toword.result = docxBlob;
+        state.toword.resultName = file.name.replace('.pdf', '.docx');
+
+        document.getElementById('towordResultInfo').innerHTML = `
+          已转换 ${pagesToConvert.length} 页<br>
+          提取文本段落数: ${totalParagraphs}<br>
+          ${extractImages ? `提取图片数: ${totalImages}<br>` : ''}
+          文件大小: ${formatBytes(docxBlob.size)}
+        `;
+        document.getElementById('towordResult').classList.add('visible');
+        document.getElementById('towordProgress').classList.remove('visible');
+
+        updateStats();
+      } catch (err) {
+        console.error(err);
+        alert('转换失败: ' + err.message);
+        resetTowordUI();
+      }
+    });
+
+    document.getElementById('towordDownloadBtn').addEventListener('click', () => {
+      download(state.toword.result, state.toword.resultName, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    });
+
+    document.getElementById('towordResetBtn').addEventListener('click', clearToword);
+    document.getElementById('towordClearBtn').addEventListener('click', clearToword);
+
+    function clearToword() {
+      state.toword = { file: null, totalPages: 0 };
+      resetTowordUI();
+    }
+
+    function resetTowordUI() {
+      document.getElementById('towordFileList').classList.add('hidden');
+      document.getElementById('towordUpload').classList.remove('hidden');
+      document.getElementById('towordControls').classList.add('hidden');
+      document.getElementById('towordActions').classList.add('hidden');
+      document.getElementById('towordResult').classList.remove('visible');
+      document.getElementById('towordProgress').classList.remove('visible');
+      document.getElementById('towordFileInput').value = '';
     }
   </script>
 </body>
