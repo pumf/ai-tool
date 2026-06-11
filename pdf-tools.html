@@ -3416,6 +3416,313 @@
       document.getElementById('decryptPassword').value = '';
     }
 
+    // ============ PDF 转 Word 辅助函数（高保真转换） ============
+    
+    // 分析文本布局 - 将PDF文本元素按行和列组织
+    function analyzeTextLayout(textContent, pageWidth, pageHeight) {
+      if (!textContent || !textContent.items || textContent.items.length === 0) {
+        return [];
+      }
+
+      const items = textContent.items;
+      const lines = [];
+      const tolerance = 3; // Y坐标容差（磅）
+      
+      // 第一步：按Y坐标分组（同一行的文本）
+      const yGroups = new Map();
+      
+      for (const item of items) {
+        if (!item.str || item.str.trim() === '') continue;
+        
+        const y = Math.round(item.transform[5]); // Y坐标
+        const yKey = Math.round(y / tolerance) * tolerance;
+        
+        if (!yGroups.has(yKey)) {
+          yGroups.set(yKey, []);
+        }
+        yGroups.get(yKey).push(item);
+      }
+      
+      // 第二步：对每一行按X坐标排序，并合并相邻文本
+      const sortedYKeys = Array.from(yGroups.keys()).sort((a, b) => b - a); // 从上到下
+      
+      for (const yKey of sortedYKeys) {
+        const itemsInLine = yGroups.get(yKey);
+        itemsInLine.sort((a, b) => a.transform[4] - b.transform[4]); // 从左到右
+        
+        // 合并同一行中相邻的文本（考虑空格）
+        const mergedItems = [];
+        let currentGroup = null;
+        
+        for (const item of itemsInLine) {
+          if (!currentGroup) {
+            currentGroup = {
+              items: [item],
+              x: item.transform[4],
+              y: item.transform[5],
+              width: item.width,
+              height: item.height
+            };
+          } else {
+            const lastItem = currentGroup.items[currentGroup.items.length - 1];
+            const lastEndX = lastItem.transform[4] + lastItem.width;
+            const currentStartX = item.transform[4];
+            const gap = currentStartX - lastEndX;
+            
+            // 如果间距小于字体高度的0.5倍，认为是同一文本块
+            const avgHeight = (lastItem.height + item.height) / 2;
+            
+            if (gap < avgHeight * 0.3 && Math.abs(lastItem.height - item.height) < 2) {
+              // 合并到当前组
+              currentGroup.items.push(item);
+              currentGroup.width = item.transform[4] + item.width - currentGroup.x;
+            } else {
+              // 保存当前组，开始新组
+              mergedItems.push(currentGroup);
+              currentGroup = {
+                items: [item],
+                x: item.transform[4],
+                y: item.transform[5],
+                width: item.width,
+                height: item.height
+              };
+            }
+          }
+        }
+        
+        if (currentGroup) {
+          mergedItems.push(currentGroup);
+        }
+        
+        // 为每个合并的文本块创建段落数据
+        for (const group of mergedItems) {
+          lines.push({
+            type: 'paragraph',
+            items: group.items,
+            x: group.x,
+            y: group.y,
+            width: group.width,
+            height: group.height,
+            pageWidth: pageWidth,
+            pageHeight: pageHeight
+          });
+        }
+      }
+      
+      return lines;
+    }
+    
+    // 从行数据创建Word段落
+    function createParagraphFromLine(line, keepFormat) {
+      const { Document, Paragraph, TextRun, AlignmentType } = docx;
+      
+      const children = [];
+      let isFirst = true;
+      
+      for (const item of line.items) {
+        let text = item.str;
+        
+        // 如果不是第一个文本，检查是否需要添加空格
+        if (!isFirst) {
+          const prevItem = line.items[line.items.indexOf(item) - 1];
+          const prevEndX = prevItem.transform[4] + prevItem.width;
+          const currentStartX = item.transform[4];
+          const gap = currentStartX - prevEndX;
+          
+          // 根据间距添加空格
+          if (gap > 2) {
+            const spaces = Math.round(gap / (item.height * 0.3));
+            text = ' '.repeat(Math.min(spaces, 10)) + text;
+          }
+        }
+        
+        const textRunOptions = {
+          text: text
+        };
+        
+        if (keepFormat) {
+          // 字体大小（Word使用半点，PDF使用点）
+          const fontSize = Math.round(item.height || 12);
+          textRunOptions.size = fontSize * 2;
+          
+          // 字体名称
+          if (item.fontName) {
+            textRunOptions.font = item.fontName;
+          }
+          
+          // 粗体
+          if (item.fontName && item.fontName.toLowerCase().includes('bold')) {
+            textRunOptions.bold = true;
+          }
+          
+          // 斜体
+          if (item.fontName && (item.fontName.toLowerCase().includes('italic') || 
+                               item.fontName.toLowerCase().includes('oblique'))) {
+            textRunOptions.italics = true;
+          }
+          
+          // 颜色（如果可用）
+          if (item.color) {
+            textRunOptions.color = item.color;
+          }
+        }
+        
+        children.push(new TextRun(textRunOptions));
+        isFirst = false;
+      }
+      
+      // 判断段落对齐方式
+      let alignment = AlignmentType.LEFT;
+      if (keepFormat && line.items.length > 0) {
+        const pageWidth = line.pageWidth;
+        const lineStartX = line.x;
+        const lineEndX = line.x + line.width;
+        const pageCenterX = pageWidth / 2;
+        const lineCenterX = (lineStartX + lineEndX) / 2;
+        
+        // 判断是否居中
+        if (Math.abs(lineCenterX - pageCenterX) < 20) {
+          alignment = AlignmentType.CENTER;
+        }
+        // 判断是否右对齐
+        else if (pageWidth - lineEndX < 20) {
+          alignment = AlignmentType.RIGHT;
+        }
+      }
+      
+      return new Paragraph({
+        children: children,
+        alignment: alignment,
+        spacing: {
+          after: 100, // 段后间距
+          line: 240 // 行距（默认单倍行距）
+        }
+      });
+    }
+    
+    // 从页面提取图片
+    async function extractPageImages(page) {
+      const images = [];
+      
+      try {
+        const operatorList = await page.getOperatorList();
+        const viewport = page.getViewport({ scale: 1 });
+        
+        for (let j = 0; j < operatorList.fnArray.length; j++) {
+          const fn = operatorList.fnArray[j];
+          const args = operatorList.argsArray[j];
+          
+          if (fn === pdfjsLib.OPS.paintImageXObject || 
+              fn === pdfjsLib.OPS.paintJpegXObject ||
+              fn === pdfjsLib.OPS.paintImageXObjectRepeat) {
+            
+            try {
+              const imgName = args[0];
+              const img = await page.objs.get(imgName);
+              
+              if (img && img.data) {
+                // 获取图片在页面上的位置和尺寸
+                const transform = args.length > 1 ? args[1] : null;
+                let x = 0, y = 0, width = img.width, height = img.height;
+                
+                if (transform && transform.length >= 6) {
+                  // transform: [scaleX, skewX, skewY, scaleY, translateX, translateY]
+                  width = Math.abs(transform[0]) || width;
+                  height = Math.abs(transform[3]) || height;
+                  x = transform[4] || 0;
+                  y = viewport.height - transform[5] - height; // PDF坐标系Y轴向上
+                }
+                
+                images.push({
+                  data: img.data,
+                  width: width,
+                  height: height,
+                  x: x,
+                  y: y,
+                  pageWidth: viewport.width,
+                  pageHeight: viewport.height
+                });
+              }
+            } catch (e) {
+              console.warn('提取图片失败:', e);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('获取操作列表失败:', e);
+      }
+      
+      return images;
+    }
+    
+    // 从图片数据创建段落
+    async function createImageParagraphFromData(img) {
+      const { Paragraph, ImageRun } = docx;
+      
+      try {
+        // 将图片数据转为PNG
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        
+        if (img.data instanceof Uint8ClampedArray) {
+          const imageData = new ImageData(img.data, img.width, img.height);
+          ctx.putImageData(imageData, 0, 0);
+        } else if (img.data instanceof Uint8Array) {
+          // 可能是JPEG或其他格式
+          const imgBlob = new Blob([img.data], { type: 'image/png' });
+          const bitmap = await createImageBitmap(imgBlob);
+          ctx.drawImage(bitmap, 0, 0);
+        }
+        
+        const dataUrl = canvas.toDataURL('image/png');
+        const base64Data = dataUrl.split(',')[1];
+        const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        
+        // 计算图片在Word中的尺寸（转换为合理的显示尺寸）
+        const maxWidth = 600; // 最大宽度（点）
+        const maxHeight = 800; // 最大高度（点）
+        
+        let displayWidth = img.width;
+        let displayHeight = img.height;
+        
+        if (displayWidth > maxWidth || displayHeight > maxHeight) {
+          const scale = Math.min(maxWidth / displayWidth, maxHeight / displayHeight);
+          displayWidth = Math.round(displayWidth * scale);
+          displayHeight = Math.round(displayHeight * scale);
+        }
+        
+        return new Paragraph({
+          children: [
+            new ImageRun({
+              data: imageBytes,
+              transformation: {
+                width: displayWidth,
+                height: displayHeight
+              }
+            })
+          ],
+          spacing: {
+            before: 200,
+            after: 200
+          }
+        });
+      } catch (e) {
+        console.error('创建图片段落失败:', e);
+        return null;
+      }
+    }
+    
+    // 占位函数（表格功能待实现）
+    function createTableFromLine(line) {
+      return null;
+    }
+    
+    function createImageParagraph(line) {
+      return null;
+    }
+
     // ============ PDF 转 Word 功能 ============
     state.toword = { file: null, totalPages: 0 };
 
@@ -3488,13 +3795,18 @@
         progressBar.style.width = '20%';
         progressText.textContent = '正在提取内容...';
 
-        // 使用docx库创建Word文档
-        const { Document, Paragraph, TextRun, HeadingLevel, ImageRun, AlignmentType, Packer } = docx;
+        // 使用docx库创建Word文档 - 高保真转换
+        const { Document, Paragraph, TextRun, HeadingLevel, ImageRun, AlignmentType, Packer, 
+                Table, TableRow, TableCell, WidthType, BorderStyle, 
+                Header, Footer, PageNumber, NumberFormat,
+                PageOrientation, convertInchesToTwip } = docx;
         
-        const sections = [];
+        const documentSections = [];
         let totalParagraphs = 0;
         let totalImages = 0;
+        let totalTables = 0;
 
+        // 处理每一页
         for (let i = 0; i < pagesToConvert.length; i++) {
           const pageNum = pagesToConvert[i];
           const progress = 20 + (i / pagesToConvert.length) * 70;
@@ -3502,134 +3814,95 @@
           progressText.textContent = `正在处理第 ${pageNum}/${totalPages} 页...`;
 
           const page = await pdf.getPage(pageNum);
+          
+          // 获取页面尺寸和视口
+          const viewport = page.getViewport({ scale: 1 });
+          const pageWidth = viewport.width;
+          const pageHeight = viewport.height;
+          
+          // 获取页面内容
           const textContent = await page.getTextContent();
           
-          // 添加页面分隔
-          if (i > 0) {
-            sections.push(new Paragraph({
-              children: [new TextRun({ text: `--- 第 ${pageNum} 页 ---`, break: 1 })],
-              spacing: { before: 400, after: 200 }
-            }));
-          }
-
-          // 提取文本内容
-          let lastY = null;
-          let currentParagraph = [];
-          let currentFontSize = 12;
-          let isBold = false;
-
-          for (const item of textContent.items) {
-            if (item.str.trim() === '') continue;
-
-            // 检查是否是新段落（Y坐标变化）
-            const y = item.transform[5];
-            if (lastY !== null && Math.abs(y - lastY) > 5) {
-              // 保存当前段落
-              if (currentParagraph.length > 0) {
-                sections.push(new Paragraph({
-                  children: currentParagraph,
-                  spacing: { after: 200 }
-                }));
-                currentParagraph = [];
+          // 分析文本布局 - 按行和列组织
+          const lines = analyzeTextLayout(textContent, pageWidth, pageHeight);
+          
+          // 转换为Word段落
+          const pageChildren = [];
+          
+          for (const line of lines) {
+            if (line.type === 'paragraph') {
+              // 文本段落
+              const paragraph = createParagraphFromLine(line, keepFormat);
+              pageChildren.push(paragraph);
+              totalParagraphs++;
+            } else if (line.type === 'table') {
+              // 表格
+              const table = createTableFromLine(line);
+              pageChildren.push(table);
+              totalTables++;
+            } else if (line.type === 'image' && extractImages) {
+              // 图片
+              const imageParagraph = await createImageParagraph(line);
+              if (imageParagraph) {
+                pageChildren.push(imageParagraph);
+                totalImages++;
               }
             }
-
-            // 提取字体信息
-            if (keepFormat && item.fontName) {
-              // 根据字体名称判断是否粗体
-              isBold = item.fontName.toLowerCase().includes('bold');
-              currentFontSize = Math.round(item.height || 12);
-            }
-
-            // 添加文本
-            const textRun = new TextRun({
-              text: item.str,
-              bold: isBold,
-              size: currentFontSize * 2 // Word使用半点
-            });
-
-            currentParagraph.push(textRun);
-            lastY = y;
-            totalParagraphs++;
           }
-
-          // 保存最后一个段落
-          if (currentParagraph.length > 0) {
-            sections.push(new Paragraph({
-              children: currentParagraph,
-              spacing: { after: 200 }
-            }));
-          }
-
-          // 提取图片（如果启用）
+          
+          // 提取页面中的图片（如果启用）
           if (extractImages) {
-            try {
-              const operatorList = await page.getOperatorList();
-              
-              for (let j = 0; j < operatorList.fnArray.length; j++) {
-                const fn = operatorList.fnArray[j];
-                const args = operatorList.argsArray[j];
-                
-                if (fn === pdfjsLib.OPS.paintImageXObject || fn === pdfjsLib.OPS.paintJpegXObject) {
-                  const imgName = args[0];
-                  const resources = await page.getResources();
-                  
-                  if (resources && resources.xObject) {
-                    const xObject = resources.xObject[imgName];
-                    if (xObject) {
-                      const imgData = await xObject.decode();
-                      
-                      if (imgData && imgData.data) {
-                        // 将图片转为PNG
-                        const canvas = document.createElement('canvas');
-                        canvas.width = imgData.width;
-                        canvas.height = imgData.height;
-                        const ctx = canvas.getContext('2d');
-                        
-                        const imgArray = new Uint8ClampedArray(imgData.data);
-                        const imageData = new ImageData(imgArray, imgData.width, imgData.height);
-                        ctx.putImageData(imageData, 0, 0);
-                        
-                        const dataUrl = canvas.toDataURL('image/png');
-                        const base64Data = dataUrl.split(',')[1];
-                        const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-                        
-                        // 添加图片到Word
-                        sections.push(new Paragraph({
-                          children: [
-                            new ImageRun({
-                              data: imageBytes,
-                              transformation: {
-                                width: Math.min(imgData.width, 600),
-                                height: Math.min(imgData.height, 800)
-                              }
-                            })
-                          ],
-                          spacing: { before: 200, after: 200 }
-                        }));
-                        
-                        totalImages++;
-                      }
-                    }
-                  }
-                }
+            const images = await extractPageImages(page);
+            for (const img of images) {
+              const imageParagraph = await createImageParagraphFromData(img);
+              if (imageParagraph) {
+                pageChildren.push(imageParagraph);
+                totalImages++;
               }
-            } catch (e) {
-              console.warn('图片提取失败:', e);
             }
           }
-
+          
+          // 添加页面分隔（除第一页外）
+          if (i > 0) {
+            pageChildren.unshift(new Paragraph({
+              children: [new TextRun({ break: 1 })],
+              spacing: { before: 0, after: 0 }
+            }));
+          }
+          
+          documentSections.push(...pageChildren);
           page.cleanup();
         }
 
         progressBar.style.width = '95%';
         progressText.textContent = '正在生成 Word 文档...';
 
-        // 创建Word文档
+        // 创建Word文档 - 设置页面属性
+        const firstPage = await pdf.getPage(pagesToConvert[0]);
+        const firstViewport = firstPage.getViewport({ scale: 1 });
+        
+        // 将PDF的磅值转换为Word的twips（1磅 = 20 twips）
+        const pageWidthTwips = Math.round(firstViewport.width * 20);
+        const pageHeightTwips = Math.round(firstViewport.height * 20);
+        
         const doc = new Document({
           sections: [{
-            properties: {},
-            children: sections
+            properties: {
+              page: {
+                size: {
+                  width: pageWidthTwips,
+                  height: pageHeightTwips,
+                  orientation: pageWidthTwips > pageHeightTwips ? PageOrientation.LANDSCAPE : PageOrientation.PORTRAIT
+                },
+                margin: {
+                  top: convertInchesToTwip(0.5),
+                  right: convertInchesToTwip(0.5),
+                  bottom: convertInchesToTwip(0.5),
+                  left: convertInchesToTwip(0.5)
+                }
+              }
+            },
+            children: documentSections
           }]
         });
 
@@ -3646,6 +3919,7 @@
           已转换 ${pagesToConvert.length} 页<br>
           提取文本段落数: ${totalParagraphs}<br>
           ${extractImages ? `提取图片数: ${totalImages}<br>` : ''}
+          ${totalTables > 0 ? `提取表格数: ${totalTables}<br>` : ''}
           文件大小: ${formatBytes(docxBlob.size)}
         `;
         document.getElementById('towordResult').classList.add('visible');
