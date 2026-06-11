@@ -3489,7 +3489,7 @@
         progressText.textContent = '正在提取内容...';
 
         // 使用docx库创建Word文档
-        const { Document, Paragraph, TextRun, HeadingLevel, ImageRun, AlignmentType } = docx;
+        const { Document, Paragraph, TextRun, HeadingLevel, ImageRun, AlignmentType, Packer } = docx;
         
         const sections = [];
         let totalParagraphs = 0;
@@ -3634,7 +3634,7 @@
         });
 
         // 生成并下载
-        const docxBlob = await doc.toBlob();
+        const docxBlob = await Packer.toBlob(doc);
 
         progressBar.style.width = '100%';
         progressText.textContent = '转换完成！';
