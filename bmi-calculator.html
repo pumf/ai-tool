@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BMI 计算器 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --color-error: #ef4444;
+      --color-warning: #f59e0b;
+      --color-success: #10b981;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 800px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .panel {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-ink);
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .input-field {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-family: var(--font-sans);
+      transition: border-color 0.2s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .unit-label {
+      font-size: 14px;
+      color: var(--color-muted);
+      min-width: 30px;
+    }
+    .gender-group {
+      display: flex;
+      gap: 12px;
+    }
+    .gender-btn {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+    }
+    .gender-btn:hover {
+      border-color: var(--color-primary);
+    }
+    .gender-btn.active {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+    .btn {
+      width: 100%;
+      padding: 14px 24px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+    }
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      transform: translateY(-1px);
+    }
+    .result-panel {
+      display: none;
+    }
+    .result-panel.show {
+      display: block;
+    }
+    .bmi-display {
+      text-align: center;
+      padding: 32px 24px;
+      background: var(--color-canvas-soft);
+      border-radius: var(--radius-md);
+      margin-bottom: 24px;
+    }
+    .bmi-value {
+      font-size: 56px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .bmi-status {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .bmi-range {
+      font-size: 14px;
+      color: var(--color-body);
+    }
+    .bmi-bar {
+      height: 8px;
+      background: linear-gradient(to right, 
+        #3b82f6 0%, #3b82f6 18.5%, 
+        #10b981 18.5%, #10b981 25%, 
+        #f59e0b 25%, #f59e0b 30%, 
+        #ef4444 30%, #ef4444 100%
+      );
+      border-radius: 4px;
+      margin: 20px 0;
+      position: relative;
+    }
+    .bmi-marker {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: var(--color-ink);
+      border-radius: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border: 3px solid var(--color-canvas);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: left 0.5s ease-out;
+    }
+    .bmi-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--color-muted);
+      margin-top: 8px;
+    }
+    .advice-list {
+      display: grid;
+      gap: 12px;
+    }
+    .advice-item {
+      padding: 16px;
+      background: var(--color-canvas-soft);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--color-primary);
+    }
+    .advice-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .advice-text {
+      font-size: 13px;
+      color: var(--color-body);
+      line-height: 1.6;
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">小飞 <span>AI</span> 工具</a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>BMI 计算器</h1>
+      <p>计算体质指数，获取健康体重建议</p>
+    </div>
+
+    <div class="panel">
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label">性别</label>
+        <div class="gender-group">
+          <button class="gender-btn active" onclick="selectGender('male', this)">男</button>
+          <button class="gender-btn" onclick="selectGender('female', this)">女</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">身高</label>
+          <div class="input-group">
+            <input type="number" class="input-field" id="height" placeholder="170" min="100" max="250">
+            <span class="unit-label">cm</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">体重</label>
+          <div class="input-group">
+            <input type="number" class="input-field" id="weight" placeholder="65" min="20" max="300" step="0.1">
+            <span class="unit-label">kg</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">年龄（可选）</label>
+        <div class="input-group">
+          <input type="number" class="input-field" id="age" placeholder="25" min="1" max="120">
+          <span class="unit-label">岁</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="calculateBMI()">计算 BMI</button>
+    </div>
+
+    <div class="panel result-panel" id="resultPanel">
+      <div class="bmi-display">
+        <div class="bmi-value" id="bmiValue">--</div>
+        <div class="bmi-status" id="bmiStatus">--</div>
+        <div class="bmi-range" id="bmiRange">--</div>
+        
+        <div class="bmi-bar">
+          <div class="bmi-marker" id="bmiMarker"></div>
+        </div>
+        <div class="bmi-labels">
+          <span>偏瘦</span>
+          <span>正常</span>
+          <span>超重</span>
+          <span>肥胖</span>
+        </div>
+      </div>
+
+      <div class="advice-list" id="adviceList"></div>
+    </div>
+  </div>
+
+  <script>
+    let gender = 'male';
+
+    function selectGender(g, btn) {
+      gender = g;
+      document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function calculateBMI() {
+      const height = parseFloat(document.getElementById('height').value);
+      const weight = parseFloat(document.getElementById('weight').value);
+      const age = parseInt(document.getElementById('age').value) || null;
+
+      if (!height || !weight || height < 100 || height > 250 || weight < 20 || weight > 300) {
+        alert('请输入有效的身高（100-250cm）和体重（20-300kg）');
+        return;
+      }
+
+      const heightM = height / 100;
+      const bmi = weight / (heightM * heightM);
+      const bmiRounded = Math.round(bmi * 10) / 10;
+
+      let status, statusColor, advice;
+      
+      if (bmi < 18.5) {
+        status = '偏瘦';
+        statusColor = '#3b82f6';
+        advice = getAdvice('underweight', height, weight, gender, age);
+      } else if (bmi < 24) {
+        status = '正常';
+        statusColor = '#10b981';
+        advice = getAdvice('normal', height, weight, gender, age);
+      } else if (bmi < 28) {
+        status = '超重';
+        statusColor = '#f59e0b';
+        advice = getAdvice('overweight', height, weight, gender, age);
+      } else {
+        status = '肥胖';
+        statusColor = '#ef4444';
+        advice = getAdvice('obese', height, weight, gender, age);
+      }
+
+      document.getElementById('bmiValue').textContent = bmiRounded;
+      document.getElementById('bmiValue').style.color = statusColor;
+      document.getElementById('bmiStatus').textContent = status;
+      document.getElementById('bmiStatus').style.color = statusColor;
+      
+      const normalWeightLow = (18.5 * heightM * heightM).toFixed(1);
+      const normalWeightHigh = (23.9 * heightM * heightM).toFixed(1);
+      document.getElementById('bmiRange').textContent = `正常体重范围：${normalWeightLow} - ${normalWeightHigh} kg`;
+
+      // 计算标记位置
+      let markerPosition = (bmi / 40) * 100;
+      markerPosition = Math.max(0, Math.min(100, markerPosition));
+      document.getElementById('bmiMarker').style.left = `${markerPosition}%`;
+
+      // 显示建议
+      document.getElementById('adviceList').innerHTML = advice.map(a => `
+        <div class="advice-item">
+          <div class="advice-title">${a.title}</div>
+          <div class="advice-text">${a.text}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('resultPanel').classList.add('show');
+    }
+
+    function getAdvice(type, height, weight, gender, age) {
+      const heightM = height / 100;
+      const idealWeight = gender === 'male' 
+        ? (heightM - 80) * 0.7 
+        : (heightM - 70) * 0.6;
+      
+      const advices = {
+        underweight: [
+          {
+            title: '💪 增重建议',
+            text: `您的理想体重约为 ${idealWeight.toFixed(1)} kg，建议每周增重 0.5kg 左右。增加优质蛋白质和复合碳水化合物的摄入，配合力量训练。`
+          },
+          {
+            title: '🥗 饮食建议',
+            text: '保证三餐规律，可适当加餐。多吃坚果、全脂奶制品、瘦肉等高营养密度食物。'
+          },
+          {
+            title: '🏃 运动建议',
+            text: '以力量训练为主，每周 3-4 次，帮助增加肌肉量。避免过量有氧运动。'
+          }
+        ],
+        normal: [
+          {
+            title: '✨ 保持现状',
+            text: `恭喜！您的 BMI 处于健康范围，体重约为 ${idealWeight.toFixed(1)} kg。继续保持良好的生活习惯。`
+          },
+          {
+            title: '🥗 饮食建议',
+            text: '保持均衡饮食，控制盐、糖、油的摄入。每天保证 2L 饮水量。'
+          },
+          {
+            title: '🏃 运动建议',
+            text: '建议每周进行 150 分钟中等强度有氧运动或 75 分钟高强度运动，外加每周 2 次力量训练。'
+          }
+        ],
+        overweight: [
+          {
+            title: '📉 减重建议',
+            text: `您的理想体重约为 ${idealWeight.toFixed(1)} kg，建议每周减重 0.5-1kg，循序渐进。`
+          },
+          {
+            title: '🥗 饮食建议',
+            text: '控制总热量摄入，减少精制碳水和油脂。增加蔬菜、水果、全谷物摄入。细嚼慢咽，避免暴饮暴食。'
+          },
+          {
+            title: '🏃 运动建议',
+            text: '每周至少 150 分钟中等强度有氧运动（快走、游泳、骑行等），配合力量训练效果更佳。'
+          }
+        ],
+        obese: [
+          {
+            title: '⚠️ 健康提醒',
+            text: `您的 BMI 已达到肥胖标准，建议尽快制定减重计划。理想体重约为 ${idealWeight.toFixed(1)} kg。`
+          },
+          {
+            title: '🏥 医疗建议',
+            text: '建议咨询专业医生或营养师，制定科学的减重方案。必要时可进行体检，评估肥胖相关疾病风险。'
+          },
+          {
+            title: '🏃 运动建议',
+            text: '从低强度运动开始，如散步、游泳等。避免对关节冲击大的运动。随着体重下降，逐步增加运动强度。'
+          }
+        ]
+      };
+
+      return advices[type];
+    }
+  </script>
+</body>
+</html>

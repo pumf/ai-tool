@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>亲戚关系计算器 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 600px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .panel {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: var(--color-ink);
+    }
+    .gender-select {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .gender-btn {
+      flex: 1;
+      padding: 14px;
+      border: 2px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-family: var(--font-sans);
+    }
+    .gender-btn:hover {
+      border-color: var(--color-primary);
+    }
+    .gender-btn.active {
+      border-color: var(--color-primary);
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+    .relation-input {
+      padding: 16px;
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 60px;
+    }
+    .relation-path {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .path-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .relation-btn {
+      padding: 10px 16px;
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+    }
+    .relation-btn:hover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-soft);
+    }
+    .path-arrow {
+      color: var(--color-muted);
+      font-size: 18px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+    }
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+    }
+    .btn-secondary {
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      border: 1px solid var(--color-border);
+    }
+    .btn-secondary:hover {
+      background: var(--color-border);
+    }
+    .result-display {
+      padding: 24px;
+      background: linear-gradient(135deg, var(--color-primary-soft) 0%, rgba(10, 191, 165, 0.05) 100%);
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+    .result-relation {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+    .result-desc {
+      font-size: 14px;
+      color: var(--color-body);
+    }
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .quick-btn {
+      padding: 10px;
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .quick-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    @media (max-width: 600px) {
+      .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">小飞 <span>AI</span> 工具</a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>亲戚关系计算器</h1>
+      <p>计算中华文化中两个家庭成员之间的关系</p>
+    </div>
+
+    <div class="panel">
+      <div class="form-group">
+        <label class="form-label">我的性别</label>
+        <div class="gender-select">
+          <button class="gender-btn active" onclick="setGender('male', this)">男</button>
+          <button class="gender-btn" onclick="setGender('female', this)">女</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">关系路径（点击添加）</label>
+        <div class="relation-input" id="relationInput">请选择关系...</div>
+        <div class="relation-path" id="relationPath"></div>
+      </div>
+
+      <div class="relation-path">
+        <button class="relation-btn" onclick="addRelation('f', '爸爸')">爸爸</button>
+        <button class="relation-btn" onclick="addRelation('m', '妈妈')">妈妈</button>
+        <button class="relation-btn" onclick="addRelation('ob', '哥哥')">哥哥</button>
+        <button class="relation-btn" onclick="addRelation('yb', '弟弟')">弟弟</button>
+        <button class="relation-btn" onclick="addRelation('os', '姐姐')">姐姐</button>
+        <button class="relation-btn" onclick="addRelation('ys', '妹妹')">妹妹</button>
+      </div>
+      <div class="relation-path" style="margin-top: 8px;">
+        <button class="relation-btn" onclick="addRelation('xb', '兄弟')">兄弟</button>
+        <button class="relation-btn" onclick="addRelation('xs', '姐妹')">姐妹</button>
+        <button class="relation-btn" onclick="addRelation('s', '儿子')">儿子</button>
+        <button class="relation-btn" onclick="addRelation('d', '女儿')">女儿</button>
+        <button class="relation-btn" onclick="addRelation('h', '丈夫')">丈夫</button>
+        <button class="relation-btn" onclick="addRelation('w', '妻子')">妻子</button>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="calculate()">计算关系</button>
+        <button class="btn btn-secondary" onclick="reset()">重置</button>
+      </div>
+    </div>
+
+    <div class="panel result-display" id="resultPanel" style="display: none;">
+      <div class="result-relation" id="resultRelation">--</div>
+      <div class="result-desc" id="resultDesc">--</div>
+    </div>
+
+    <div class="panel">
+      <div class="form-label" style="margin-bottom: 12px;">快速计算</div>
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="quickCalc('f,f')">爷爷</button>
+        <button class="quick-btn" onclick="quickCalc('f,m')">奶奶</button>
+        <button class="quick-btn" onclick="quickCalc('m,f')">外公</button>
+        <button class="quick-btn" onclick="quickCalc('m,m')">外婆</button>
+        <button class="quick-btn" onclick="quickCalc('f,ob')">堂哥</button>
+        <button class="quick-btn" onclick="quickCalc('f,os')">堂姐</button>
+        <button class="quick-btn" onclick="quickCalc('m,ob')">表哥</button>
+        <button class="quick-btn" onclick="quickCalc('m,os')">表姐</button>
+        <button class="quick-btn" onclick="quickCalc('ob,w')">嫂子</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let myGender = 'male';
+    let relationChain = [];
+    let relationLabels = [];
+
+    function setGender(gender, btn) {
+      myGender = gender;
+      document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      calculate();
+    }
+
+    function addRelation(code, label) {
+      relationChain.push(code);
+      relationLabels.push(label);
+      updateRelationDisplay();
+      calculate();
+    }
+
+    function updateRelationDisplay() {
+      const input = document.getElementById('relationInput');
+      const path = document.getElementById('relationPath');
+      
+      if (relationLabels.length === 0) {
+        input.textContent = '请选择关系...';
+        path.innerHTML = '';
+        return;
+      }
+      
+      input.textContent = '我' + ' → ' + relationLabels.join(' → ');
+      
+      path.innerHTML = relationLabels.map((label, i) => `
+        <div class="path-item">
+          ${i > 0 ? '<span class="path-arrow">→</span>' : ''}
+          <span style="padding: 4px 8px; background: var(--color-primary-soft); border-radius: var(--radius-sm); font-size: 13px;">${label}</span>
+        </div>
+      `).join('');
+    }
+
+    function calculate() {
+      if (relationChain.length === 0) {
+        document.getElementById('resultPanel').style.display = 'none';
+        return;
+      }
+
+      // 简化的亲戚关系计算
+      const relation = calculateRelation(relationChain, myGender);
+      
+      document.getElementById('resultRelation').textContent = relation.title;
+      document.getElementById('resultDesc').textContent = relation.desc;
+      document.getElementById('resultPanel').style.display = 'block';
+    }
+
+    function calculateRelation(chain, gender) {
+      // 关系映射表（简化版）
+      const relations = {
+        'f': { title: '爸爸', desc: '父亲' },
+        'm': { title: '妈妈', desc: '母亲' },
+        'f,f': { title: '爷爷', desc: '父亲的父亲' },
+        'f,m': { title: '奶奶', desc: '父亲的母亲' },
+        'm,f': { title: '外公', desc: '母亲的父亲' },
+        'm,m': { title: '外婆', desc: '母亲的母亲' },
+        'f,f,f': { title: '曾祖父', desc: '爷爷的爸爸' },
+        'f,f,m': { title: '曾祖母', desc: '爷爷的妈妈' },
+        'm,f,f': { title: '外曾祖父', desc: '外公的爸爸' },
+        'm,f,m': { title: '外曾祖母', desc: '外公的妈妈' },
+        'f,ob': { title: '堂哥', desc: '爸爸兄弟的儿子（比你大）' },
+        'f,yb': { title: '堂弟', desc: '爸爸兄弟的儿子（比你小）' },
+        'f,os': { title: '堂姐', desc: '爸爸兄弟的女儿（比你大）' },
+        'f,ys': { title: '堂妹', desc: '爸爸兄弟的女儿（比你小）' },
+        'm,ob': { title: '表哥', desc: '妈妈的兄弟姐妹的儿子（比你大）' },
+        'm,yb': { title: '表弟', desc: '妈妈的兄弟姐妹的儿子（比你小）' },
+        'm,os': { title: '表姐', desc: '妈妈的兄弟姐妹的女儿（比你大）' },
+        'm,ys': { title: '表妹', desc: '妈妈的兄弟姐妹的女儿（比你小）' },
+        'ob': { title: '哥哥', desc: '年长的兄弟' },
+        'yb': { title: '弟弟', desc: '年幼的兄弟' },
+        'os': { title: '姐姐', desc: '年长的姐妹' },
+        'ys': { title: '妹妹', desc: '年幼的姐妹' },
+        'ob,w': { title: '嫂子', desc: '哥哥的妻子' },
+        'yb,w': { title: '弟妹', desc: '弟弟的妻子' },
+        'os,h': { title: '姐夫', desc: '姐姐的丈夫' },
+        'ys,h': { title: '妹夫', desc: '妹妹的丈夫' },
+        'h': { title: '丈夫', desc: '配偶' },
+        'w': { title: '妻子', desc: '配偶' },
+        's': { title: '儿子', desc: '儿子' },
+        'd': { title: '女儿', desc: '女儿' },
+        's,s': { title: '孙子', desc: '儿子的儿子' },
+        's,d': { title: '孙女', desc: '儿子的女儿' },
+        'd,s': { title: '外孙', desc: '女儿的儿子' },
+        'd,d': { title: '外孙女', desc: '女儿的女儿' },
+        'f,xb': { title: '伯父/叔叔', desc: '爸爸的兄弟' },
+        'f,xs': { title: '姑姑', desc: '爸爸的姐妹' },
+        'm,xb': { title: '舅舅', desc: '妈妈的兄弟' },
+        'm,xs': { title: '姨妈', desc: '妈妈的姐妹' }
+      };
+
+      const key = chain.join(',');
+      
+      if (relations[key]) {
+        return relations[key];
+      }
+
+      // 如果找不到匹配的关系，返回计算路径
+      return {
+        title: '远方亲戚',
+        desc: `您的${relationLabels.join('的')}`
+      };
+    }
+
+    function reset() {
+      relationChain = [];
+      relationLabels = [];
+      updateRelationDisplay();
+      document.getElementById('resultPanel').style.display = 'none';
+    }
+
+    function quickCalc(chain) {
+      reset();
+      const codes = chain.split(',');
+      const labels = {
+        'f': '爸爸', 'm': '妈妈', 'ob': '哥哥', 'yb': '弟弟',
+        'os': '姐姐', 'ys': '妹妹', 'xb': '兄弟', 'xs': '姐妹',
+        's': '儿子', 'd': '女儿', 'h': '丈夫', 'w': '妻子'
+      };
+      
+      codes.forEach(code => {
+        relationChain.push(code);
+        relationLabels.push(labels[code]);
+      });
+      
+      updateRelationDisplay();
+      calculate();
+    }
+  </script>
+</body>
+</html>

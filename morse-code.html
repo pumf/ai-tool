@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>摩尔斯电码转换 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --font-sans: 'Inter', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 800px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .tabs {
+      display: flex; gap: 8px; margin-bottom: 20px;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 12px;
+    }
+    .tab {
+      padding: 10px 20px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      color: var(--color-body);
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+    }
+    .tab:hover { color: var(--color-primary); }
+    .tab.active {
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .panel {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--color-ink);
+    }
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-family: var(--font-sans);
+      transition: border-color 0.2s;
+      resize: vertical;
+      min-height: 100px;
+    }
+    .input-field.morse {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      letter-spacing: 2px;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+    }
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .result-display {
+      padding: 16px;
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 18px;
+      letter-spacing: 2px;
+      word-break: break-all;
+      min-height: 80px;
+    }
+    .audio-controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .morse-chart {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .morse-item {
+      padding: 12px;
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+    .morse-char {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .morse-code {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--color-primary);
+    }
+    @media (max-width: 600px) {
+      .morse-chart {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">小飞 <span>AI</span> 工具</a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>摩尔斯电码转换</h1>
+      <p>文本与摩尔斯电码互转，支持音频播放</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('encode')">文本转电码</button>
+      <button class="tab" onclick="switchTab('decode')">电码转文本</button>
+      <button class="tab" onclick="switchTab('chart')">电码表</button>
+    </div>
+
+    <!-- 文本转电码 -->
+    <div class="tab-content active" id="encodeTab">
+      <div class="panel">
+        <div class="form-group">
+          <label class="form-label">输入文本</label>
+          <textarea class="input-field" id="inputText" placeholder="输入要转换的文本（支持英文字母、数字和常用符号）" oninput="encodeMorse()"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">摩尔斯电码</label>
+          <div class="result-display" id="encodedResult">-</div>
+        </div>
+        <div class="audio-controls">
+          <button class="btn btn-primary" onclick="playMorse('encode')">🔊 播放电码</button>
+          <button class="btn btn-primary" onclick="copyMorse('encode')">📋 复制电码</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 电码转文本 -->
+    <div class="tab-content" id="decodeTab">
+      <div class="panel">
+        <div class="form-group">
+          <label class="form-label">输入摩尔斯电码</label>
+          <textarea class="input-field morse" id="inputMorse" placeholder="输入摩尔斯电码（用空格分隔字符，用 / 分隔单词）" oninput="decodeMorse()"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">转换结果</label>
+          <div class="result-display" id="decodedResult" style="font-family: var(--font-sans); letter-spacing: 1px;">-</div>
+        </div>
+        <div class="audio-controls">
+          <button class="btn btn-primary" onclick="playMorse('decode')">🔊 播放电码</button>
+          <button class="btn btn-primary" onclick="copyMorse('decode')">📋 复制文本</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 电码表 -->
+    <div class="tab-content" id="chartTab">
+      <div class="panel">
+        <div class="form-label" style="margin-bottom: 16px;">摩尔斯电码对照表</div>
+        <div class="morse-chart" id="morseChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 摩尔斯电码映射表
+    const morseCode = {
+      'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+      'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+      'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+      'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+      'Y': '-.--', 'Z': '--..',
+      '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+      '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+      '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--',
+      '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...',
+      ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-',
+      '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
+    };
+
+    // 反向映射
+    const reverseMorse = {};
+    for (const [char, code] of Object.entries(morseCode)) {
+      reverseMorse[code] = char;
+    }
+
+    function encodeMorse() {
+      const input = document.getElementById('inputText').value.toUpperCase();
+      if (!input) {
+        document.getElementById('encodedResult').textContent = '-';
+        return;
+      }
+
+      const result = [];
+      for (const char of input) {
+        if (char === ' ') {
+          result.push('/');
+        } else if (morseCode[char]) {
+          result.push(morseCode[char]);
+        } else {
+          result.push(char); // 不支持的字符保留原样
+        }
+      }
+
+      document.getElementById('encodedResult').textContent = result.join(' ');
+    }
+
+    function decodeMorse() {
+      const input = document.getElementById('inputMorse').value.trim();
+      if (!input) {
+        document.getElementById('decodedResult').textContent = '-';
+        return;
+      }
+
+      const words = input.split('/').map(w => w.trim());
+      const result = words.map(word => {
+        const chars = word.split(/\s+/).filter(c => c);
+        return chars.map(c => reverseMorse[c] || c).join('');
+      });
+
+      document.getElementById('decodedResult').textContent = result.join(' ');
+    }
+
+    let audioContext = null;
+
+    function playMorse(mode) {
+      const morse = mode === 'encode' 
+        ? document.getElementById('encodedResult').textContent 
+        : document.getElementById('inputMorse').value;
+
+      if (!morse || morse === '-') return;
+
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      const dotDuration = 60; // ms
+      const dashDuration = dotDuration * 3;
+      const symbolGap = dotDuration;
+      const charGap = dotDuration * 3;
+      const wordGap = dotDuration * 7;
+
+      let time = audioContext.currentTime;
+      const gainNode = audioContext.createGain();
+      gainNode.connect(audioContext.destination);
+      gainNode.gain.value = 0.5;
+
+      for (const symbol of morse) {
+        if (symbol === '.') {
+          playTone(time, dotDuration / 1000);
+          time += (dotDuration + symbolGap) / 1000;
+        } else if (symbol === '-') {
+          playTone(time, dashDuration / 1000);
+          time += (dashDuration + symbolGap) / 1000;
+        } else if (symbol === ' ') {
+          time += charGap / 1000;
+        } else if (symbol === '/') {
+          time += wordGap / 1000;
+        }
+      }
+
+      function playTone(startTime, duration) {
+        const oscillator = audioContext.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 700;
+        oscillator.connect(gainNode);
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+      }
+    }
+
+    function copyMorse(mode) {
+      const text = mode === 'encode' 
+        ? document.getElementById('encodedResult').textContent 
+        : document.getElementById('decodedResult').textContent;
+      
+      if (!text || text === '-') return;
+      
+      navigator.clipboard.writeText(text).then(() => {
+        alert('已复制到剪贴板');
+      });
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      if (tab === 'encode') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
+        document.getElementById('encodeTab').classList.add('active');
+      } else if (tab === 'decode') {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('decodeTab').classList.add('active');
+      } else {
+        document.querySelector('.tab:nth-child(3)').classList.add('active');
+        document.getElementById('chartTab').classList.add('active');
+        loadMorseChart();
+      }
+    }
+
+    function loadMorseChart() {
+      const chart = document.getElementById('morseChart');
+      const items = [
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+      ];
+      
+      chart.innerHTML = items.map(char => `
+        <div class="morse-item">
+          <div class="morse-char">${char}</div>
+          <div class="morse-code">${morseCode[char]}</div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

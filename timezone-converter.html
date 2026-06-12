@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>世界时区对比 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 1200px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .current-time {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .time-display {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--color-primary);
+      letter-spacing: -1px;
+    }
+    .date-display {
+      font-size: 16px;
+      color: var(--color-body);
+      margin-top: 8px;
+    }
+    .timezone-select {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .select-label {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .timezone-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      padding: 8px 16px;
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .chip:hover {
+      border-color: var(--color-primary);
+    }
+    .chip.active {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+    .timezone-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .timezone-card {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: all 0.2s;
+    }
+    .timezone-card:hover {
+      border-color: var(--color-primary);
+      transform: translateY(-2px);
+    }
+    .timezone-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .timezone-city {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .timezone-offset {
+      font-size: 12px;
+      padding: 4px 8px;
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+    .timezone-time {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--color-ink);
+      margin-bottom: 4px;
+    }
+    .timezone-date {
+      font-size: 13px;
+      color: var(--color-body);
+    }
+    .timezone-diff {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--color-border);
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+    .remove-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: var(--color-canvas-soft);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .timezone-card:hover .remove-btn {
+      opacity: 1;
+    }
+    .remove-btn:hover {
+      background: #ef4444;
+      color: white;
+    }
+    @media (max-width: 768px) {
+      .time-display {
+        font-size: 36px;
+      }
+      .timezone-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">小飞 <span>AI</span> 工具</a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>世界时区对比</h1>
+      <p>实时对比多个时区时间，轻松协调全球时间</p>
+    </div>
+
+    <div class="current-time">
+      <div class="time-display" id="localTime">--:--:--</div>
+      <div class="date-display" id="localDate">----年--月--日 星期-</div>
+    </div>
+
+    <div class="timezone-select">
+      <label class="select-label">选择要对比的时区（点击添加/移除）</label>
+      <div class="timezone-chips" id="timezoneChips"></div>
+    </div>
+
+    <div class="timezone-grid" id="timezoneGrid"></div>
+  </div>
+
+  <script>
+    // 主要城市时区配置
+    const timezones = [
+      { id: 'shanghai', city: '上海', timezone: 'Asia/Shanghai', country: '中国' },
+      { id: 'beijing', city: '北京', timezone: 'Asia/Shanghai', country: '中国' },
+      { id: 'tokyo', city: '东京', timezone: 'Asia/Tokyo', country: '日本' },
+      { id: 'seoul', city: '首尔', timezone: 'Asia/Seoul', country: '韩国' },
+      { id: 'singapore', city: '新加坡', timezone: 'Asia/Singapore', country: '新加坡' },
+      { id: 'dubai', city: '迪拜', timezone: 'Asia/Dubai', country: '阿联酋' },
+      { id: 'moscow', city: '莫斯科', timezone: 'Europe/Moscow', country: '俄罗斯' },
+      { id: 'london', city: '伦敦', timezone: 'Europe/London', country: '英国' },
+      { id: 'paris', city: '巴黎', timezone: 'Europe/Paris', country: '法国' },
+      { id: 'berlin', city: '柏林', timezone: 'Europe/Berlin', country: '德国' },
+      { id: 'newyork', city: '纽约', timezone: 'America/New_York', country: '美国' },
+      { id: 'losangeles', city: '洛杉矶', timezone: 'America/Los_Angeles', country: '美国' },
+      { id: 'chicago', city: '芝加哥', timezone: 'America/Chicago', country: '美国' },
+      { id: 'sydney', city: '悉尼', timezone: 'Australia/Sydney', country: '澳大利亚' },
+      { id: 'auckland', city: '奥克兰', timezone: 'Pacific/Auckland', country: '新西兰' }
+    ];
+
+    // 默认显示的时区
+    let selectedTimezones = ['shanghai', 'tokyo', 'london', 'newyork', 'sydney'];
+
+    function initTimezoneChips() {
+      const chipsContainer = document.getElementById('timezoneChips');
+      chipsContainer.innerHTML = timezones.map(tz => `
+        <div class="chip ${selectedTimezones.includes(tz.id) ? 'active' : ''}" 
+             onclick="toggleTimezone('${tz.id}')">
+          ${tz.city}
+        </div>
+      `).join('');
+    }
+
+    function toggleTimezone(id) {
+      const index = selectedTimezones.indexOf(id);
+      if (index > -1) {
+        selectedTimezones.splice(index, 1);
+      } else {
+        selectedTimezones.push(id);
+      }
+      initTimezoneChips();
+      updateTimezoneCards();
+    }
+
+    function updateTimezoneCards() {
+      const grid = document.getElementById('timezoneGrid');
+      const selected = timezones.filter(tz => selectedTimezones.includes(tz.id));
+      
+      grid.innerHTML = selected.map(tz => {
+        const now = new Date();
+        const options = { timeZone: tz.timezone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+        const time = now.toLocaleTimeString('zh-CN', options);
+        
+        const dateOptions = { timeZone: tz.timezone, year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        const date = now.toLocaleDateString('zh-CN', dateOptions);
+        
+        // 计算时差
+        const localOffset = now.getTimezoneOffset();
+        const targetDate = new Date(now.toLocaleString('en-US', { timeZone: tz.timezone }));
+        const targetOffset = (now - targetDate) / 60000 + localOffset;
+        const diffHours = -targetOffset / 60;
+        const diffText = diffHours === 0 ? '与本地时间相同' : 
+                        diffHours > 0 ? `比本地时间快 ${diffHours} 小时` : 
+                        `比本地时间慢 ${Math.abs(diffHours)} 小时`;
+        
+        const offset = now.toLocaleString('en-US', { timeZone: tz.timezone, timeZoneName: 'shortOffset' }).split(' ').pop();
+        
+        return `
+          <div class="timezone-card">
+            <div class="timezone-header">
+              <div class="timezone-city">${tz.city}</div>
+              <div class="timezone-offset">${offset}</div>
+            </div>
+            <div class="timezone-time">${time}</div>
+            <div class="timezone-date">${date}</div>
+            <div class="timezone-diff">${diffText}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateLocalTime() {
+      const now = new Date();
+      
+      const time = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      document.getElementById('localTime').textContent = time;
+      
+      const date = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+      document.getElementById('localDate').textContent = date;
+      
+      updateTimezoneCards();
+    }
+
+    // 初始化
+    initTimezoneChips();
+    updateLocalTime();
+    setInterval(updateLocalTime, 1000);
+  </script>
+</body>
+</html>

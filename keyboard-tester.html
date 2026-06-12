@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>键盘测试器 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-soft: rgba(10, 191, 165, 0.15);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.1);
+      --color-border-hover: rgba(0, 0, 0, 0.15);
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 1000px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .stats {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .stat-item {
+      background: var(--color-canvas);
+      padding: 16px 24px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--color-muted);
+      margin-top: 4px;
+    }
+    .keyboard {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .keyboard-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+      justify-content: center;
+    }
+    .key {
+      min-width: 48px;
+      height: 48px;
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-ink);
+      transition: all 0.1s;
+      user-select: none;
+      position: relative;
+    }
+    .key:hover {
+      border-color: var(--color-border-hover);
+    }
+    .key.pressed {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      transform: scale(0.95);
+      border-color: var(--color-primary);
+    }
+    .key.space {
+      min-width: 320px;
+    }
+    .key.backspace, .key.tab, .key.caps, .key.enter, .key.shift {
+      min-width: 72px;
+    }
+    .key.shift-left, .key.shift-right {
+      min-width: 96px;
+    }
+    .key.ctrl, .key.alt, .key.cmd {
+      min-width: 64px;
+    }
+    .key-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .key-label small {
+      font-size: 9px;
+      color: var(--color-muted);
+    }
+    .key.pressed .key-label small {
+      color: rgba(255,255,255,0.7);
+    }
+    .reset-btn {
+      display: block;
+      margin: 0 auto;
+      padding: 12px 32px;
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+    }
+    .reset-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .instruction {
+      text-align: center;
+      padding: 16px;
+      background: var(--color-primary-soft);
+      border-radius: var(--radius-md);
+      color: var(--color-body);
+      font-size: 14px;
+    }
+    @media (max-width: 768px) {
+      .keyboard {
+        overflow-x: auto;
+      }
+      .key {
+        min-width: 40px;
+        height: 40px;
+        font-size: 11px;
+      }
+      .key.space {
+        min-width: 200px;
+      }
+      .stats {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">小飞 <span>AI</span> 工具</a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>键盘测试器</h1>
+      <p>测试键盘按键响应，可视化显示按键状态</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-value" id="pressedCount">0</div>
+        <div class="stat-label">已测试按键</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="totalKeys">104</div>
+        <div class="stat-label">总按键数</div>
+      </div>
+    </div>
+
+    <div class="keyboard" id="keyboard">
+      <!-- Row 1: Function keys -->
+      <div class="keyboard-row">
+        <div class="key" data-key="Escape">ESC</div>
+        <div class="key" data-key="F1">F1</div>
+        <div class="key" data-key="F2">F2</div>
+        <div class="key" data-key="F3">F3</div>
+        <div class="key" data-key="F4">F4</div>
+        <div class="key" data-key="F5">F5</div>
+        <div class="key" data-key="F6">F6</div>
+        <div class="key" data-key="F7">F7</div>
+        <div class="key" data-key="F8">F8</div>
+        <div class="key" data-key="F9">F9</div>
+        <div class="key" data-key="F10">F10</div>
+        <div class="key" data-key="F11">F11</div>
+        <div class="key" data-key="F12">F12</div>
+      </div>
+
+      <!-- Row 2: Number keys -->
+      <div class="keyboard-row">
+        <div class="key" data-key="Backquote"><span class="key-label">`<small>~</small></span></div>
+        <div class="key" data-key="Digit1"><span class="key-label">1<small>!</small></span></div>
+        <div class="key" data-key="Digit2"><span class="key-label">2<small>@</small></span></div>
+        <div class="key" data-key="Digit3"><span class="key-label">3<small>#</small></span></div>
+        <div class="key" data-key="Digit4"><span class="key-label">4<small>$</small></span></div>
+        <div class="key" data-key="Digit5"><span class="key-label">5<small>%</small></span></div>
+        <div class="key" data-key="Digit6"><span class="key-label">6<small>^</small></span></div>
+        <div class="key" data-key="Digit7"><span class="key-label">7<small>&</small></span></div>
+        <div class="key" data-key="Digit8"><span class="key-label">8<small>*</small></span></div>
+        <div class="key" data-key="Digit9"><span class="key-label">9<small>(</small></span></div>
+        <div class="key" data-key="Digit0"><span class="key-label">0<small>)</small></span></div>
+        <div class="key" data-key="Minus"><span class="key-label">-<small>_</small></span></div>
+        <div class="key" data-key="Equal"><span class="key-label">=<small>+</small></span></div>
+        <div class="key backspace" data-key="Backspace">Backspace</div>
+      </div>
+
+      <!-- Row 3: QWERTY -->
+      <div class="keyboard-row">
+        <div class="key tab" data-key="Tab">Tab</div>
+        <div class="key" data-key="KeyQ">Q</div>
+        <div class="key" data-key="KeyW">W</div>
+        <div class="key" data-key="KeyE">E</div>
+        <div class="key" data-key="KeyR">R</div>
+        <div class="key" data-key="KeyT">T</div>
+        <div class="key" data-key="KeyY">Y</div>
+        <div class="key" data-key="KeyU">U</div>
+        <div class="key" data-key="KeyI">I</div>
+        <div class="key" data-key="KeyO">O</div>
+        <div class="key" data-key="KeyP">P</div>
+        <div class="key" data-key="BracketLeft"><span class="key-label">[<small>{</small></span></div>
+        <div class="key" data-key="BracketRight"><span class="key-label">]<small>}</small></span></div>
+        <div class="key" data-key="Backslash"><span class="key-label">\<small>|</small></span></div>
+      </div>
+
+      <!-- Row 4: ASDF -->
+      <div class="keyboard-row">
+        <div class="key caps" data-key="CapsLock">CapsLock</div>
+        <div class="key" data-key="KeyA">A</div>
+        <div class="key" data-key="KeyS">S</div>
+        <div class="key" data-key="KeyD">D</div>
+        <div class="key" data-key="KeyF">F</div>
+        <div class="key" data-key="KeyG">G</div>
+        <div class="key" data-key="KeyH">H</div>
+        <div class="key" data-key="KeyJ">J</div>
+        <div class="key" data-key="KeyK">K</div>
+        <div class="key" data-key="KeyL">L</div>
+        <div class="key" data-key="Semicolon"><span class="key-label">;<small>:</small></span></div>
+        <div class="key" data-key="Quote"><span class="key-label">'<small>"</small></span></div>
+        <div class="key enter" data-key="Enter">Enter</div>
+      </div>
+
+      <!-- Row 5: ZXCV -->
+      <div class="keyboard-row">
+        <div class="key shift-left" data-key="ShiftLeft">Shift</div>
+        <div class="key" data-key="KeyZ">Z</div>
+        <div class="key" data-key="KeyX">X</div>
+        <div class="key" data-key="KeyC">C</div>
+        <div class="key" data-key="KeyV">V</div>
+        <div class="key" data-key="KeyB">B</div>
+        <div class="key" data-key="KeyN">N</div>
+        <div class="key" data-key="KeyM">M</div>
+        <div class="key" data-key="Comma"><span class="key-label">,<small><</small></span></div>
+        <div class="key" data-key="Period"><span class="key-label">.<small>></small></span></div>
+        <div class="key" data-key="Slash"><span class="key-label">/<small>?</small></span></div>
+        <div class="key shift-right" data-key="ShiftRight">Shift</div>
+      </div>
+
+      <!-- Row 6: Bottom -->
+      <div class="keyboard-row">
+        <div class="key ctrl" data-key="ControlLeft">Ctrl</div>
+        <div class="key" data-key="MetaLeft">Win</div>
+        <div class="key alt" data-key="AltLeft">Alt</div>
+        <div class="key space" data-key="Space">Space</div>
+        <div class="key alt" data-key="AltRight">Alt</div>
+        <div class="key" data-key="MetaRight">Win</div>
+        <div class="key" data-key="ContextMenu">Menu</div>
+        <div class="key ctrl" data-key="ControlRight">Ctrl</div>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetKeyboard()">重置测试</button>
+
+    <div class="instruction" style="margin-top: 20px;">
+      💡 提示：按下任意键开始测试，按键会高亮显示
+    </div>
+  </div>
+
+  <script>
+    let pressedKeys = new Set();
+
+    document.addEventListener('keydown', (e) => {
+      e.preventDefault();
+      
+      const keyEl = document.querySelector(`[data-key="${e.code}"]`);
+      if (keyEl && !keyEl.classList.contains('pressed')) {
+        keyEl.classList.add('pressed');
+        pressedKeys.add(e.code);
+        updateStats();
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      const keyEl = document.querySelector(`[data-key="${e.code}"]`);
+      if (keyEl) {
+        // 保持高亮状态，不立即移除
+        // keyEl.classList.remove('pressed');
+      }
+    });
+
+    function updateStats() {
+      document.getElementById('pressedCount').textContent = pressedKeys.size;
+    }
+
+    function resetKeyboard() {
+      document.querySelectorAll('.key').forEach(key => {
+        key.classList.remove('pressed');
+      });
+      pressedKeys.clear();
+      updateStats();
+    }
+  </script>
+</body>
+</html>

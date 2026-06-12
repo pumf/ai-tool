@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>特殊字体生成器 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 800px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .panel {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--color-ink);
+    }
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-family: var(--font-sans);
+      transition: border-color 0.2s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .results-container {
+      display: grid;
+      gap: 12px;
+    }
+    .result-item {
+      padding: 16px;
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .result-item:hover {
+      border-color: var(--color-primary);
+      transform: translateY(-1px);
+    }
+    .result-item:active {
+      transform: translateY(0);
+    }
+    .result-name {
+      font-size: 12px;
+      color: var(--color-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .result-text {
+      font-size: 20px;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+    .copy-hint {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 4px 8px;
+      background: var(--color-primary);
+      color: white;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .result-item:hover .copy-hint {
+      opacity: 1;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--color-ink);
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">小飞 <span>AI</span> 工具</a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>特殊字体生成器</h1>
+      <p>将文字转换为花式 Unicode 字体和符号</p>
+    </div>
+
+    <div class="panel">
+      <div class="form-group">
+        <label class="form-label">输入文字</label>
+        <input type="text" class="input-field" id="inputText" placeholder="输入要转换的文字..." oninput="convertText()">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="form-label" style="margin-bottom: 16px;">转换结果（点击复制）</div>
+      <div class="results-container" id="resultsContainer">
+        <div class="result-item">
+          <div class="result-name">请输入文字开始转换</div>
+          <div class="result-text">...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已复制到剪贴板</div>
+
+  <script>
+    // Unicode 字体映射
+    const fontStyles = {
+      '粗体': {
+        upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 65 + 0x1D400)),
+        lower: 'abcdefghijklmnopqrstuvwxyz'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 97 + 0x1D41A))
+      },
+      '斜体': {
+        upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 65 + 0x1D434)),
+        lower: 'abcdefghijklmnopqrstuvwxyz'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 97 + 0x1D44E))
+      },
+      '粗斜体': {
+        upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 65 + 0x1D468)),
+        lower: 'abcdefghijklmnopqrstuvwxyz'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 97 + 0x1D482))
+      },
+      '手写体': {
+        upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 65 + 0x1D49C)),
+        lower: 'abcdefghijklmnopqrstuvwxyz'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 97 + 0x1D4B6))
+      },
+      '哥特体': {
+        upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 65 + 0x1D4D0)),
+        lower: 'abcdefghijklmnopqrstuvwxyz'.split('').map(c => String.fromCodePoint(c.charCodeAt(0) - 97 + 0x1D4EA))
+      },
+      '圆体': {
+        upper: 'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ'.split(''),
+        lower: 'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ'.split('')
+      },
+      '实心圆体': {
+        upper: '🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩'.split(''),
+        lower: '🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆂🆂🆃🆄🆅🆆🆇🆈🆉'.split('')
+      },
+      '小号大写': {
+        upper: 'ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ'.split(''),
+        lower: 'ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ'.split('')
+      },
+      '双线体': {
+        upper: '𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ'.split(''),
+        lower: '𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫'.split('')
+      },
+      '花体': {
+        upper: '𝒜𝐵𝒞𝒟𝐸𝐹𝒢𝐻𝐼𝒥𝒦𝐿𝑀𝒩𝒪𝒫𝒬𝑅𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵'.split(''),
+        lower: '𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏'.split('')
+      },
+      '气泡体': {
+        upper: 'ⒶⒷⒸⒹⒺⒻⒼⒽⒾⒿⓀⓁⓂⓃⓄⓅⓆⓇⓈⓉⓊⓋⓌⓍⓎⓏ'.split(''),
+        lower: 'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ'.split('')
+      },
+      '方框体': {
+        upper: '🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉'.split(''),
+        lower: '🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉'.split('')
+      }
+    };
+
+    function convertText() {
+      const input = document.getElementById('inputText').value;
+      if (!input) {
+        document.getElementById('resultsContainer').innerHTML = `
+          <div class="result-item">
+            <div class="result-name">请输入文字开始转换</div>
+            <div class="result-text">...</div>
+          </div>
+        `;
+        return;
+      }
+
+      const results = [];
+      
+      for (const [fontName, fontData] of Object.entries(fontStyles)) {
+        let converted = '';
+        
+        for (const char of input) {
+          const code = char.charCodeAt(0);
+          
+          if (code >= 65 && code <= 90) { // 大写字母
+            const index = code - 65;
+            converted += fontData.upper[index] || char;
+          } else if (code >= 97 && code <= 122) { // 小写字母
+            const index = code - 97;
+            converted += fontData.lower[index] || char;
+          } else if (code >= 0x4E00 && code <= 0x9FFF) { // 中文字符
+            // 中文不转换，直接保留
+            converted += char;
+          } else {
+            // 其他字符（数字、标点等）直接保留
+            converted += char;
+          }
+        }
+        
+        results.push({ name: fontName, text: converted });
+      }
+
+      const container = document.getElementById('resultsContainer');
+      container.innerHTML = results.map(r => `
+        <div class="result-item" onclick="copyText('${r.text.replace(/'/g, "\\'")}')">
+          <div class="result-name">${r.name}</div>
+          <div class="result-text">${r.text}</div>
+          <div class="copy-hint">点击复制</div>
+        </div>
+      `).join('');
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已复制到剪贴板');
+      });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

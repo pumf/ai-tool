@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日期计算器 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 800px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .tabs {
+      display: flex; gap: 8px; margin-bottom: 20px;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 12px;
+    }
+    .tab {
+      padding: 10px 20px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      color: var(--color-body);
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+    }
+    .tab:hover { color: var(--color-primary); }
+    .tab.active {
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .panel {
+      background: var(--color-canvas);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--color-ink);
+    }
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: var(--font-sans);
+      transition: border-color 0.2s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-sans);
+      width: 100%;
+    }
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+    }
+    .result-display {
+      padding: 20px;
+      background: var(--color-canvas-soft);
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+    .result-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+    .result-label {
+      font-size: 14px;
+      color: var(--color-body);
+    }
+    .result-details {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .detail-item {
+      text-align: center;
+    }
+    .detail-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--color-ink);
+    }
+    .detail-label {
+      font-size: 12px;
+      color: var(--color-muted);
+      margin-top: 4px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--color-canvas-soft);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+    .info-label {
+      color: var(--color-body);
+    }
+    .info-value {
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      .result-details {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">小飞 <span>AI</span> 工具</a>
+      <a href="/" class="nav-back">← 返回首页</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>日期计算器</h1>
+      <p>计算日期间隔、工作日与时间</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('interval')">日期间隔</button>
+      <button class="tab" onclick="switchTab('add')">日期推算</button>
+      <button class="tab" onclick="switchTab('workday')">工作日计算</button>
+    </div>
+
+    <!-- 日期间隔 -->
+    <div class="tab-content active" id="intervalTab">
+      <div class="panel">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">开始日期</label>
+            <input type="date" class="input-field" id="startDate" onchange="calculateInterval()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">结束日期</label>
+            <input type="date" class="input-field" id="endDate" onchange="calculateInterval()">
+          </div>
+        </div>
+
+        <div class="result-display">
+          <div class="result-value" id="intervalDays">--</div>
+          <div class="result-label">总天数</div>
+          <div class="result-details">
+            <div class="detail-item">
+              <div class="detail-value" id="intervalWeeks">--</div>
+              <div class="detail-label">周</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-value" id="intervalMonths">--</div>
+              <div class="detail-label">月</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-value" id="intervalYears">--</div>
+              <div class="detail-label">年</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日期推算 -->
+    <div class="tab-content" id="addTab">
+      <div class="panel">
+        <div class="form-group">
+          <label class="form-label">基准日期</label>
+          <input type="date" class="input-field" id="baseDate" onchange="calculateDateAdd()">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">年</label>
+            <input type="number" class="input-field" id="addYears" value="0" onchange="calculateDateAdd()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">月</label>
+            <input type="number" class="input-field" id="addMonths" value="0" onchange="calculateDateAdd()">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">日</label>
+            <input type="number" class="input-field" id="addDays" value="0" onchange="calculateDateAdd()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">周</label>
+            <input type="number" class="input-field" id="addWeeks" value="0" onchange="calculateDateAdd()">
+          </div>
+        </div>
+
+        <div class="result-display">
+          <div class="result-value" id="resultDate">--</div>
+          <div class="result-label">计算结果</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 工作日计算 -->
+    <div class="tab-content" id="workdayTab">
+      <div class="panel">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">开始日期</label>
+            <input type="date" class="input-field" id="workStartDate" onchange="calculateWorkdays()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">结束日期</label>
+            <input type="date" class="input-field" id="workEndDate" onchange="calculateWorkdays()">
+          </div>
+        </div>
+
+        <div class="result-display">
+          <div class="result-value" id="workdays">--</div>
+          <div class="result-label">工作日天数</div>
+          <div class="result-details">
+            <div class="detail-item">
+              <div class="detail-value" id="weekends">--</div>
+              <div class="detail-label">周末</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-value" id="totalDays">--</div>
+              <div class="detail-label">总天数</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: var(--color-canvas-soft); border-radius: var(--radius-sm); font-size: 13px; color: var(--color-body);">
+          💡 提示：工作日计算暂未扣除法定假期，仅排除周六周日
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 初始化日期为今天
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value = today;
+    document.getElementById('baseDate').value = today;
+    document.getElementById('workStartDate').value = today;
+    document.getElementById('workEndDate').value = today;
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      if (tab === 'interval') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
+        document.getElementById('intervalTab').classList.add('active');
+        calculateInterval();
+      } else if (tab === 'add') {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('addTab').classList.add('active');
+        calculateDateAdd();
+      } else {
+        document.querySelector('.tab:nth-child(3)').classList.add('active');
+        document.getElementById('workdayTab').classList.add('active');
+        calculateWorkdays();
+      }
+    }
+
+    function calculateInterval() {
+      const start = new Date(document.getElementById('startDate').value);
+      const end = new Date(document.getElementById('endDate').value);
+      
+      if (isNaN(start) || isNaN(end)) return;
+      
+      const diff = Math.abs(end - start);
+      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      
+      document.getElementById('intervalDays').textContent = days;
+      document.getElementById('intervalWeeks').textContent = (days / 7).toFixed(1);
+      document.getElementById('intervalMonths').textContent = (days / 30).toFixed(1);
+      document.getElementById('intervalYears').textContent = (days / 365).toFixed(2);
+    }
+
+    function calculateDateAdd() {
+      const base = new Date(document.getElementById('baseDate').value);
+      
+      if (isNaN(base)) return;
+      
+      const years = parseInt(document.getElementById('addYears').value) || 0;
+      const months = parseInt(document.getElementById('addMonths').value) || 0;
+      const days = parseInt(document.getElementById('addDays').value) || 0;
+      const weeks = parseInt(document.getElementById('addWeeks').value) || 0;
+      
+      const result = new Date(base);
+      result.setFullYear(result.getFullYear() + years);
+      result.setMonth(result.getMonth() + months);
+      result.setDate(result.getDate() + days + weeks * 7);
+      
+      const formatted = result.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+      });
+      
+      document.getElementById('resultDate').textContent = formatted;
+    }
+
+    function calculateWorkdays() {
+      const start = new Date(document.getElementById('workStartDate').value);
+      const end = new Date(document.getElementById('workEndDate').value);
+      
+      if (isNaN(start) || isNaN(end)) return;
+      
+      let workdays = 0;
+      let weekends = 0;
+      const current = new Date(start);
+      
+      while (current <= end) {
+        const day = current.getDay();
+        if (day === 0 || day === 6) {
+          weekends++;
+        } else {
+          workdays++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      
+      const total = workdays + weekends;
+      
+      document.getElementById('workdays').textContent = workdays;
+      document.getElementById('weekends').textContent = weekends;
+      document.getElementById('totalDays').textContent = total;
+    }
+
+    // 初始计算
+    calculateInterval();
+    calculateDateAdd();
+    calculateWorkdays();
+  </script>
+</body>
+</html>
