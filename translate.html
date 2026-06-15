@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>在线翻译 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-error: #ef4444;
+      --color-success: #10b981;
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 900px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .panel {
+      background: var(--color-canvas); border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); padding: 24px; margin-bottom: 20px;
+    }
+    .lang-selector {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .lang-group {
+      flex: 1;
+    }
+    .lang-label {
+      display: block;
+      font-size: 13px;
+      color: var(--color-body);
+      margin-bottom: 6px;
+    }
+    .lang-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      background: var(--color-canvas);
+      cursor: pointer;
+    }
+    .lang-select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .swap-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      margin-top: 20px;
+    }
+    .swap-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .swap-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    .translation-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .text-panel {
+      display: flex;
+      flex-direction: column;
+    }
+    .text-label {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--color-ink);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .char-count {
+      font-size: 12px;
+      color: var(--color-muted);
+      font-weight: 400;
+    }
+    .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-family: var(--font-sans);
+      transition: all 0.2s;
+      resize: vertical;
+      min-height: 200px;
+      flex: 1;
+    }
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-soft);
+    }
+    .result-textarea {
+      background: var(--color-canvas-soft);
+      cursor: default;
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      padding: 12px 24px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--color-canvas);
+      color: var(--color-ink);
+    }
+    .btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      color: var(--color-on-primary);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--color-on-primary);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .svg-icon {
+      width: 16px;
+      height: 16px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-ink);
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+    @media (max-width: 768px) {
+      .translation-area {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><span>小飞</span> AI 工具</a>
+      <a href="index.html" class="nav-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        返回首页
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>在线翻译</h1>
+      <p>支持中文、英文、日文、韩文、法文、西班牙文互译</p>
+    </div>
+
+    <div class="panel">
+      <div class="lang-selector">
+        <div class="lang-group">
+          <label class="lang-label">源语言</label>
+          <select class="lang-select" id="sourceLang">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+        
+        <button class="swap-btn" id="swapBtn" title="互换语言">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
+          </svg>
+        </button>
+        
+        <div class="lang-group">
+          <label class="lang-label">目标语言</label>
+          <select class="lang-select" id="targetLang">
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="translation-area">
+        <div class="text-panel">
+          <label class="text-label">
+            原文
+            <span class="char-count"><span id="charCount">0</span> / 500</span>
+          </label>
+          <textarea class="form-textarea" id="sourceText" placeholder="请输入要翻译的文字..." maxlength="500"></textarea>
+        </div>
+        
+        <div class="text-panel">
+          <label class="text-label">译文</label>
+          <textarea class="form-textarea result-textarea" id="targetText" placeholder="翻译结果将显示在此处" readonly></textarea>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" id="clearBtn">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          清空
+        </button>
+        <button class="btn btn-primary" id="translateBtn" style="flex: 1;">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+          <span id="translateText">翻译</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已复制到剪贴板</div>
+
+  <script>
+    const sourceLang = document.getElementById('sourceLang');
+    const targetLang = document.getElementById('targetLang');
+    const sourceText = document.getElementById('sourceText');
+    const targetText = document.getElementById('targetText');
+    const charCount = document.getElementById('charCount');
+    const swapBtn = document.getElementById('swapBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const translateBtn = document.getElementById('translateBtn');
+    const translateText = document.getElementById('translateText');
+    const toast = document.getElementById('toast');
+
+    // 语言代码映射
+    const langMap = {
+      'zh': 'zh-CN',
+      'en': 'en-GB',
+      'ja': 'ja-JP',
+      'ko': 'ko-KR',
+      'fr': 'fr-FR',
+      'es': 'es-ES'
+    };
+
+    // 更新字符计数
+    sourceText.addEventListener('input', () => {
+      charCount.textContent = sourceText.value.length;
+    });
+
+    // 互换语言
+    swapBtn.addEventListener('click', () => {
+      const temp = sourceLang.value;
+      sourceLang.value = targetLang.value;
+      targetLang.value = temp;
+      
+      // 如果有翻译结果，也互换文本
+      if (targetText.value) {
+        const tempText = sourceText.value;
+        sourceText.value = targetText.value;
+        targetText.value = tempText;
+        charCount.textContent = sourceText.value.length;
+      }
+    });
+
+    // 清空
+    clearBtn.addEventListener('click', () => {
+      sourceText.value = '';
+      targetText.value = '';
+      charCount.textContent = '0';
+    });
+
+    // 翻译
+    translateBtn.addEventListener('click', async () => {
+      const text = sourceText.value.trim();
+      if (!text) return;
+
+      // 显示加载状态
+      translateBtn.disabled = true;
+      translateText.innerHTML = '<span class="loading"></span>';
+
+      try {
+        const source = langMap[sourceLang.value];
+        const target = langMap[targetLang.value];
+        
+        // 使用 MyMemory Translation API
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.responseStatus === 200) {
+          targetText.value = data.responseData.translatedText;
+        } else {
+          throw new Error(data.responseDetails || '翻译失败');
+        }
+      } catch (error) {
+        console.error('Translation error:', error);
+        targetText.value = '翻译失败，请稍后重试';
+      } finally {
+        translateBtn.disabled = false;
+        translateText.textContent = '翻译';
+      }
+    });
+
+    // Enter键翻译
+    sourceText.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        translateBtn.click();
+      }
+    });
+
+    // 点击译文复制
+    targetText.addEventListener('click', () => {
+      if (targetText.value) {
+        navigator.clipboard.writeText(targetText.value).then(() => {
+          showToast('已复制到剪贴板');
+        });
+      }
+    });
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

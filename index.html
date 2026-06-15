@@ -429,6 +429,9 @@
       <button class="category-btn" data-category="design">
         <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span> 设计辅助
       </button>
+      <button class="category-btn" data-category="ai">
+        <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><path d="M7.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path d="M16.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg></span> AI 工具
+      </button>
     </div>
 
     <!-- 核心产品 Section -->
@@ -596,6 +599,52 @@
       </div>
     </section>
 
+    <!-- AI 工具 Section -->
+    <section class="section" data-section="ai">
+      <div class="section-header">
+        <span class="section-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><path d="M7.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/><path d="M16.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg></span>
+        <h2 class="section-title">AI 工具</h2>
+        <span class="section-count">4</span>
+      </div>
+      <div class="card-grid">
+        <!-- 背景去除 -->
+        <a class="card" href="/bg-remove.html" data-category="ai">
+          <div class="card-badge"><span class="badge-external">→</span></div>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+          <h3 class="card-title">背景去除</h3>
+          <p class="card-desc">AI 自动识别主体，一键去除图片背景。纯本地处理，照片不上传服务器，保护隐私。</p>
+          <span class="card-url">/bg-remove</span>
+        </a>
+
+        <!-- 文字转语音 -->
+        <a class="card" href="/text-to-speech.html" data-category="ai">
+          <div class="card-badge"><span class="badge-external">→</span></div>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></span>
+          <h3 class="card-title">文字转语音</h3>
+          <p class="card-desc">使用浏览器原生 Web Speech API，支持多语言朗读，调节语速音调音量。</p>
+          <span class="card-url">/text-to-speech</span>
+        </a>
+
+        <!-- 在线翻译 -->
+        <a class="card" href="/translate.html" data-category="ai">
+          <div class="card-badge"><span class="badge-external">→</span></div>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+          <h3 class="card-title">在线翻译</h3>
+          <p class="card-desc">支持中文、英文、日文、韩文、法文、西班牙文互译，一键复制结果。</p>
+          <span class="card-url">/translate</span>
+        </a>
+
+        <!-- 音频转文字 -->
+        <a class="card" href="/audio-to-text.html" data-category="ai">
+          <div class="card-badge"><span class="badge-external">→</span></div>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span>
+          <h3 class="card-title">音频转文字</h3>
+          <p class="card-desc">基于 OpenAI Whisper 本地运行，支持多语言转录，纯浏览器端处理。</p>
+          <span class="card-url">/audio-to-text</span>
+        </a>
+      </div>
+    </section>
+
     <!-- 设计辅助 Section -->
     <section class="section" data-section="design">
       <div class="section-header">
@@ -641,7 +690,7 @@
       <div class="section-header">
         <span class="section-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
         <h2 class="section-title">实用工具</h2>
-        <span class="section-count">12</span>
+        <span class="section-count">13</span>
       </div>
       <div class="card-grid">
         <!-- 密码生成器 -->
@@ -750,6 +799,15 @@
           <h3 class="card-title">亲戚关系计算器</h3>
           <p class="card-desc">计算中华文化中家庭成员关系，过年过节必备神器。</p>
           <span class="card-url">/relationship-calculator</span>
+        </a>
+
+        <!-- 数字转中文大写 -->
+        <a class="card" href="/number-to-chinese.html" data-category="utility">
+          <div class="card-badge"><span class="badge-external">→</span></div>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+          <h3 class="card-title">数字转中文大写</h3>
+          <p class="card-desc">将阿拉伯数字转换为中文大写金额，支持简繁体、纯数字多种格式。</p>
+          <span class="card-url">/number-to-chinese</span>
         </a>
       </div>
     </section>

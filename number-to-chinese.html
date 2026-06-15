@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数字转中文大写 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-error: #ef4444;
+      --color-success: #10b981;
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 800px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .panel {
+      background: var(--color-canvas); border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); padding: 24px; margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--color-ink);
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-family: var(--font-sans);
+      transition: all 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-soft);
+    }
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      transform: translateY(-1px);
+    }
+    .result-box {
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-top: 20px;
+      font-size: 18px;
+      line-height: 1.6;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--color-ink);
+      position: relative;
+    }
+    .result-box.empty {
+      color: var(--color-muted);
+      font-size: 14px;
+    }
+    .copy-btn {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-ink);
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+    .options {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .option-group {
+      flex: 1;
+      min-width: 150px;
+    }
+    .option-label {
+      display: block;
+      font-size: 13px;
+      color: var(--color-body);
+      margin-bottom: 6px;
+    }
+    .option-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      background: var(--color-canvas);
+      cursor: pointer;
+    }
+    .option-select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><span>小飞</span> AI 工具</a>
+      <a href="index.html" class="nav-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        返回首页
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>数字转中文大写</h1>
+      <p>将阿拉伯数字转换为中文大写金额，支持多种格式</p>
+    </div>
+
+    <div class="panel">
+      <div class="form-group">
+        <label class="form-label">输入数字</label>
+        <input type="text" class="form-input" id="numberInput" placeholder="请输入数字，如：123.45" maxlength="20">
+      </div>
+
+      <div class="options">
+        <div class="option-group">
+          <label class="option-label">转换类型</label>
+          <select class="option-select" id="convertType">
+            <option value="money">金额（含元角分）</option>
+            <option value="simple">简体大写</option>
+            <option value="traditional">繁体大写</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="convertBtn" style="width: 100%;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+        转换
+      </button>
+
+      <div class="result-box empty" id="resultBox">
+        转换结果将显示在此处
+        <button class="copy-btn" id="copyBtn" style="display: none;" title="复制">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已复制到剪贴板</div>
+
+  <script>
+    const numberInput = document.getElementById('numberInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const convertType = document.getElementById('convertType');
+    const resultBox = document.getElementById('resultBox');
+    const copyBtn = document.getElementById('copyBtn');
+    const toast = document.getElementById('toast');
+
+    // 简体数字
+    const simpleDigits = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+    const simpleUnits = ['', '拾', '佰', '仟', '万', '拾', '佰', '仟', '亿'];
+    
+    // 繁体数字
+    const traditionalDigits = ['零', '壹', '貳', '參', '肆', '伍', '陸', '柒', '捌', '玖'];
+    
+    // 单纯数字（不含金额单位）
+    const plainDigits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+    const plainUnits = ['', '十', '百', '千', '万', '十', '百', '千', '亿'];
+
+    function convertToChinese(num, type) {
+      if (isNaN(num) || num === '') return '请输入有效数字';
+      
+      const parts = num.toString().split('.');
+      const intPart = parseInt(parts[0]);
+      const decPart = parts[1] ? parts[1] : '';
+      
+      let result = '';
+      
+      if (type === 'money') {
+        result = convertIntegerToMoney(intPart, simpleDigits, simpleUnits);
+        if (decPart) {
+          result += convertDecimalToMoney(decPart, simpleDigits);
+        } else {
+          result += '元整';
+        }
+      } else if (type === 'simple') {
+        result = convertIntegerToPlain(intPart, plainDigits, plainUnits);
+        if (decPart) {
+          result += '点' + convertDecimalToPlain(decPart, plainDigits);
+        }
+      } else {
+        result = convertIntegerToMoney(intPart, traditionalDigits, simpleUnits);
+        if (decPart) {
+          result += convertDecimalToMoney(decPart, traditionalDigits);
+        } else {
+          result += '元整';
+        }
+      }
+      
+      return result;
+    }
+
+    function convertIntegerToMoney(num, digits, units) {
+      if (num === 0) return digits[0];
+      
+      let result = '';
+      const numStr = num.toString();
+      const len = numStr.length;
+      let zeroFlag = false;
+      
+      for (let i = 0; i < len; i++) {
+        const digit = parseInt(numStr[i]);
+        const unitIndex = len - 1 - i;
+        
+        if (digit === 0) {
+          zeroFlag = true;
+          // 万、亿单位需要添加
+          if (unitIndex === 4 || unitIndex === 8) {
+            result += units[unitIndex];
+            zeroFlag = false;
+          }
+        } else {
+          if (zeroFlag) {
+            result += digits[0];
+            zeroFlag = false;
+          }
+          result += digits[digit] + units[unitIndex];
+        }
+      }
+      
+      return result + '元';
+    }
+
+    function convertDecimalToMoney(dec, digits) {
+      let result = '';
+      
+      if (dec.length >= 1 && parseInt(dec[0]) > 0) {
+        result += digits[parseInt(dec[0])] + '角';
+      }
+      
+      if (dec.length >= 2 && parseInt(dec[1]) > 0) {
+        result += digits[parseInt(dec[1])] + '分';
+      }
+      
+      return result || '';
+    }
+
+    function convertIntegerToPlain(num, digits, units) {
+      if (num === 0) return digits[0];
+      
+      let result = '';
+      const numStr = num.toString();
+      const len = numStr.length;
+      let zeroFlag = false;
+      
+      for (let i = 0; i < len; i++) {
+        const digit = parseInt(numStr[i]);
+        const unitIndex = len - 1 - i;
+        
+        if (digit === 0) {
+          zeroFlag = true;
+          if (unitIndex === 4 || unitIndex === 8) {
+            result += units[unitIndex];
+            zeroFlag = false;
+          }
+        } else {
+          if (zeroFlag) {
+            result += digits[0];
+            zeroFlag = false;
+          }
+          result += digits[digit] + units[unitIndex];
+        }
+      }
+      
+      return result;
+    }
+
+    function convertDecimalToPlain(dec, digits) {
+      let result = '';
+      for (let i = 0; i < dec.length; i++) {
+        result += digits[parseInt(dec[i])];
+      }
+      return result;
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    convertBtn.addEventListener('click', () => {
+      const num = numberInput.value.trim();
+      const type = convertType.value;
+      const result = convertToChinese(num, type);
+      
+      resultBox.textContent = result;
+      resultBox.classList.remove('empty');
+      copyBtn.style.display = 'flex';
+    });
+
+    numberInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        convertBtn.click();
+      }
+    });
+
+    copyBtn.addEventListener('click', () => {
+      const text = resultBox.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已复制到剪贴板');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>音频转文字 - 小飞 AI 工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #0abFA5;
+      --color-on-primary: #ffffff;
+      --color-primary-hover: #08d9a3;
+      --color-primary-soft: rgba(10, 191, 165, 0.08);
+      --color-error: #ef4444;
+      --color-success: #10b981;
+      --color-ink: #1a1a2e;
+      --color-body: #5c5c72;
+      --color-muted: #9494a8;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #f8f9fb;
+      --color-border: rgba(0, 0, 0, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --space-xs: 8px;
+      --space-sm: 12px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-canvas-soft);
+      color: var(--color-ink);
+      min-height: 100vh;
+    }
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--color-canvas);
+      border-bottom: 1px solid var(--color-border);
+      height: 56px; display: flex; align-items: center;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%;
+    }
+    .nav-logo {
+      font-size: 16px; font-weight: 600; color: var(--color-ink);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--color-primary); }
+    .nav-back {
+      font-size: 14px; color: var(--color-body); text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-back:hover { color: var(--color-primary); }
+    .container {
+      max-width: 800px; margin: 0 auto; padding: 24px;
+    }
+    .header {
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 24px; font-weight: 600; letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 14px; color: var(--color-body);
+    }
+    .panel {
+      background: var(--color-canvas); border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); padding: 24px; margin-bottom: 20px;
+    }
+    .upload-area {
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--color-canvas-soft);
+    }
+    .upload-area:hover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-soft);
+    }
+    .upload-area.dragover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-soft);
+    }
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    .upload-text {
+      font-size: 16px;
+      color: var(--color-ink);
+      margin-bottom: 6px;
+    }
+    .upload-hint {
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+    #fileInput {
+      display: none;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--color-ink);
+    }
+    .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-family: var(--font-sans);
+      background: var(--color-canvas);
+      cursor: pointer;
+    }
+    .form-select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .progress-section {
+      margin: 20px 0;
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--color-border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--color-primary);
+      transition: width 0.3s;
+    }
+    .progress-text {
+      font-size: 13px;
+      color: var(--color-body);
+      text-align: center;
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      flex: 1;
+      padding: 12px 24px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--color-canvas);
+      color: var(--color-ink);
+    }
+    .btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+    .btn-primary:hover {
+      background: var(--color-primary-hover);
+      color: var(--color-on-primary);
+    }
+    .result-box {
+      background: var(--color-canvas-soft);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-top: 20px;
+      min-height: 120px;
+      font-size: 15px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: var(--color-ink);
+      position: relative;
+    }
+    .result-box.empty {
+      color: var(--color-muted);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .copy-btn {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--color-border);
+      background: var(--color-canvas);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    .info-box {
+      background: var(--color-primary-soft);
+      border: 1px solid var(--color-primary);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--color-ink);
+      line-height: 1.6;
+    }
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--color-on-primary);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .svg-icon {
+      width: 16px;
+      height: 16px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-ink);
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><span>小飞</span> AI 工具</a>
+      <a href="index.html" class="nav-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        返回首页
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>音频转文字</h1>
+      <p>上传音频，AI 自动转录文字 · 基于 OpenAI Whisper 本地运行 · 处理时间较长请耐心等待</p>
+    </div>
+
+    <div class="panel">
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">🎙️</div>
+        <div class="upload-text">点击或拖拽上传音频</div>
+        <div class="upload-hint">支持 MP3 / WAV / M4A / OGG · 最大 50MB</div>
+      </div>
+      <input type="file" id="fileInput" accept="audio/*">
+
+      <div class="form-group" id="langGroup" style="display: none;">
+        <label class="form-label">语言</label>
+        <select class="form-select" id="langSelect">
+          <option value="自动检测">自动检测</option>
+          <option value="chinese">中文</option>
+          <option value="english">English</option>
+          <option value="japanese">日本語</option>
+          <option value="korean">한국어</option>
+          <option value="french">Français</option>
+          <option value="german">Deutsch</option>
+        </select>
+      </div>
+
+      <div class="progress-section" id="progressSection" style="display: none;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+        </div>
+        <div class="progress-text" id="progressText">准备中...</div>
+      </div>
+
+      <div class="btn-group" id="btnGroup" style="display: none;">
+        <button class="btn" id="resetBtn">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          重新选择
+        </button>
+        <button class="btn btn-primary" id="transcribeBtn">
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="10 8 16 12 10 16 10 8"/>
+          </svg>
+          开始转录
+        </button>
+      </div>
+
+      <div class="result-box empty" id="resultBox" style="display: none;">
+        转录结果将显示在此处
+        <button class="copy-btn" id="copyBtn" style="display: none;" title="复制">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="info-box">
+        <strong>说明：</strong>本工具使用 OpenAI Whisper 模型在浏览器中本地运行转录。首次使用需下载模型（约 70MB），之后会缓存在浏览器中。音频文件不会上传服务器，所有处理均在本地完成。
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已复制到剪贴板</div>
+
+  <script type="module">
+    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const langGroup = document.getElementById('langGroup');
+    const langSelect = document.getElementById('langSelect');
+    const progressSection = document.getElementById('progressSection');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const btnGroup = document.getElementById('btnGroup');
+    const resetBtn = document.getElementById('resetBtn');
+    const transcribeBtn = document.getElementById('transcribeBtn');
+    const resultBox = document.getElementById('resultBox');
+    const copyBtn = document.getElementById('copyBtn');
+    const toast = document.getElementById('toast');
+
+    let currentFile = null;
+    let transcriber = null;
+
+    // 上传区域点击
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    // 文件选择
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('audio/')) {
+        handleFile(file);
+      }
+    });
+
+    // 处理文件
+    function handleFile(file) {
+      if (file.size > 50 * 1024 * 1024) {
+        alert('文件大小不能超过 50MB');
+        return;
+      }
+      
+      currentFile = file;
+      uploadArea.style.display = 'none';
+      langGroup.style.display = 'block';
+      btnGroup.style.display = 'flex';
+      resultBox.style.display = 'none';
+    }
+
+    // 重新选择
+    resetBtn.addEventListener('click', () => {
+      uploadArea.style.display = 'block';
+      langGroup.style.display = 'none';
+      btnGroup.style.display = 'none';
+      progressSection.style.display = 'none';
+      resultBox.style.display = 'none';
+      fileInput.value = '';
+      currentFile = null;
+    });
+
+    // 开始转录
+    transcribeBtn.addEventListener('click', async () => {
+      if (!currentFile) return;
+
+      transcribeBtn.disabled = true;
+      progressSection.style.display = 'block';
+      resultBox.style.display = 'none';
+
+      try {
+        // 显示加载模型进度
+        progressText.textContent = '正在加载 AI 模型，首次使用需要下载约 70MB...';
+        progressFill.style.width = '0%';
+
+        // 创建转录器（如果还没创建）
+        if (!transcriber) {
+          transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-small', {
+            progress_callback: (progress) => {
+              if (progress.status === 'downloading') {
+                const percent = Math.round((progress.loaded / progress.total) * 100);
+                progressFill.style.width = percent + '%';
+                progressText.textContent = `下载模型中... ${percent}%`;
+              } else if (progress.status === 'loading') {
+                progressText.textContent = '加载模型中...';
+              }
+            }
+          });
+        }
+
+        // 读取音频文件
+        progressText.textContent = '读取音频文件...';
+        const audioUrl = URL.createObjectURL(currentFile);
+        
+        // 执行转录
+        progressText.textContent = '正在转录，请耐心等待...';
+        progressFill.style.width = '50%';
+
+        const lang = langSelect.value === '自动检测' ? null : langSelect.value;
+        const result = await transcriber(audioUrl, {
+          language: lang,
+          task: 'transcribe',
+          return_timestamps: true
+        });
+
+        progressFill.style.width = '100%';
+        progressText.textContent = '转录完成！';
+
+        // 显示结果
+        resultBox.textContent = result.text;
+        resultBox.classList.remove('empty');
+        resultBox.style.display = 'block';
+        copyBtn.style.display = 'flex';
+
+        URL.revokeObjectURL(audioUrl);
+      } catch (error) {
+        console.error('Error:', error);
+        progressText.textContent = '转录失败：' + error.message;
+        transcribeBtn.disabled = false;
+      }
+    });
+
+    // 复制
+    copyBtn.addEventListener('click', () => {
+      const text = resultBox.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('已复制到剪贴板');
+      });
+    });
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
