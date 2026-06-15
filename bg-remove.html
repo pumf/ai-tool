@@ -407,7 +407,7 @@
       statusText.textContent = '正在加载 AI 模型，首次使用需要下载约 10-20MB...';
 
       try {
-        const { removeBackground } = await import('https://unpkg.com/@imgly/background-removal@1.4.5/+esm');
+        const { removeBackground } = await import('https://unpkg.com/@imgly/background-removal@1.4.5/dist/index.mjs');
 
         const result = await removeBackground(currentFile, {
           progress: (key, current, total) => {
