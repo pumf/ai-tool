@@ -318,9 +318,8 @@
     </div>
   </div>
 
-  <script type="module">
-    import { removeBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm';
-
+  <script>
+    // 文件选择逻辑（独立于模块加载，确保始终可用）
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
     const previewArea = document.getElementById('previewArea');
@@ -343,6 +342,7 @@
     // 文件选择按钮
     document.getElementById('fileSelectBtn').addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       fileInput.click();
     });
 
@@ -398,7 +398,7 @@
       resultBlob = null;
     });
 
-    // 开始处理
+    // 开始处理（加载模块后执行）
     processBtn.addEventListener('click', async () => {
       if (!currentFile) return;
 
@@ -407,6 +407,8 @@
       statusText.textContent = '正在加载 AI 模型，首次使用需要下载约 10-20MB...';
 
       try {
+        const { removeBackground } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm');
+
         const result = await removeBackground(currentFile, {
           progress: (key, current, total) => {
             if (key === 'compute:inference') {
@@ -423,7 +425,6 @@
 
         resultBlob = result;
         
-        // 显示结果
         const url = URL.createObjectURL(result);
         resultContent.innerHTML = `<img src="${url}" alt="处理结果">`;
         
