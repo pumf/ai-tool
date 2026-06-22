@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视频转 GIF — 小飞 AI 工具</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🎬</text></svg>">
+<style>
+:root {
+  --primary: #3b82f6;
+  --primary-light: #eff6ff;
+  --primary-dark: #2563eb;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+header a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+header a:hover { color: var(--primary); }
+header h1 { font-size: 18px; font-weight: 600; flex: 1; }
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+  width: 100%;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.drop-zone-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+.drop-zone-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.drop-zone-text strong { color: var(--primary); cursor: pointer; }
+.drop-zone-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+input[type="file"] { display: none; }
+.video-preview {
+  display: none;
+  margin-top: 16px;
+}
+.video-preview video {
+  width: 100%;
+  max-height: 360px;
+  border-radius: 8px;
+  background: #000;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.setting-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.setting-group input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+.setting-group .value-display {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+}
+.setting-group select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+.setting-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+.time-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.time-range input[type="number"] {
+  width: 70px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+.time-range input[type="number"]:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.time-range span {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+  width: 100%;
+}
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--border); }
+.progress-area {
+  display: none;
+  margin-top: 16px;
+}
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width .3s;
+  width: 0%;
+}
+.progress-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  text-align: center;
+}
+.result-area {
+  display: none;
+  margin-top: 16px;
+}
+.result-area img {
+  width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.result-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.result-info .size {
+  font-weight: 600;
+  color: var(--text);
+}
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.alert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  display: none;
+}
+.alert-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  display: block;
+}
+.alert-info {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border: 1px solid #bfdbfe;
+  display: block;
+}
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+@media (max-width: 600px) {
+  .settings-grid { grid-template-columns: 1fr; }
+  .action-buttons { grid-template-columns: 1fr; }
+  .container { padding: 16px 12px 40px; }
+  .card { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/">← 返回首页</a>
+  <h1>视频转 GIF</h1>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">选择视频</div>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">🎬</div>
+      <div class="drop-zone-text">
+        拖拽视频文件到这里，或 <strong>点击选择文件</strong>
+      </div>
+      <div class="drop-zone-hint">支持 MP4、WebM、MOV、AVI 等常见格式</div>
+      <input type="file" id="fileInput" accept="video/*">
+    </div>
+    <div class="video-preview" id="videoPreview">
+      <video id="videoEl" controls></video>
+    </div>
+  </div>
+
+  <div class="card" id="settingsCard" style="display:none">
+    <div class="card-title">转换设置</div>
+    <div class="settings-grid">
+      <div class="setting-group">
+        <label>帧率 (FPS)</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" id="fpsSlider" min="1" max="30" value="10" step="1">
+          <span class="value-display" id="fpsDisplay">10</span>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>宽度 (px)</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" id="widthSlider" min="100" max="1920" value="480" step="10">
+          <span class="value-display" id="widthDisplay">480</span>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>起始时间</label>
+        <div class="time-range">
+          <input type="number" id="startMin" value="0" min="0"> <span>分</span>
+          <input type="number" id="startSec" value="0" min="0" max="59"> <span>秒</span>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>持续时间</label>
+        <div class="time-range">
+          <input type="number" id="durationSec" value="3" min="1" max="60"> <span>秒</span>
+        </div>
+      </div>
+      <div class="setting-group" style="grid-column:1/-1">
+        <label>缩放模式</label>
+        <select id="fitMode">
+          <option value="contain">保持比例（填充黑边）</option>
+          <option value="cover">裁剪填充</option>
+          <option value="fill">拉伸填充</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="alert" id="alert"></div>
+
+    <div class="progress-area" id="progressArea">
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-text" id="progressText">处理中...</div>
+    </div>
+
+    <div class="result-area" id="resultArea">
+      <img id="resultImg" alt="转换结果">
+      <div class="result-info">
+        <span>GIF 大小：<span class="size" id="gifSize">--</span></span>
+        <span>帧数：<span id="frameCount">--</span></span>
+      </div>
+      <div class="action-buttons">
+        <button class="btn btn-primary" id="downloadBtn">⬇ 下载 GIF</button>
+        <button class="btn btn-secondary" id="resetBtn">🔄 重新选择</button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="convertBtn" style="margin-top:16px" disabled>
+      ⚡ 开始转换
+    </button>
+  </div>
+
+</div>
+
+<footer>
+  纯浏览器端处理，视频不上传服务器 · 小飞 AI 工具
+</footer>
+
+<script>
+// ===== GIF Encoder (minimal) =====
+// LZW-based GIF encoder, adapted for browser use
+class GIFEncoder {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+    this.frames = [];
+    this.delay = 100; // default 100ms
+    this.transparent = null;
+    this.repeat = 0; // 0 = loop forever
+  }
+
+  setDelay(ms) { this.delay = ms; }
+  setRepeat(n) { this.repeat = n; }
+
+  addFrame(ctx) {
+    const imageData = ctx.getImageData(0, 0, this.width, this.height);
+    this.frames.push(imageData);
+  }
+
+  // Quantize RGBA to 256-color palette using median cut
+  quantize(imageData) {
+    const pixels = [];
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      pixels.push([data[i], data[i+1], data[i+2], data[i+3]]);
+    }
+    return this.medianCut(pixels, 256);
+  }
+
+  medianCut(pixels, maxColors) {
+    // Simple uniform quantization for speed
+    const palette = [];
+    const map = new Map();
+
+    for (const p of pixels) {
+      // 5-6-5 quantization
+      const r = Math.round(p[0] / 32) * 32;
+      const g = Math.round(p[1] / 32) * 32;
+      const b = Math.round(p[2] / 32) * 32;
+      const key = `${r},${g},${b}`;
+      if (!map.has(key)) {
+        map.set(key, [r, g, b, p[3]]);
+      }
+    }
+
+    const entries = Array.from(map.values());
+    // If too many colors, reduce further
+    let colors = entries;
+    if (colors.length > maxColors) {
+      // Sort by luminance and take evenly spaced samples
+      colors.sort((a, b) => (a[0]*299 + a[1]*587 + a[2]*114) - (b[0]*299 + b[1]*587 + b[2]*114));
+      const step = Math.floor(colors.length / maxColors);
+      const sampled = [];
+      for (let i = 0; i < colors.length && sampled.length < maxColors; i += step) {
+        sampled.push(colors[i]);
+      }
+      colors = sampled;
+    }
+
+    // Ensure we have at least 2 colors
+    if (colors.length < 2) {
+      colors = [[0,0,0,255], [255,255,255,255]];
+    }
+
+    return colors;
+  }
+
+  findClosest(color, palette) {
+    let minDist = Infinity;
+    let idx = 0;
+    for (let i = 0; i < palette.length; i++) {
+      const dr = color[0] - palette[i][0];
+      const dg = color[1] - palette[i][1];
+      const db = color[2] - palette[i][2];
+      const dist = dr*dr + dg*dg + db*db;
+      if (dist < minDist) {
+        minDist = dist;
+        idx = i;
+      }
+    }
+    return idx;
+  }
+
+  buildStream() {
+    const stream = [];
+    const write = (b) => stream.push(b & 0xFF);
+
+    // Header
+    write(0x47); write(0x49); write(0x46); // GIF
+    write(0x38); write(0x39); write(0x61); // 89a
+
+    // Logical screen descriptor
+    write(this.width & 0xFF);
+    write((this.width >> 8) & 0xFF);
+    write(this.height & 0xFF);
+    write((this.height >> 8) & 0xFF);
+
+    // Use global palette
+    const globalPalette = this.quantize(this.frames[0]);
+    const paletteSize = globalPalette.length;
+    const colorBits = Math.max(2, Math.ceil(Math.log2(paletteSize)));
+    const globalColorTableFlag = 0x80;
+    const sortFlag = 0;
+    const packed = globalColorTableFlag | ((colorBits - 1) << 4) | (colorBits - 1);
+    write(packed);
+
+    // Background color index
+    write(0);
+    // Pixel aspect ratio
+    write(0);
+
+    // Global color table
+    for (let i = 0; i < 256; i++) {
+      if (i < globalPalette.length) {
+        write(globalPalette[i][0]);
+        write(globalPalette[i][1]);
+        write(globalPalette[i][2]);
+      } else {
+        write(0); write(0); write(0);
+      }
+    }
+
+    // Netscape extension for looping
+    if (this.repeat >= 0) {
+      write(0x21); // Extension introducer
+      write(0xFF); // Application extension
+      write(0x0B); // Block size
+      write(0x4E); write(0x45); write(0x54); write(0x53);
+      write(0x43); write(0x41); write(0x50); write(0x45);
+      write(0x32); write(0x2E); write(0x30); // "NETSCAPE2.0"
+      write(0x03); // Sub-block size
+      write(0x01); // Sub-block ID
+      write(this.repeat & 0xFF);
+      write((this.repeat >> 8) & 0xFF);
+      write(0x00); // Block terminator
+    }
+
+    // For each frame, compute per-frame palette and encode
+    for (let fi = 0; fi < this.frames.length; fi++) {
+      const frameData = this.frames[fi];
+      const pixels = [];
+      const data = frameData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        pixels.push([data[i], data[i+1], data[i+2], data[i+3]]);
+      }
+
+      // Per-frame palette
+      const framePalette = this.quantize(frameData);
+      const fPalSize = framePalette.length;
+      const fColorBits = Math.max(2, Math.ceil(Math.log2(fPalSize)));
+
+      // Graphics control extension
+      write(0x21); // Extension introducer
+      write(0xF9); // Graphic control extension
+      write(0x04); // Block size
+      const disposalMethod = 0; // 0 = no disposal
+      const userInput = 0;
+      const transparentColorFlag = 0;
+      const gcePacked = (disposalMethod << 2) | (userInput << 1) | transparentColorFlag;
+      write(gcePacked);
+      // Delay
+      write(this.delay & 0xFF);
+      write((this.delay >> 8) & 0xFF);
+      write(0); // Transparent color index
+      write(0x00); // Block terminator
+
+      // Image descriptor
+      write(0x2C); // Image separator
+      write(0); write(0); // Left
+      write(0); write(0); // Top
+      write(this.width & 0xFF);
+      write((this.width >> 8) & 0xFF);
+      write(this.height & 0xFF);
+      write((this.height >> 8) & 0xFF);
+
+      // Local color table
+      const localColorTableFlag = 0x80;
+      const interlaced = 0;
+      const imgPacked = localColorTableFlag | interlaced | (fColorBits - 1);
+      write(imgPacked);
+
+      // Local color table
+      for (let i = 0; i < 256; i++) {
+        if (i < framePalette.length) {
+          write(framePalette[i][0]);
+          write(framePalette[i][1]);
+          write(framePalette[i][2]);
+        } else {
+          write(0); write(0); write(0);
+        }
+      }
+
+      // LZW minimum code size
+      write(fColorBits);
+
+      // Encode pixel indices with LZW
+      const indices = pixels.map(p => this.findClosest(p, framePalette));
+      const lzwData = this.lzwEncode(indices, fColorBits);
+
+      // Write sub-blocks
+      for (let i = 0; i < lzwData.length; i += 255) {
+        const chunk = lzwData.slice(i, i + 255);
+        write(chunk.length);
+        for (let j = 0; j < chunk.length; j++) {
+          write(chunk[j]);
+        }
+      }
+      write(0x00); // Block terminator
+    }
+
+    // Trailer
+    write(0x3B);
+
+    return new Uint8Array(stream);
+  }
+
+  lzwEncode(indices, minCodeSize) {
+    const clearCode = 1 << minCodeSize;
+    const eoiCode = clearCode + 1;
+    let codeSize = minCodeSize + 1;
+    let nextCode = eoiCode + 1;
+
+    const dict = new Map();
+    for (let i = 0; i < clearCode; i++) {
+      dict.set(String.fromCharCode(i), i);
+    }
+
+    const output = [];
+    let bitBuffer = 0;
+    let bitCount = 0;
+
+    const writeCode = (code) => {
+      bitBuffer |= (code << bitCount);
+      bitCount += codeSize;
+      while (bitCount >= 8) {
+        output.push(bitBuffer & 0xFF);
+        bitBuffer >>= 8;
+        bitCount -= 8;
+      }
+    };
+
+    writeCode(clearCode);
+
+    let current = String.fromCharCode(indices[0]);
+    for (let i = 1; i < indices.length; i++) {
+      const next = String.fromCharCode(indices[i]);
+      const combined = current + next;
+      if (dict.has(combined)) {
+        current = combined;
+      } else {
+        writeCode(dict.get(current));
+        if (nextCode < 4096) {
+          dict.set(combined, nextCode++);
+          if (nextCode > (1 << codeSize) && codeSize < 12) {
+            codeSize++;
+          }
+        }
+        current = next;
+      }
+    }
+    writeCode(dict.get(current));
+    writeCode(eoiCode);
+
+    // Flush remaining bits
+    if (bitCount > 0) {
+      output.push(bitBuffer & 0xFF);
+    }
+
+    return output;
+  }
+
+  render() {
+    return this.buildStream();
+  }
+}
+
+// ===== Main App =====
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const videoPreview = document.getElementById('videoPreview');
+const videoEl = document.getElementById('videoEl');
+const settingsCard = document.getElementById('settingsCard');
+const convertBtn = document.getElementById('convertBtn');
+const fpsSlider = document.getElementById('fpsSlider');
+const fpsDisplay = document.getElementById('fpsDisplay');
+const widthSlider = document.getElementById('widthSlider');
+const widthDisplay = document.getElementById('widthDisplay');
+const startMin = document.getElementById('startMin');
+const startSec = document.getElementById('startSec');
+const durationSec = document.getElementById('durationSec');
+const fitMode = document.getElementById('fitMode');
+const progressArea = document.getElementById('progressArea');
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+const resultArea = document.getElementById('resultArea');
+const resultImg = document.getElementById('resultImg');
+const gifSize = document.getElementById('gifSize');
+const frameCount = document.getElementById('frameCount');
+const downloadBtn = document.getElementById('downloadBtn');
+const resetBtn = document.getElementById('resetBtn');
+const alert = document.getElementById('alert');
+
+let currentFile = null;
+let videoLoaded = false;
+
+// Drop zone handlers
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('video/')) {
+    loadVideo(file);
+  } else {
+    showAlert('请选择视频文件', 'error');
+  }
+});
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) loadVideo(e.target.files[0]);
+});
+
+// Settings
+fpsSlider.addEventListener('input', () => {
+  fpsDisplay.textContent = fpsSlider.value;
+});
+widthSlider.addEventListener('input', () => {
+  widthDisplay.textContent = widthSlider.value;
+});
+
+function loadVideo(file) {
+  currentFile = file;
+  const url = URL.createObjectURL(file);
+  videoEl.src = url;
+  videoPreview.style.display = 'block';
+  videoEl.onloadedmetadata = () => {
+    videoLoaded = true;
+    settingsCard.style.display = 'block';
+    convertBtn.disabled = false;
+    // Auto-set max duration
+    durationSec.max = Math.floor(videoEl.duration);
+    if (parseInt(durationSec.value) > videoEl.duration) {
+      durationSec.value = Math.min(3, Math.floor(videoEl.duration));
+    }
+    // Auto-set width based on video
+    const suggestedWidth = Math.min(480, videoEl.videoWidth);
+    widthSlider.value = suggestedWidth;
+    widthDisplay.textContent = suggestedWidth;
+    hideAlert();
+    resultArea.style.display = 'none';
+    progressArea.style.display = 'none';
+  };
+}
+
+function showAlert(msg, type = 'error') {
+  alert.textContent = msg;
+  alert.className = `alert alert-${type}`;
+  alert.style.display = 'block';
+}
+
+function hideAlert() {
+  alert.style.display = 'none';
+}
+
+// Convert
+convertBtn.addEventListener('click', async () => {
+  if (!videoLoaded || !currentFile) return;
+
+  convertBtn.disabled = true;
+  progressArea.style.display = 'block';
+  resultArea.style.display = 'none';
+  progressBar.style.width = '0%';
+  hideAlert();
+
+  const fps = parseInt(fpsSlider.value);
+  const targetWidth = parseInt(widthSlider.value);
+  const startTime = parseInt(startMin.value) * 60 + parseInt(startSec.value);
+  const duration = parseInt(durationSec.value);
+  const mode = fitMode.value;
+
+  try {
+    // Seek to start time
+    videoEl.currentTime = startTime;
+
+    // Wait for seek
+    await new Promise((resolve) => {
+      videoEl.onseeked = resolve;
+      // Fallback if already at correct time
+      setTimeout(resolve, 100);
+    });
+
+    const vw = videoEl.videoWidth;
+    const vh = videoEl.videoHeight;
+    const aspect = vw / vh;
+    const targetHeight = Math.round(targetWidth / aspect);
+
+    let canvasWidth = targetWidth;
+    let canvasHeight = targetHeight;
+    let drawX = 0, drawY = 0;
+    let drawW = targetWidth;
+    let drawH = targetHeight;
+
+    if (mode === 'cover') {
+      const coverAspect = targetWidth / targetHeight;
+      if (aspect > coverAspect) {
+        drawW = targetWidth;
+        drawH = Math.round(targetWidth / aspect);
+        drawY = Math.round((targetHeight - drawH) / 2);
+      } else {
+        drawH = targetHeight;
+        drawW = Math.round(targetHeight * aspect);
+        drawX = Math.round((targetWidth - drawW) / 2);
+      }
+    } else if (mode === 'fill') {
+      // Already set
+    } else {
+      // contain - keep aspect, add black bars
+      if (aspect > targetWidth / targetHeight) {
+        drawW = targetWidth;
+        drawH = Math.round(targetWidth / aspect);
+        drawY = Math.round((targetHeight - drawH) / 2);
+      } else {
+        drawH = targetHeight;
+        drawW = Math.round(targetHeight * aspect);
+        drawX = Math.round((targetWidth - drawW) / 2);
+      }
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    const ctx = canvas.getContext('2d');
+
+    const encoder = new GIFEncoder(targetWidth, targetHeight);
+    encoder.setDelay(Math.round(1000 / fps));
+    encoder.setRepeat(0);
+
+    const totalFrames = Math.floor(fps * duration);
+    const frameInterval = 1 / fps;
+
+    // Process frames
+    for (let i = 0; i < totalFrames; i++) {
+      const time = startTime + i * frameInterval;
+      videoEl.currentTime = time;
+
+      await new Promise((resolve) => {
+        videoEl.onseeked = resolve;
+        setTimeout(resolve, 50);
+      });
+
+      // Draw frame
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+      ctx.drawImage(videoEl, drawX, drawY, drawW, drawH);
+
+      encoder.addFrame(ctx);
+
+      // Update progress
+      const pct = Math.round(((i + 1) / totalFrames) * 100);
+      progressBar.style.width = pct + '%';
+      progressText.textContent = `处理中... ${pct}% (${i + 1}/${totalFrames} 帧)`;
+
+      // Yield to UI
+      if (i % 5 === 0) {
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+
+    progressText.textContent = '正在生成 GIF...';
+
+    // Render GIF
+    const gifData = encoder.render();
+    const blob = new Blob([gifData], { type: 'image/gif' });
+    const url = URL.createObjectURL(blob);
+
+    // Show result
+    resultImg.src = url;
+    resultArea.style.display = 'block';
+    gifSize.textContent = formatSize(blob.size);
+    frameCount.textContent = totalFrames;
+
+    progressArea.style.display = 'none';
+
+    // Download handler
+    downloadBtn.onclick = () => {
+      const a = document.createElement('a');
+      a.href = url;
+      const baseName = currentFile.name.replace(/\.[^.]+$/, '');
+      a.download = `${baseName}.gif`;
+      a.click();
+    };
+
+  } catch (err) {
+    showAlert('转换失败：' + err.message, 'error');
+    progressArea.style.display = 'none';
+  } finally {
+    convertBtn.disabled = false;
+  }
+});
+
+// Reset
+resetBtn.addEventListener('click', () => {
+  currentFile = null;
+  videoLoaded = false;
+  videoEl.src = '';
+  videoPreview.style.display = 'none';
+  settingsCard.style.display = 'none';
+  resultArea.style.display = 'none';
+  progressArea.style.display = 'none';
+  convertBtn.disabled = true;
+  hideAlert();
+  fileInput.value = '';
+});
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+</script>
+</body>
+</html>
