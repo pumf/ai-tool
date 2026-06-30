@@ -463,42 +463,60 @@ function lzwEncode(indices, minCodeSize) {
   const eoiCode = clearCode + 1;
   let codeSize = minCodeSize + 1;
   let nextCode = eoiCode + 1;
+  
+  // Use string keys for dictionary to avoid number overflow issues
   const dict = new Map();
-  for (let i = 0; i < clearCode; i++) dict.set(i, i);
+  for (let i = 0; i < clearCode; i++) dict.set(String.fromCharCode(i), i);
+  
   const output = [];
   let bitBuffer = 0, bitCount = 0;
+  
   const writeCode = (code) => {
     bitBuffer |= (code << bitCount);
     bitCount += codeSize;
-    while (bitCount >= 8) { output.push(bitBuffer & 0xFF); bitBuffer >>= 8; bitCount -= 8; }
+    while (bitCount >= 8) {
+      output.push(bitBuffer & 0xFF);
+      bitBuffer >>= 8;
+      bitCount -= 8;
+    }
   };
+  
   writeCode(clearCode);
-  let current = indices[0];
+  
+  // Build string of character codes
+  let current = String.fromCharCode(indices[0]);
+  
   for (let i = 1; i < indices.length; i++) {
-    const next = indices[i];
-    const combinedKey = (current << 12) | next;
-    if (dict.has(combinedKey)) {
-      current = combinedKey;
+    const nextChar = String.fromCharCode(indices[i]);
+    const combined = current + nextChar;
+    
+    if (dict.has(combined)) {
+      current = combined;
     } else {
       writeCode(dict.get(current));
       if (nextCode < 4096) {
-        dict.set(combinedKey, nextCode++);
+        dict.set(combined, nextCode++);
         if (nextCode > (1 << codeSize) && codeSize < 12) codeSize++;
       }
-      current = next;
+      current = nextChar;
     }
   }
+  
   writeCode(dict.get(current));
   writeCode(eoiCode);
+  
   if (bitCount > 0) output.push(bitBuffer & 0xFF);
   return output;
 }
 
 function buildGIF(frames, width, height, delay, repeat) {
-  // Collect all pixels for global palette
+  // Collect sampled pixels for global palette (sample every 4th pixel for speed)
   const allPixels = [];
+  const sampleStep = 4;
   for (const f of frames) {
-    for (let i = 0; i < f.length; i += 4) allPixels.push([f[i], f[i+1], f[i+2]]);
+    for (let i = 0; i < f.length; i += 4 * sampleStep) {
+      allPixels.push([f[i], f[i+1], f[i+2]]);
+    }
   }
   
   const palette = buildOctreePalette(allPixels, 256);
