@@ -382,322 +382,193 @@ footer {
 </footer>
 
 <script>
-// ===== GIF Encoder (improved) =====
-// Uses octree quantization for better color quality + global palette across all frames
-class GIFEncoder {
-  constructor(width, height) {
-    this.width = width;
-    this.height = height;
-    this.frames = [];
-    this.delay = 100;
-    this.repeat = 0;
+// ===== GIF Encoder (Web Worker) =====
+// GIF encoding runs in a Web Worker to avoid blocking the main thread
+
+// Create worker from blob URL
+const workerCode = `
+// Octree color quantization
+function buildOctreePalette(allPixels, maxColors) {
+  const root = { children: null, count: 0, isLeaf: false, r: 0, g: 0, b: 0 };
+  
+  const addColor = (node, r, g, b, depth) => {
+    if (depth === 8) {
+      node.isLeaf = true;
+      node.count++;
+      node.r += r; node.g += g; node.b += b;
+      return;
+    }
+    if (!node.children) node.children = new Array(8).fill(null);
+    const idx = ((r >> (7-depth)) & 1) << 2 | ((g >> (7-depth)) & 1) << 1 | ((b >> (7-depth)) & 1);
+    if (!node.children[idx]) {
+      node.children[idx] = { children: null, count: 0, isLeaf: false, r: 0, g: 0, b: 0 };
+    }
+    addColor(node.children[idx], r, g, b, depth + 1);
+  };
+
+  for (const p of allPixels) addColor(root, p[0], p[1], p[2], 0);
+
+  const leaves = [];
+  const collectLeaves = (node) => {
+    if (node.isLeaf) { leaves.push(node); return; }
+    if (node.children) for (const child of node.children) if (child) collectLeaves(child);
+  };
+  collectLeaves(root);
+
+  while (leaves.length > maxColors) {
+    let minIdx = 0;
+    for (let i = 1; i < leaves.length; i++) if (leaves[i].count < leaves[minIdx].count) minIdx = i;
+    leaves.splice(minIdx, 1);
   }
 
-  setDelay(ms) { this.delay = ms; }
-  setRepeat(n) { this.repeat = n; }
-
-  addFrame(ctx) {
-    const imageData = ctx.getImageData(0, 0, this.width, this.height);
-    this.frames.push(imageData);
-  }
-
-  // Octree-based color quantization for better quality
-  buildOctreePalette(frames, maxColors) {
-    // Collect all pixels from all frames
-    const allPixels = [];
-    for (const frame of frames) {
-      const data = frame.data;
-      for (let i = 0; i < data.length; i += 4) {
-        allPixels.push([data[i], data[i+1], data[i+2]]);
-      }
-    }
-
-    // Build octree
-    const root = { children: null, count: 0, isLeaf: false, r: 0, g: 0, b: 0 };
-    
-    const addColor = (node, r, g, b, depth) => {
-      if (depth === 8) {
-        node.isLeaf = true;
-        node.count++;
-        node.r += r;
-        node.g += g;
-        node.b += b;
-        return;
-      }
-      if (!node.children) node.children = new Array(8).fill(null);
-      const idx = ((r >> (7-depth)) & 1) << 2 | ((g >> (7-depth)) & 1) << 1 | ((b >> (7-depth)) & 1);
-      if (!node.children[idx]) {
-        node.children[idx] = { children: null, count: 0, isLeaf: false, r: 0, g: 0, b: 0 };
-      }
-      addColor(node.children[idx], r, g, b, depth + 1);
-    };
-
-    for (const p of allPixels) {
-      addColor(root, p[0], p[1], p[2], 0);
-    }
-
-    // Collect leaf nodes and reduce if needed
-    const leaves = [];
-    const collectLeaves = (node) => {
-      if (node.isLeaf) {
-        leaves.push(node);
-        return;
-      }
-      if (node.children) {
-        for (const child of node.children) {
-          if (child) collectLeaves(child);
-        }
-      }
-    };
-    collectLeaves(root);
-
-    // Reduce by merging least-populated nodes
-    while (leaves.length > maxColors) {
-      // Find the leaf with smallest count
-      let minIdx = 0;
-      for (let i = 1; i < leaves.length; i++) {
-        if (leaves[i].count < leaves[minIdx].count) minIdx = i;
-      }
-      leaves.splice(minIdx, 1);
-    }
-
-    // Build palette from remaining leaves
-    const palette = leaves.map(l => [
-      Math.round(l.r / l.count),
-      Math.round(l.g / l.count),
-      Math.round(l.b / l.count)
-    ]);
-
-    // Ensure at least 2 colors
-    if (palette.length < 2) {
-      palette.push([0,0,0], [255,255,255]);
-    }
-
-    return palette;
-  }
-
-  findClosest(color, palette) {
-    let minDist = Infinity;
-    let idx = 0;
-    for (let i = 0; i < palette.length; i++) {
-      const dr = color[0] - palette[i][0];
-      const dg = color[1] - palette[i][1];
-      const db = color[2] - palette[i][2];
-      const dist = dr*dr + dg*dg + db*db;
-      if (dist < minDist) {
-        minDist = dist;
-        idx = i;
-      }
-    }
-    return idx;
-  }
-
-  // Floyd-Steinberg dithering for much better visual quality
-  ditherFrame(imageData, palette) {
-    const w = imageData.width;
-    const h = imageData.height;
-    const data = new Uint8Array(imageData.data);
-    const indices = new Uint16Array(w * h);
-
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const idx = (y * w + x) * 4;
-        const oldR = data[idx];
-        const oldG = data[idx+1];
-        const oldB = data[idx+2];
-
-        const ci = this.findClosest([oldR, oldG, oldB], palette);
-        indices[y * w + x] = ci;
-
-        const newR = palette[ci][0];
-        const newG = palette[ci][1];
-        const newB = palette[ci][2];
-
-        const errR = oldR - newR;
-        const errG = oldG - newG;
-        const errB = oldB - newB;
-
-        // Floyd-Steinberg error diffusion
-        const distribute = (px, py, factor) => {
-          if (px < 0 || px >= w || py < 0 || py >= h) return;
-          const pi = (py * w + px) * 4;
-          data[pi] = Math.max(0, Math.min(255, data[pi] + errR * factor));
-          data[pi+1] = Math.max(0, Math.min(255, data[pi+1] + errG * factor));
-          data[pi+2] = Math.max(0, Math.min(255, data[pi+2] + errB * factor));
-        };
-
-        distribute(x+1, y, 7/16);
-        distribute(x-1, y+1, 3/16);
-        distribute(x, y+1, 5/16);
-        distribute(x+1, y+1, 1/16);
-      }
-    }
-
-    return indices;
-  }
-
-  buildStream() {
-    const stream = [];
-    const write = (b) => stream.push(b & 0xFF);
-
-    // Build global palette from all frames (better color consistency)
-    const globalPalette = this.buildOctreePalette(this.frames, 256);
-    const paletteSize = globalPalette.length;
-    const colorBits = Math.max(2, Math.ceil(Math.log2(paletteSize)));
-
-    // Header
-    write(0x47); write(0x49); write(0x46); // GIF
-    write(0x38); write(0x39); write(0x61); // 89a
-
-    // Logical screen descriptor
-    write(this.width & 0xFF);
-    write((this.width >> 8) & 0xFF);
-    write(this.height & 0xFF);
-    write((this.height >> 8) & 0xFF);
-
-    // Global color table
-    const packed = 0x80 | ((colorBits - 1) << 4) | (colorBits - 1);
-    write(packed);
-    write(0); // Background
-    write(0); // Aspect
-
-    // Global color table
-    for (let i = 0; i < 256; i++) {
-      if (i < globalPalette.length) {
-        write(globalPalette[i][0]);
-        write(globalPalette[i][1]);
-        write(globalPalette[i][2]);
-      } else {
-        write(0); write(0); write(0);
-      }
-    }
-
-    // Netscape loop extension
-    if (this.repeat >= 0) {
-      write(0x21); write(0xFF); write(0x0B);
-      write(0x4E); write(0x45); write(0x54); write(0x53);
-      write(0x43); write(0x41); write(0x50); write(0x45);
-      write(0x32); write(0x2E); write(0x30);
-      write(0x03); write(0x01);
-      write(this.repeat & 0xFF);
-      write((this.repeat >> 8) & 0xFF);
-      write(0x00);
-    }
-
-    // Encode each frame with dithering
-    for (let fi = 0; fi < this.frames.length; fi++) {
-      const frameData = this.frames[fi];
-      
-      // Dither frame using global palette
-      const indices = this.ditherFrame(frameData, globalPalette);
-
-      // Graphics control extension
-      write(0x21); write(0xF9); write(0x04);
-      write(0x00); // No disposal, no transparency
-      write(this.delay & 0xFF);
-      write((this.delay >> 8) & 0xFF);
-      write(0x00); // Transparent index
-      write(0x00);
-
-      // Image descriptor (no local palette, use global)
-      write(0x2C);
-      write(0); write(0); write(0); write(0);
-      write(this.width & 0xFF);
-      write((this.width >> 8) & 0xFF);
-      write(this.height & 0xFF);
-      write((this.height >> 8) & 0xFF);
-      write(colorBits - 1); // Use global color table
-
-      // LZW minimum code size
-      write(colorBits);
-
-      // Encode with LZW
-      const lzwData = this.lzwEncode(Array.from(indices), colorBits);
-
-      // Write sub-blocks
-      for (let i = 0; i < lzwData.length; i += 255) {
-        const chunk = lzwData.slice(i, i + 255);
-        write(chunk.length);
-        for (let j = 0; j < chunk.length; j++) {
-          write(chunk[j]);
-        }
-      }
-      write(0x00);
-    }
-
-    // Trailer
-    write(0x3B);
-    return new Uint8Array(stream);
-  }
-
-  lzwEncode(indices, minCodeSize) {
-    const clearCode = 1 << minCodeSize;
-    const eoiCode = clearCode + 1;
-    let codeSize = minCodeSize + 1;
-    let nextCode = eoiCode + 1;
-
-    const dict = new Map();
-    for (let i = 0; i < clearCode; i++) {
-      dict.set(i, i);
-    }
-
-    const output = [];
-    let bitBuffer = 0;
-    let bitCount = 0;
-
-    const writeCode = (code) => {
-      bitBuffer |= (code << bitCount);
-      bitCount += codeSize;
-      while (bitCount >= 8) {
-        output.push(bitBuffer & 0xFF);
-        bitBuffer >>= 8;
-        bitCount -= 8;
-      }
-    };
-
-    writeCode(clearCode);
-
-    let current = indices[0];
-    let currentLen = 1;
-
-    for (let i = 1; i < indices.length; i++) {
-      const next = indices[i];
-      // Build combined key
-      let combinedKey = current;
-      let shift = 0;
-      let temp = next;
-      while (temp > 0) { shift++; temp >>= 1; }
-      combinedKey = (current << 12) | next;
-
-      if (dict.has(combinedKey)) {
-        current = combinedKey;
-        currentLen++;
-      } else {
-        writeCode(dict.get(current));
-        if (nextCode < 4096) {
-          dict.set(combinedKey, nextCode++);
-          if (nextCode > (1 << codeSize) && codeSize < 12) {
-            codeSize++;
-          }
-        }
-        current = next;
-        currentLen = 1;
-      }
-    }
-    writeCode(dict.get(current));
-    writeCode(eoiCode);
-
-    if (bitCount > 0) {
-      output.push(bitBuffer & 0xFF);
-    }
-
-    return output;
-  }
-
-  render() {
-    return this.buildStream();
-  }
+  return leaves.map(l => [Math.round(l.r / l.count), Math.round(l.g / l.count), Math.round(l.b / l.count)]);
 }
+
+function findClosest(color, palette) {
+  let minDist = Infinity, idx = 0;
+  for (let i = 0; i < palette.length; i++) {
+    const dr = color[0] - palette[i][0], dg = color[1] - palette[i][1], db = color[2] - palette[i][2];
+    const dist = dr*dr + dg*dg + db*db;
+    if (dist < minDist) { minDist = dist; idx = i; }
+  }
+  return idx;
+}
+
+function ditherFrame(data, w, h, palette) {
+  const pixels = new Uint8Array(data);
+  const indices = new Uint16Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = (y * w + x) * 4;
+      const oldR = pixels[idx], oldG = pixels[idx+1], oldB = pixels[idx+2];
+      const ci = findClosest([oldR, oldG, oldB], palette);
+      indices[y * w + x] = ci;
+      const newR = palette[ci][0], newG = palette[ci][1], newB = palette[ci][2];
+      const errR = oldR - newR, errG = oldG - newG, errB = oldB - newB;
+      const dist = (px, py, f) => {
+        if (px < 0 || px >= w || py < 0 || py >= h) return;
+        const pi = (py * w + px) * 4;
+        pixels[pi] = Math.max(0, Math.min(255, pixels[pi] + errR * f));
+        pixels[pi+1] = Math.max(0, Math.min(255, pixels[pi+1] + errG * f));
+        pixels[pi+2] = Math.max(0, Math.min(255, pixels[pi+2] + errB * f));
+      };
+      dist(x+1, y, 7/16); dist(x-1, y+1, 3/16); dist(x, y+1, 5/16); dist(x+1, y+1, 1/16);
+    }
+  }
+  return indices;
+}
+
+function lzwEncode(indices, minCodeSize) {
+  const clearCode = 1 << minCodeSize;
+  const eoiCode = clearCode + 1;
+  let codeSize = minCodeSize + 1;
+  let nextCode = eoiCode + 1;
+  const dict = new Map();
+  for (let i = 0; i < clearCode; i++) dict.set(i, i);
+  const output = [];
+  let bitBuffer = 0, bitCount = 0;
+  const writeCode = (code) => {
+    bitBuffer |= (code << bitCount);
+    bitCount += codeSize;
+    while (bitCount >= 8) { output.push(bitBuffer & 0xFF); bitBuffer >>= 8; bitCount -= 8; }
+  };
+  writeCode(clearCode);
+  let current = indices[0];
+  for (let i = 1; i < indices.length; i++) {
+    const next = indices[i];
+    const combinedKey = (current << 12) | next;
+    if (dict.has(combinedKey)) {
+      current = combinedKey;
+    } else {
+      writeCode(dict.get(current));
+      if (nextCode < 4096) {
+        dict.set(combinedKey, nextCode++);
+        if (nextCode > (1 << codeSize) && codeSize < 12) codeSize++;
+      }
+      current = next;
+    }
+  }
+  writeCode(dict.get(current));
+  writeCode(eoiCode);
+  if (bitCount > 0) output.push(bitBuffer & 0xFF);
+  return output;
+}
+
+function buildGIF(frames, width, height, delay, repeat) {
+  // Collect all pixels for global palette
+  const allPixels = [];
+  for (const f of frames) {
+    for (let i = 0; i < f.length; i += 4) allPixels.push([f[i], f[i+1], f[i+2]]);
+  }
+  
+  const palette = buildOctreePalette(allPixels, 256);
+  const colorBits = Math.max(2, Math.ceil(Math.log2(palette.length)));
+  
+  const stream = [];
+  const w = (b) => stream.push(b & 0xFF);
+  
+  // Header
+  w(0x47); w(0x49); w(0x46); w(0x38); w(0x39); w(0x61);
+  // Logical screen
+  w(width & 0xFF); w((width >> 8) & 0xFF);
+  w(height & 0xFF); w((height >> 8) & 0xFF);
+  w(0x80 | ((colorBits - 1) << 4) | (colorBits - 1));
+  w(0); w(0);
+  // Global color table
+  for (let i = 0; i < 256; i++) {
+    if (i < palette.length) { w(palette[i][0]); w(palette[i][1]); w(palette[i][2]); }
+    else { w(0); w(0); w(0); }
+  }
+  // Loop extension
+  if (repeat >= 0) {
+    w(0x21); w(0xFF); w(0x0B);
+    w(0x4E); w(0x45); w(0x54); w(0x53); w(0x43); w(0x41); w(0x50); w(0x45); w(0x32); w(0x2E); w(0x30);
+    w(0x03); w(0x01); w(repeat & 0xFF); w((repeat >> 8) & 0xFF); w(0x00);
+  }
+  
+  // Frames
+  for (let fi = 0; fi < frames.length; fi++) {
+    const indices = ditherFrame(frames[fi], width, height, palette);
+    // GCE
+    w(0x21); w(0xF9); w(0x04); w(0x00);
+    w(delay & 0xFF); w((delay >> 8) & 0xFF);
+    w(0x00); w(0x00);
+    // Image descriptor
+    w(0x2C); w(0); w(0); w(0); w(0);
+    w(width & 0xFF); w((width >> 8) & 0xFF);
+    w(height & 0xFF); w((height >> 8) & 0xFF);
+    w(colorBits - 1);
+    w(colorBits);
+    // LZW data
+    const lzwData = lzwEncode(Array.from(indices), colorBits);
+    for (let i = 0; i < lzwData.length; i += 255) {
+      const chunk = lzwData.slice(i, i + 255);
+      w(chunk.length);
+      for (let j = 0; j < chunk.length; j++) w(chunk[j]);
+    }
+    w(0x00);
+    
+    // Report progress back to main thread
+    self.postMessage({ type: 'frame', done: fi + 1, total: frames.length });
+  }
+  
+  w(0x3B);
+  return new Uint8Array(stream);
+}
+
+self.onmessage = function(e) {
+  const { frames, width, height, delay, repeat } = e.data;
+  try {
+    const gifData = buildGIF(frames, width, height, delay, repeat);
+    self.postMessage({ type: 'done', data: gifData.buffer }, [gifData.buffer]);
+  } catch(err) {
+    self.postMessage({ type: 'error', message: err.message });
+  }
+};
+`;
+
+const workerBlob = new Blob([workerCode], { type: 'application/javascript' });
+const workerUrl = URL.createObjectURL(workerBlob);
 
 // ===== Main App =====
 const dropZone = document.getElementById('dropZone');
@@ -793,6 +664,55 @@ function hideAlert() {
   alert.style.display = 'none';
 }
 
+// ===== Async frame capture + Web Worker encoding =====
+
+// Helper: seek video and wait
+function seekVideo(time) {
+  return new Promise((resolve) => {
+    videoEl.currentTime = time;
+    const onSeeked = () => { videoEl.removeEventListener('seeked', onSeeked); resolve(); };
+    videoEl.addEventListener('seeked', onSeeked);
+    setTimeout(resolve, 200); // fallback
+  });
+}
+
+// Capture frames in chunks to keep UI responsive
+async function captureFrames(video, startTime, fps, duration, targetWidth, targetHeight, drawX, drawY, drawW, drawH, onProgress) {
+  const totalFrames = Math.floor(fps * duration);
+  const frameInterval = 1 / fps;
+  const frames = [];
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const ctx = canvas.getContext('2d');
+
+  // Process in chunks of 5 frames, yield to UI between chunks
+  const CHUNK = 5;
+  for (let start = 0; start < totalFrames; start += CHUNK) {
+    const end = Math.min(start + CHUNK, totalFrames);
+    
+    for (let i = start; i < end; i++) {
+      const time = startTime + i * frameInterval;
+      await seekVideo(time);
+      
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+      ctx.drawImage(video, drawX, drawY, drawW, drawH);
+      
+      // Copy raw RGBA data
+      const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+      frames.push(new Uint8Array(imageData.data));
+    }
+    
+    // Yield to UI thread
+    await new Promise(r => setTimeout(r, 0));
+    if (onProgress) onProgress(Math.round(end / totalFrames * 50), end, totalFrames);
+  }
+  
+  return frames;
+}
+
 // Convert
 convertBtn.addEventListener('click', async () => {
   if (!videoLoaded || !currentFile) return;
@@ -810,26 +730,15 @@ convertBtn.addEventListener('click', async () => {
   const mode = fitMode.value;
 
   try {
-    // Seek to start time
-    videoEl.currentTime = startTime;
-
-    // Wait for seek
-    await new Promise((resolve) => {
-      videoEl.onseeked = resolve;
-      // Fallback if already at correct time
-      setTimeout(resolve, 100);
-    });
+    // Seek to start
+    await seekVideo(startTime);
 
     const vw = videoEl.videoWidth;
     const vh = videoEl.videoHeight;
     const aspect = vw / vh;
     const targetHeight = Math.round(targetWidth / aspect);
 
-    let canvasWidth = targetWidth;
-    let canvasHeight = targetHeight;
-    let drawX = 0, drawY = 0;
-    let drawW = targetWidth;
-    let drawH = targetHeight;
+    let drawX = 0, drawY = 0, drawW = targetWidth, drawH = targetHeight;
 
     if (mode === 'cover') {
       const coverAspect = targetWidth / targetHeight;
@@ -842,10 +751,8 @@ convertBtn.addEventListener('click', async () => {
         drawW = Math.round(targetHeight * aspect);
         drawX = Math.round((targetWidth - drawW) / 2);
       }
-    } else if (mode === 'fill') {
-      // Already set
-    } else {
-      // contain - keep aspect, add black bars
+    } else if (mode !== 'fill') {
+      // contain
       if (aspect > targetWidth / targetHeight) {
         drawW = targetWidth;
         drawH = Math.round(targetWidth / aspect);
@@ -857,62 +764,69 @@ convertBtn.addEventListener('click', async () => {
       }
     }
 
-    const canvas = document.createElement('canvas');
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-    const ctx = canvas.getContext('2d');
+    progressText.textContent = '正在采集视频帧... 0%';
 
-    const encoder = new GIFEncoder(targetWidth, targetHeight);
-    encoder.setDelay(Math.round(1000 / fps));
-    encoder.setRepeat(0);
-
-    const totalFrames = Math.floor(fps * duration);
-    const frameInterval = 1 / fps;
-
-    // Process frames
-    for (let i = 0; i < totalFrames; i++) {
-      const time = startTime + i * frameInterval;
-      videoEl.currentTime = time;
-
-      await new Promise((resolve) => {
-        videoEl.onseeked = resolve;
-        setTimeout(resolve, 50);
-      });
-
-      // Draw frame
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-      ctx.drawImage(videoEl, drawX, drawY, drawW, drawH);
-
-      encoder.addFrame(ctx);
-
-      // Update progress
-      const pct = Math.round(((i + 1) / totalFrames) * 100);
-      progressBar.style.width = pct + '%';
-      progressText.textContent = `处理中... ${pct}% (${i + 1}/${totalFrames} 帧)`;
-
-      // Yield to UI
-      if (i % 5 === 0) {
-        await new Promise(r => setTimeout(r, 0));
+    // Step 1: Capture frames (async, yields to UI)
+    const frames = await captureFrames(
+      videoEl, startTime, fps, duration,
+      targetWidth, targetHeight,
+      drawX, drawY, drawW, drawH,
+      (pct, done, total) => {
+        progressBar.style.width = pct + '%';
+        progressText.textContent = `正在采集视频帧... ${done}/${total} 帧`;
       }
-    }
+    );
 
-    progressText.textContent = '正在生成 GIF...';
+    progressText.textContent = '正在编码 GIF（后台处理，请稍候）...';
+    progressBar.style.width = '50%';
 
-    // Render GIF
-    const gifData = encoder.render();
+    // Step 2: Encode in Web Worker
+    const gifData = await new Promise((resolve, reject) => {
+      const worker = new Worker(workerUrl);
+      
+      worker.onmessage = (e) => {
+        if (e.data.type === 'frame') {
+          const pct = 50 + Math.round((e.data.done / e.data.total) * 50);
+          progressBar.style.width = pct + '%';
+          progressText.textContent = `正在编码 GIF... ${e.data.done}/${e.data.total} 帧`;
+        } else if (e.data.type === 'done') {
+          resolve(new Uint8Array(e.data.data));
+          worker.terminate();
+        } else if (e.data.type === 'error') {
+          reject(new Error(e.data.message));
+          worker.terminate();
+        }
+      };
+      
+      worker.onerror = (err) => {
+        reject(new Error('Worker error: ' + err.message));
+        worker.terminate();
+      };
+      
+      // Transfer frame buffers to worker (zero-copy)
+      const transferables = frames.map(f => f.buffer);
+      worker.postMessage({
+        frames: frames,
+        width: targetWidth,
+        height: targetHeight,
+        delay: Math.round(1000 / fps),
+        repeat: 0
+      }, transferables);
+    });
+
+    progressBar.style.width = '100%';
+    progressText.textContent = 'GIF 生成完成！';
+
     const blob = new Blob([gifData], { type: 'image/gif' });
     const url = URL.createObjectURL(blob);
 
-    // Show result
     resultImg.src = url;
     resultArea.style.display = 'block';
     gifSize.textContent = formatSize(blob.size);
-    frameCount.textContent = totalFrames;
+    frameCount.textContent = frames.length;
 
     progressArea.style.display = 'none';
 
-    // Download handler
     downloadBtn.onclick = () => {
       const a = document.createElement('a');
       a.href = url;
