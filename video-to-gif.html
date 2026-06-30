@@ -387,41 +387,63 @@ footer {
 
 // Create worker from blob URL
 const workerCode = `
-// Octree color quantization
-function buildOctreePalette(allPixels, maxColors) {
-  const root = { children: null, count: 0, isLeaf: false, r: 0, g: 0, b: 0 };
+// ===== GIF Encoder for Web Worker =====
+// Uses median-cut quantization + Floyd-Steinberg dithering
+
+// Median cut quantization
+function buildPalette(allPixels, maxColors) {
+  if (allPixels.length === 0) return [[0,0,0],[255,255,255]];
   
-  const addColor = (node, r, g, b, depth) => {
-    if (depth === 8) {
-      node.isLeaf = true;
-      node.count++;
-      node.r += r; node.g += g; node.b += b;
-      return;
+  // Convert to array of objects for sorting
+  let points = allPixels.map(p => ({ r: p[0], g: p[1], b: p[2] }));
+  
+  function medianCut(list, depth) {
+    if (list.length === 0) return [];
+    if (list.length <= 1 || depth >= 8) {
+      // Average this box
+      let sr = 0, sg = 0, sb = 0;
+      for (const p of list) { sr += p.r; sg += p.g; sb += p.b; }
+      return [[Math.round(sr/list.length), Math.round(sg/list.length), Math.round(sb/list.length)]];
     }
-    if (!node.children) node.children = new Array(8).fill(null);
-    const idx = ((r >> (7-depth)) & 1) << 2 | ((g >> (7-depth)) & 1) << 1 | ((b >> (7-depth)) & 1);
-    if (!node.children[idx]) {
-      node.children[idx] = { children: null, count: 0, isLeaf: false, r: 0, g: 0, b: 0 };
+    
+    // Find the range of each channel
+    let minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0;
+    for (const p of list) {
+      if (p.r < minR) minR = p.r; if (p.r > maxR) maxR = p.r;
+      if (p.g < minG) minG = p.g; if (p.g > maxG) maxG = p.g;
+      if (p.b < minB) minB = p.b; if (p.b > maxB) maxB = p.b;
     }
-    addColor(node.children[idx], r, g, b, depth + 1);
-  };
-
-  for (const p of allPixels) addColor(root, p[0], p[1], p[2], 0);
-
-  const leaves = [];
-  const collectLeaves = (node) => {
-    if (node.isLeaf) { leaves.push(node); return; }
-    if (node.children) for (const child of node.children) if (child) collectLeaves(child);
-  };
-  collectLeaves(root);
-
-  while (leaves.length > maxColors) {
-    let minIdx = 0;
-    for (let i = 1; i < leaves.length; i++) if (leaves[i].count < leaves[minIdx].count) minIdx = i;
-    leaves.splice(minIdx, 1);
+    
+    const rangeR = maxR - minR, rangeG = maxG - minG, rangeB = maxB - minB;
+    
+    // Sort by the channel with largest range
+    if (rangeR >= rangeG && rangeR >= rangeB) {
+      list.sort((a, b) => a.r - b.r);
+    } else if (rangeG >= rangeR && rangeG >= rangeB) {
+      list.sort((a, b) => a.g - b.g);
+    } else {
+      list.sort((a, b) => a.b - b.b);
+    }
+    
+    const mid = Math.floor(list.length / 2);
+    const left = medianCut(list.slice(0, mid), depth + 1);
+    const right = medianCut(list.slice(mid), depth + 1);
+    return left.concat(right);
   }
-
-  return leaves.map(l => [Math.round(l.r / l.count), Math.round(l.g / l.count), Math.round(l.b / l.count)]);
+  
+  let palette = medianCut(points, 0);
+  
+  // Trim to maxColors
+  if (palette.length > maxColors) {
+    palette = palette.slice(0, maxColors);
+  }
+  
+  // Ensure at least 2 colors
+  if (palette.length < 2) {
+    palette.push([0,0,0], [255,255,255]);
+  }
+  
+  return palette;
 }
 
 function findClosest(color, palette) {
@@ -464,7 +486,6 @@ function lzwEncode(indices, minCodeSize) {
   let codeSize = minCodeSize + 1;
   let nextCode = eoiCode + 1;
   
-  // Use string keys for dictionary to avoid number overflow issues
   const dict = new Map();
   for (let i = 0; i < clearCode; i++) dict.set(String.fromCharCode(i), i);
   
@@ -483,7 +504,6 @@ function lzwEncode(indices, minCodeSize) {
   
   writeCode(clearCode);
   
-  // Build string of character codes
   let current = String.fromCharCode(indices[0]);
   
   for (let i = 1; i < indices.length; i++) {
@@ -510,16 +530,16 @@ function lzwEncode(indices, minCodeSize) {
 }
 
 function buildGIF(frames, width, height, delay, repeat) {
-  // Collect sampled pixels for global palette (sample every 4th pixel for speed)
+  // Collect sampled pixels for palette (sample every 2nd pixel for speed)
   const allPixels = [];
-  const sampleStep = 4;
+  const sampleStep = 2;
   for (const f of frames) {
     for (let i = 0; i < f.length; i += 4 * sampleStep) {
       allPixels.push([f[i], f[i+1], f[i+2]]);
     }
   }
   
-  const palette = buildOctreePalette(allPixels, 256);
+  const palette = buildPalette(allPixels, 256);
   const colorBits = Math.max(2, Math.ceil(Math.log2(palette.length)));
   
   const stream = [];
@@ -527,17 +547,24 @@ function buildGIF(frames, width, height, delay, repeat) {
   
   // Header
   w(0x47); w(0x49); w(0x46); w(0x38); w(0x39); w(0x61);
-  // Logical screen
+  // Logical screen descriptor
   w(width & 0xFF); w((width >> 8) & 0xFF);
   w(height & 0xFF); w((height >> 8) & 0xFF);
-  w(0x80 | ((colorBits - 1) << 4) | (colorBits - 1));
-  w(0); w(0);
+  // Packed: global color table flag + color resolution + table size
+  const gctFlag = 0x80;
+  const colorResolution = 7; // 8 bits per color
+  const gctSize = colorBits - 1;
+  w(gctFlag | (colorResolution << 4) | gctSize);
+  w(0); // Background color index
+  w(0); // Pixel aspect ratio
+  
   // Global color table
-  for (let i = 0; i < 256; i++) {
+  for (let i = 0; i < (1 << colorBits); i++) {
     if (i < palette.length) { w(palette[i][0]); w(palette[i][1]); w(palette[i][2]); }
     else { w(0); w(0); w(0); }
   }
-  // Loop extension
+  
+  // Netscape loop extension
   if (repeat >= 0) {
     w(0x21); w(0xFF); w(0x0B);
     w(0x4E); w(0x45); w(0x54); w(0x53); w(0x43); w(0x41); w(0x50); w(0x45); w(0x32); w(0x2E); w(0x30);
@@ -547,29 +574,39 @@ function buildGIF(frames, width, height, delay, repeat) {
   // Frames
   for (let fi = 0; fi < frames.length; fi++) {
     const indices = ditherFrame(frames[fi], width, height, palette);
-    // GCE
-    w(0x21); w(0xF9); w(0x04); w(0x00);
+    
+    // Graphics control extension
+    w(0x21); w(0xF9); w(0x04);
+    w(0x00); // Disposal: none
     w(delay & 0xFF); w((delay >> 8) & 0xFF);
-    w(0x00); w(0x00);
-    // Image descriptor
-    w(0x2C); w(0); w(0); w(0); w(0);
+    w(0x00); // Transparent color index
+    w(0x00); // Block terminator
+    
+    // Image descriptor - use GLOBAL color table (no local table)
+    w(0x2C); // Image separator
+    w(0); w(0); // Image left
+    w(0); w(0); // Image top
     w(width & 0xFF); w((width >> 8) & 0xFF);
     w(height & 0xFF); w((height >> 8) & 0xFF);
-    w(colorBits - 1);
+    w(0x00); // Packed: no local color table, not interlaced
+    
+    // LZW minimum code size
     w(colorBits);
-    // LZW data
+    
+    // LZW encoded data
     const lzwData = lzwEncode(Array.from(indices), colorBits);
     for (let i = 0; i < lzwData.length; i += 255) {
       const chunk = lzwData.slice(i, i + 255);
       w(chunk.length);
       for (let j = 0; j < chunk.length; j++) w(chunk[j]);
     }
-    w(0x00);
+    w(0x00); // Block terminator
     
-    // Report progress back to main thread
+    // Report progress
     self.postMessage({ type: 'frame', done: fi + 1, total: frames.length });
   }
   
+  // Trailer
   w(0x3B);
   return new Uint8Array(stream);
 }
