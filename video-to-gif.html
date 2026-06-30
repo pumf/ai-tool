@@ -382,16 +382,15 @@ footer {
 </footer>
 
 <script>
-// ===== GIF Encoder (minimal) =====
-// LZW-based GIF encoder, adapted for browser use
+// ===== GIF Encoder (improved) =====
+// Uses octree quantization for better color quality + global palette across all frames
 class GIFEncoder {
   constructor(width, height) {
     this.width = width;
     this.height = height;
     this.frames = [];
-    this.delay = 100; // default 100ms
-    this.transparent = null;
-    this.repeat = 0; // 0 = loop forever
+    this.delay = 100;
+    this.repeat = 0;
   }
 
   setDelay(ms) { this.delay = ms; }
@@ -402,52 +401,79 @@ class GIFEncoder {
     this.frames.push(imageData);
   }
 
-  // Quantize RGBA to 256-color palette using median cut
-  quantize(imageData) {
-    const pixels = [];
-    const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      pixels.push([data[i], data[i+1], data[i+2], data[i+3]]);
-    }
-    return this.medianCut(pixels, 256);
-  }
-
-  medianCut(pixels, maxColors) {
-    // Simple uniform quantization for speed
-    const palette = [];
-    const map = new Map();
-
-    for (const p of pixels) {
-      // 5-6-5 quantization
-      const r = Math.round(p[0] / 32) * 32;
-      const g = Math.round(p[1] / 32) * 32;
-      const b = Math.round(p[2] / 32) * 32;
-      const key = `${r},${g},${b}`;
-      if (!map.has(key)) {
-        map.set(key, [r, g, b, p[3]]);
+  // Octree-based color quantization for better quality
+  buildOctreePalette(frames, maxColors) {
+    // Collect all pixels from all frames
+    const allPixels = [];
+    for (const frame of frames) {
+      const data = frame.data;
+      for (let i = 0; i < data.length; i += 4) {
+        allPixels.push([data[i], data[i+1], data[i+2]]);
       }
     }
 
-    const entries = Array.from(map.values());
-    // If too many colors, reduce further
-    let colors = entries;
-    if (colors.length > maxColors) {
-      // Sort by luminance and take evenly spaced samples
-      colors.sort((a, b) => (a[0]*299 + a[1]*587 + a[2]*114) - (b[0]*299 + b[1]*587 + b[2]*114));
-      const step = Math.floor(colors.length / maxColors);
-      const sampled = [];
-      for (let i = 0; i < colors.length && sampled.length < maxColors; i += step) {
-        sampled.push(colors[i]);
+    // Build octree
+    const root = { children: null, count: 0, isLeaf: false, r: 0, g: 0, b: 0 };
+    
+    const addColor = (node, r, g, b, depth) => {
+      if (depth === 8) {
+        node.isLeaf = true;
+        node.count++;
+        node.r += r;
+        node.g += g;
+        node.b += b;
+        return;
       }
-      colors = sampled;
+      if (!node.children) node.children = new Array(8).fill(null);
+      const idx = ((r >> (7-depth)) & 1) << 2 | ((g >> (7-depth)) & 1) << 1 | ((b >> (7-depth)) & 1);
+      if (!node.children[idx]) {
+        node.children[idx] = { children: null, count: 0, isLeaf: false, r: 0, g: 0, b: 0 };
+      }
+      addColor(node.children[idx], r, g, b, depth + 1);
+    };
+
+    for (const p of allPixels) {
+      addColor(root, p[0], p[1], p[2], 0);
     }
 
-    // Ensure we have at least 2 colors
-    if (colors.length < 2) {
-      colors = [[0,0,0,255], [255,255,255,255]];
+    // Collect leaf nodes and reduce if needed
+    const leaves = [];
+    const collectLeaves = (node) => {
+      if (node.isLeaf) {
+        leaves.push(node);
+        return;
+      }
+      if (node.children) {
+        for (const child of node.children) {
+          if (child) collectLeaves(child);
+        }
+      }
+    };
+    collectLeaves(root);
+
+    // Reduce by merging least-populated nodes
+    while (leaves.length > maxColors) {
+      // Find the leaf with smallest count
+      let minIdx = 0;
+      for (let i = 1; i < leaves.length; i++) {
+        if (leaves[i].count < leaves[minIdx].count) minIdx = i;
+      }
+      leaves.splice(minIdx, 1);
     }
 
-    return colors;
+    // Build palette from remaining leaves
+    const palette = leaves.map(l => [
+      Math.round(l.r / l.count),
+      Math.round(l.g / l.count),
+      Math.round(l.b / l.count)
+    ]);
+
+    // Ensure at least 2 colors
+    if (palette.length < 2) {
+      palette.push([0,0,0], [255,255,255]);
+    }
+
+    return palette;
   }
 
   findClosest(color, palette) {
@@ -466,9 +492,58 @@ class GIFEncoder {
     return idx;
   }
 
+  // Floyd-Steinberg dithering for much better visual quality
+  ditherFrame(imageData, palette) {
+    const w = imageData.width;
+    const h = imageData.height;
+    const data = new Uint8Array(imageData.data);
+    const indices = new Uint16Array(w * h);
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = (y * w + x) * 4;
+        const oldR = data[idx];
+        const oldG = data[idx+1];
+        const oldB = data[idx+2];
+
+        const ci = this.findClosest([oldR, oldG, oldB], palette);
+        indices[y * w + x] = ci;
+
+        const newR = palette[ci][0];
+        const newG = palette[ci][1];
+        const newB = palette[ci][2];
+
+        const errR = oldR - newR;
+        const errG = oldG - newG;
+        const errB = oldB - newB;
+
+        // Floyd-Steinberg error diffusion
+        const distribute = (px, py, factor) => {
+          if (px < 0 || px >= w || py < 0 || py >= h) return;
+          const pi = (py * w + px) * 4;
+          data[pi] = Math.max(0, Math.min(255, data[pi] + errR * factor));
+          data[pi+1] = Math.max(0, Math.min(255, data[pi+1] + errG * factor));
+          data[pi+2] = Math.max(0, Math.min(255, data[pi+2] + errB * factor));
+        };
+
+        distribute(x+1, y, 7/16);
+        distribute(x-1, y+1, 3/16);
+        distribute(x, y+1, 5/16);
+        distribute(x+1, y+1, 1/16);
+      }
+    }
+
+    return indices;
+  }
+
   buildStream() {
     const stream = [];
     const write = (b) => stream.push(b & 0xFF);
+
+    // Build global palette from all frames (better color consistency)
+    const globalPalette = this.buildOctreePalette(this.frames, 256);
+    const paletteSize = globalPalette.length;
+    const colorBits = Math.max(2, Math.ceil(Math.log2(paletteSize)));
 
     // Header
     write(0x47); write(0x49); write(0x46); // GIF
@@ -480,19 +555,11 @@ class GIFEncoder {
     write(this.height & 0xFF);
     write((this.height >> 8) & 0xFF);
 
-    // Use global palette
-    const globalPalette = this.quantize(this.frames[0]);
-    const paletteSize = globalPalette.length;
-    const colorBits = Math.max(2, Math.ceil(Math.log2(paletteSize)));
-    const globalColorTableFlag = 0x80;
-    const sortFlag = 0;
-    const packed = globalColorTableFlag | ((colorBits - 1) << 4) | (colorBits - 1);
+    // Global color table
+    const packed = 0x80 | ((colorBits - 1) << 4) | (colorBits - 1);
     write(packed);
-
-    // Background color index
-    write(0);
-    // Pixel aspect ratio
-    write(0);
+    write(0); // Background
+    write(0); // Aspect
 
     // Global color table
     for (let i = 0; i < 256; i++) {
@@ -505,82 +572,47 @@ class GIFEncoder {
       }
     }
 
-    // Netscape extension for looping
+    // Netscape loop extension
     if (this.repeat >= 0) {
-      write(0x21); // Extension introducer
-      write(0xFF); // Application extension
-      write(0x0B); // Block size
+      write(0x21); write(0xFF); write(0x0B);
       write(0x4E); write(0x45); write(0x54); write(0x53);
       write(0x43); write(0x41); write(0x50); write(0x45);
-      write(0x32); write(0x2E); write(0x30); // "NETSCAPE2.0"
-      write(0x03); // Sub-block size
-      write(0x01); // Sub-block ID
+      write(0x32); write(0x2E); write(0x30);
+      write(0x03); write(0x01);
       write(this.repeat & 0xFF);
       write((this.repeat >> 8) & 0xFF);
-      write(0x00); // Block terminator
+      write(0x00);
     }
 
-    // For each frame, compute per-frame palette and encode
+    // Encode each frame with dithering
     for (let fi = 0; fi < this.frames.length; fi++) {
       const frameData = this.frames[fi];
-      const pixels = [];
-      const data = frameData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        pixels.push([data[i], data[i+1], data[i+2], data[i+3]]);
-      }
-
-      // Per-frame palette
-      const framePalette = this.quantize(frameData);
-      const fPalSize = framePalette.length;
-      const fColorBits = Math.max(2, Math.ceil(Math.log2(fPalSize)));
+      
+      // Dither frame using global palette
+      const indices = this.ditherFrame(frameData, globalPalette);
 
       // Graphics control extension
-      write(0x21); // Extension introducer
-      write(0xF9); // Graphic control extension
-      write(0x04); // Block size
-      const disposalMethod = 0; // 0 = no disposal
-      const userInput = 0;
-      const transparentColorFlag = 0;
-      const gcePacked = (disposalMethod << 2) | (userInput << 1) | transparentColorFlag;
-      write(gcePacked);
-      // Delay
+      write(0x21); write(0xF9); write(0x04);
+      write(0x00); // No disposal, no transparency
       write(this.delay & 0xFF);
       write((this.delay >> 8) & 0xFF);
-      write(0); // Transparent color index
-      write(0x00); // Block terminator
+      write(0x00); // Transparent index
+      write(0x00);
 
-      // Image descriptor
-      write(0x2C); // Image separator
-      write(0); write(0); // Left
-      write(0); write(0); // Top
+      // Image descriptor (no local palette, use global)
+      write(0x2C);
+      write(0); write(0); write(0); write(0);
       write(this.width & 0xFF);
       write((this.width >> 8) & 0xFF);
       write(this.height & 0xFF);
       write((this.height >> 8) & 0xFF);
-
-      // Local color table
-      const localColorTableFlag = 0x80;
-      const interlaced = 0;
-      const imgPacked = localColorTableFlag | interlaced | (fColorBits - 1);
-      write(imgPacked);
-
-      // Local color table
-      for (let i = 0; i < 256; i++) {
-        if (i < framePalette.length) {
-          write(framePalette[i][0]);
-          write(framePalette[i][1]);
-          write(framePalette[i][2]);
-        } else {
-          write(0); write(0); write(0);
-        }
-      }
+      write(colorBits - 1); // Use global color table
 
       // LZW minimum code size
-      write(fColorBits);
+      write(colorBits);
 
-      // Encode pixel indices with LZW
-      const indices = pixels.map(p => this.findClosest(p, framePalette));
-      const lzwData = this.lzwEncode(indices, fColorBits);
+      // Encode with LZW
+      const lzwData = this.lzwEncode(Array.from(indices), colorBits);
 
       // Write sub-blocks
       for (let i = 0; i < lzwData.length; i += 255) {
@@ -590,12 +622,11 @@ class GIFEncoder {
           write(chunk[j]);
         }
       }
-      write(0x00); // Block terminator
+      write(0x00);
     }
 
     // Trailer
     write(0x3B);
-
     return new Uint8Array(stream);
   }
 
@@ -607,7 +638,7 @@ class GIFEncoder {
 
     const dict = new Map();
     for (let i = 0; i < clearCode; i++) {
-      dict.set(String.fromCharCode(i), i);
+      dict.set(i, i);
     }
 
     const output = [];
@@ -626,27 +657,36 @@ class GIFEncoder {
 
     writeCode(clearCode);
 
-    let current = String.fromCharCode(indices[0]);
+    let current = indices[0];
+    let currentLen = 1;
+
     for (let i = 1; i < indices.length; i++) {
-      const next = String.fromCharCode(indices[i]);
-      const combined = current + next;
-      if (dict.has(combined)) {
-        current = combined;
+      const next = indices[i];
+      // Build combined key
+      let combinedKey = current;
+      let shift = 0;
+      let temp = next;
+      while (temp > 0) { shift++; temp >>= 1; }
+      combinedKey = (current << 12) | next;
+
+      if (dict.has(combinedKey)) {
+        current = combinedKey;
+        currentLen++;
       } else {
         writeCode(dict.get(current));
         if (nextCode < 4096) {
-          dict.set(combined, nextCode++);
+          dict.set(combinedKey, nextCode++);
           if (nextCode > (1 << codeSize) && codeSize < 12) {
             codeSize++;
           }
         }
         current = next;
+        currentLen = 1;
       }
     }
     writeCode(dict.get(current));
     writeCode(eoiCode);
 
-    // Flush remaining bits
     if (bitCount > 0) {
       output.push(bitBuffer & 0xFF);
     }
